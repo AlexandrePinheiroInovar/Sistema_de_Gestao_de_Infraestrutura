@@ -157,6 +157,30 @@ Acesse a área de **Desenvolvimento** para:
 
 Este projeto está sob a licença ISC. Veja o arquivo `package.json` para detalhes.
 
+## 🚀 Deploy Firebase
+
+### Deploy Automático
+```bash
+# Executar script de deploy
+./deploy.sh
+```
+
+### Deploy Manual
+```bash
+# 1. Login no Firebase
+firebase login
+
+# 2. Selecionar projeto
+firebase use gestao-de-infraestrutura-4ee4a
+
+# 3. Deploy
+firebase deploy --only hosting
+```
+
+### URLs de Produção
+- **Aplicação**: https://gestao-de-infraestrutura-4ee4a.firebaseapp.com
+- **API Functions**: https://us-central1-gestao-de-infraestrutura-4ee4a.cloudfunctions.net/api
+
 ## 📞 Suporte
 
 Para suporte técnico ou dúvidas:

@@ -3994,7 +3994,7 @@ function downloadTemplate() {
     button.disabled = true;
     
     // Fazer requisição para download
-    fetch('/api/download-template')
+    fetch(`${API_BASE_URL}/download-template`)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Erro ao baixar planilha');
