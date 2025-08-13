@@ -9,6 +9,41 @@ const firebaseConfig = {
   measurementId: "G-TQCLQ72KYD"
 };
 
+// Verificar se Firebase SDK está carregado e inicializar
+let db = null;
+let analytics = null;
+
+// Aguardar carregamento dos scripts do Firebase
+document.addEventListener('DOMContentLoaded', function() {
+  // Verificar se Firebase está disponível
+  if (typeof firebase !== 'undefined') {
+    try {
+      // Inicializar Firebase se ainda não foi inicializado
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      
+      // Inicializar Firestore
+      if (firebase.firestore) {
+        db = firebase.firestore();
+        console.log('✅ Firestore inicializado');
+      }
+      
+      // Inicializar Analytics (opcional)
+      if (firebase.analytics) {
+        analytics = firebase.analytics();
+        console.log('✅ Analytics inicializado');
+      }
+      
+    } catch (error) {
+      console.warn('⚠️ Erro ao inicializar Firebase:', error);
+      console.log('📝 Sistema funcionará em modo local');
+    }
+  } else {
+    console.warn('⚠️ Firebase SDK não carregado - usando modo local');
+  }
+});
+
 // URL base da API (vai ser a URL do Firebase Functions após o deploy)
 const API_BASE_URL = window.location.hostname === 'localhost' 
   ? 'http://localhost:5001/gestao-de-infraestrutura-4ee4a/us-central1/api'

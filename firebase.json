@@ -8,7 +8,13 @@
       "backups/**",
       "server.js",
       "*.log",
-      "package*.json"
+      "package*.json",
+      "deploy.sh",
+      "deploy-simple.bat",
+      "functions/**",
+      "DEPLOY_MANUAL.md",
+      "deploy-instructions.md",
+      "PERMISSIONS_GUIDE.md"
     ],
     "rewrites": [
       {
@@ -41,5 +47,9 @@
       "firebase-debug.log",
       "firebase-debug.*.log"
     ]
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   }
 }

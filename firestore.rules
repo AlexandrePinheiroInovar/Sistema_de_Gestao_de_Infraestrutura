@@ -1,0 +1,29 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Permitir acesso total para desenvolvimento
+    // IMPORTANTE: Em produção, adicione autenticação mais específica
+    match /{document=**} {
+      allow read, write: if true;
+    }
+    
+    // Regras específicas para o sistema MDU
+    match /sistema/{docId} {
+      allow read, write: if true;
+    }
+    
+    match /enderecos/{enderecoId} {
+      allow read, write: if true;
+    }
+    
+    match /gestao/{gestaoId} {
+      allow read, write: if true;
+    }
+    
+    // Para usuários autenticados (se implementar auth futuramente)
+    // match /sistema/{docId} {
+    //   allow read, write: if request.auth != null;
+    // }
+  }
+}
