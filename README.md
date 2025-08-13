@@ -21,7 +21,7 @@ Sistema completo para análise de dados de infraestrutura MDU (Multi Dwelling Un
 ### Instalação
 ```bash
 # Clone o repositório
-git clone <url-do-repositorio>
+git clone https://github.com/AlexandrePinheiroInovar/Sistema_de_Gestao_de_Infraestrutura.git
 cd Sala_Tecnica
 
 # Instale as dependências
@@ -80,7 +80,6 @@ DEBUG_MODE=false
 
 ## 🛠️ Desenvolvimento
 
-### Desenvolvimento
 ```bash
 # Iniciar servidor de desenvolvimento
 npm run dev
