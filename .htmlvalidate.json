@@ -1,0 +1,15 @@
+{
+  "extends": ["html-validate:recommended"],
+  "rules": {
+    "void-style": "selfclosing",
+    "attribute-boolean-style": "omit",
+    "doctype-style": "html5",
+    "no-trailing-whitespace": "error",
+    "require-sri": "off",
+    "script-type": "off",
+    "tel-non-breaking": "off"
+  },
+  "elements": [
+    "html5"
+  ]
+}

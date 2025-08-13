@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - Sistema de Análises</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="images/Inovar-Telecom-Logo-Site_.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="login-body">
+    <div class="login-center-wrapper">
+        <div class="login-card-modern">
+            <div style="text-align:center; margin-bottom: 18px;">
+                <img src="images/Inovar-Telecom-Logo-Site_.png" alt="Logo Inovar Telecom" style="max-width: 120px;">
+            </div>
+            <form id="registerForm" class="login-form-modern">
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <span class="input-icon"><i class="fas fa-user"></i></span>
+                        <input type="text" id="firstName" name="firstName" placeholder="Nome" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <span class="input-icon"><i class="fas fa-user"></i></span>
+                        <input type="text" id="lastName" name="lastName" placeholder="Sobrenome" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <span class="input-icon"><i class="fas fa-envelope"></i></span>
+                        <input type="email" id="email" name="email" placeholder="E-mail" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <span class="input-icon"><i class="fas fa-lock"></i></span>
+                        <input type="password" id="password" name="password" placeholder="Senha" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword('password')"><i class="fas fa-eye"></i></button>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <span class="input-icon"><i class="fas fa-lock"></i></span>
+                        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Repita a senha" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')"><i class="fas fa-eye"></i></button>
+                    </div>
+                </div>
+                <div class="form-options-modern">
+                    <label class="remember-me">
+                        <input type="checkbox" id="agreeTerms" required>
+                        <span class="checkbox-custom"></span>
+                        Concordo com os termos de uso
+                    </label>
+                </div>
+                <button type="submit" class="login-btn-modern">Criar Conta</button>
+            </form>
+            <div class="auth-switch-modern">
+                <span>Já possui uma conta?</span> <a href="index.html" class="auth-link">Fazer Login</a>
+            </div>
+            <div class="login-footer-modern">
+                <span>© 2025 Sistema MDU</span>
+                <a href="#">Suporte</a> · <a href="#">Política de Privacidade</a>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

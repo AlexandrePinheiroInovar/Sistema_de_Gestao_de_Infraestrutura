@@ -1,0 +1,54 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "extends": [
+    "eslint:recommended"
+  ],
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "rules": {
+    "indent": ["error", 4],
+    "linebreak-style": ["error", "unix"],
+    "quotes": ["error", "single"],
+    "semi": ["error", "always"],
+    "no-unused-vars": "warn",
+    "no-console": "warn",
+    "no-debugger": "error",
+    "no-var": "error",
+    "prefer-const": "error",
+    "no-trailing-spaces": "error",
+    "eol-last": "error",
+    "comma-dangle": ["error", "never"],
+    "object-curly-spacing": ["error", "always"],
+    "array-bracket-spacing": ["error", "never"],
+    "space-before-function-paren": ["error", "never"],
+    "keyword-spacing": "error",
+    "space-infix-ops": "error"
+  },
+  "globals": {
+    "Chart": "readonly",
+    "showSection": "writable",
+    "logout": "writable",
+    "togglePassword": "writable",
+    "loadRealData": "writable",
+    "loadSampleData": "writable",
+    "exportData": "writable",
+    "showExportMenu": "writable",
+
+    "toggleMultiSelect": "writable",
+    "searchColaborador": "writable",
+    "executeCommand": "writable",
+    "updateSheetUrl": "writable",
+    "updateRefreshInterval": "writable",
+    "clearCache": "writable",
+    "exportDebugData": "writable",
+    "testConnection": "writable",
+    "resetSystem": "writable",
+    "clearLogs": "writable",
+    "exportLogs": "writable"
+  }
+}

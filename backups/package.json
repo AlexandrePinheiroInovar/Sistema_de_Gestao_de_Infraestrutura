@@ -1,0 +1,64 @@
+{
+  "name": "sistema-mdu",
+  "version": "1.0.0",
+  "description": "Sistema de Análises MDU - Infraestrutura de Telecomunicações",
+  "main": "script.js",
+  "scripts": {
+    "dev": "node server.js",
+    "dev-live": "live-server --port=3000 --host=localhost --open=index.html --ignore=node_modules",
+    "start": "live-server --port=8080 --host=0.0.0.0 --open=index.html",
+    "build": "npm run minify:css && npm run minify:js",
+    "minify:css": "cleancss -o dist/styles.min.css styles.css",
+    "minify:js": "terser script.js -o dist/script.min.js --compress --mangle",
+    "watch:css": "nodemon --watch styles.css --exec \"npm run minify:css\"",
+    "watch:js": "nodemon --watch script.js --exec \"npm run minify:js\"",
+    "lint:js": "eslint script.js --fix",
+    "format": "prettier --write \"*.{html,css,js,json}\"",
+    "validate:html": "html-validate *.html",
+    "serve:dist": "live-server dist --port=8080",
+    "clean": "rimraf dist",
+    "precommit": "npm run lint:js && npm run format && npm run validate:html"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "clean-css-cli": "^5.6.3",
+    "eslint": "^8.57.0",
+    "html-validate": "^8.15.0",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "live-server": "^1.2.2",
+    "nodemon": "^3.1.0",
+    "prettier": "^3.2.5",
+    "rimraf": "^5.0.5",
+    "terser": "^5.29.1"
+  },
+  "keywords": [
+    "mdu",
+    "telecomunicações",
+    "análise",
+    "dashboard",
+    "infraestrutura"
+  ],
+  "author": "Equipe Desenvolvimento",
+  "license": "ISC",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{html,css,json}": [
+      "prettier --write"
+    ],
+    "*.html": [
+      "html-validate"
+    ]
+  }
+}
