@@ -10,12 +10,13 @@ if (typeof firebase === 'undefined') {
 // ============= CONFIGURACAO FIREBASE PRODUCAO =============
 // APENAS URLs DE PRODUÇÃO - SEM DETECÇÃO DE AMBIENTE LOCAL
 const firebaseConfig = {
-    apiKey: "AIzaSyC5_0kYaFHWZ4vOoLFTJJUz7QQOhqUhMO4",
+    apiKey: "AIzaSyDHKb34lNwFIEBmkO9WVVKVwMCL__O_u8A",
     authDomain: "gestao-de-infraestrutura-4ee4a.firebaseapp.com",
     projectId: "gestao-de-infraestrutura-4ee4a",
-    storageBucket: "gestao-de-infraestrutura-4ee4a.appspot.com",
-    messagingSenderId: "123456789012",
-    appId: "1:123456789012:web:abcd1234567890ef"
+    storageBucket: "gestao-de-infraestrutura-4ee4a.firebasestorage.app",
+    messagingSenderId: "1012042763792",
+    appId: "1:1012042763792:web:b2c183bcc490b1bbb24495",
+    measurementId: "G-TQCLQ72KYD"
 };
 
 console.log('🌐 [FIREBASE] Configurando APENAS para PRODUÇÃO');
@@ -266,7 +267,6 @@ window.auth.onAuthStateChanged(function(user) {
         
         // Verificar se precisa redirecionar (apenas em produção)
         const currentPath = window.location.pathname.toLowerCase();
-        const currentHost = window.location.hostname;
         
         // Verificar se está nas páginas de auth
         const isLoginPage = currentPath.includes('index.html') || 
