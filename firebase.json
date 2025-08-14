@@ -13,7 +13,10 @@
       "DEPLOY_MANUAL.md",
       "deploy-instructions.md",
       "PERMISSIONS_GUIDE.md",
-      "README.md"
+      "README.md",
+      "LIMPEZA_E_DEPLOY.md",
+      "test-*.html",
+      "cache-buster.js"
     ],
     "rewrites": [
       {
