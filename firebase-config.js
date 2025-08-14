@@ -78,12 +78,22 @@ function initializeFirebaseSystem() {
         console.log('🧪 Testando Firebase Auth...');
         console.log('Auth object:', window.auth);
         console.log('Register function:', typeof window.registerWithEmailPassword);
+        console.log('Login function:', typeof window.loginWithEmailPassword);
+        console.log('Firebase app:', firebase?.apps?.length || 'nenhum');
         
         // Teste direto
         if (window.registerWithEmailPassword) {
           console.log('✅ Função de registro disponível');
         } else {
           console.log('❌ Função de registro NÃO disponível');
+        }
+        
+        // Verificar se o Auth está funcionando
+        if (auth) {
+          console.log('✅ Firebase Auth inicializado');
+          console.log('Current user:', auth.currentUser);
+        } else {
+          console.log('❌ Firebase Auth NÃO inicializado');
         }
       };
       
@@ -188,9 +198,13 @@ async function onAuthStateChanged(user) {
     // Carregar dados do usuário do Firestore
     await loadUserData(user.uid);
     
-    // Se estiver na página de login, redirecionar para dashboard
-    if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
-      window.location.href = 'dashboard.html';
+    // Se estiver na página de login ou cadastro, redirecionar para dashboard
+    const currentPath = window.location.pathname;
+    if (currentPath.includes('index.html') || currentPath === '/' || currentPath.includes('cadastro.html')) {
+      console.log('✅ Usuário autenticado - redirecionando para dashboard');
+      setTimeout(() => {
+        window.location.href = 'dashboard.html';
+      }, 1000); // Delay para mostrar mensagens de sucesso
     }
     
     // Atualizar interface baseada no role do usuário

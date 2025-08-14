@@ -2138,9 +2138,35 @@ function initializeRegister() {
             firebase_config: typeof firebaseConfig
         });
         
-        // Tentar registro com Firebase primeiro (se disponível)
-        if (typeof window.registerWithEmailPassword === 'function') {
-            console.log('✅ Função window.registerWithEmailPassword encontrada, iniciando cadastro Firebase...');
+        // AGUARDAR Firebase carregar se não estiver disponível
+        if (typeof window.registerWithEmailPassword !== 'function') {
+            console.log('⏳ Firebase ainda não carregou, aguardando...');
+            
+            // Aguardar até 5 segundos pelo carregamento do Firebase
+            let attempts = 0;
+            const maxAttempts = 50; // 5 segundos (100ms * 50)
+            
+            const waitForFirebase = setInterval(() => {
+                attempts++;
+                
+                if (typeof window.registerWithEmailPassword === 'function') {
+                    clearInterval(waitForFirebase);
+                    console.log('✅ Firebase carregou! Processando cadastro...');
+                    processFirebaseRegistration();
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(waitForFirebase);
+                    console.error('❌ TIMEOUT: Firebase não carregou após 5 segundos');
+                    showError('Erro no Sistema', 'Sistema de autenticação não está disponível. Recarregue a página e tente novamente.');
+                }
+            }, 100);
+            
+            return;
+        }
+        
+        processFirebaseRegistration();
+        
+        async function processFirebaseRegistration() {
+            console.log('✅ Processando cadastro Firebase...');
             const submitBtn = registerForm.querySelector('button[type="submit"]');
             const originalText = submitBtn.textContent;
             
@@ -2155,8 +2181,9 @@ function initializeRegister() {
                 
                 if (result.success) {
                     console.log('✅ Cadastro Firebase realizado com sucesso');
+                    console.log('👤 Usuário criado:', result.user.uid, result.user.email);
                     showSuccess('Cadastro Realizado!', 
-                        `Bem-vindo(a) ${firstName}! Seu cadastro foi realizado com sucesso.\n\nVocê será redirecionado automaticamente.`);
+                        `Bem-vindo(a) ${firstName}! Seu cadastro foi realizado com sucesso no Firebase.\n\nVocê será redirecionado automaticamente.`);
                     
                     // O redirecionamento será feito automaticamente pelo onAuthStateChanged
                     return;
@@ -2173,33 +2200,6 @@ function initializeRegister() {
                 submitBtn.disabled = false;
                 submitBtn.textContent = originalText;
             }
-            
-            return; // Sair aqui para usar apenas Firebase
-        }
-        
-        // Sistema de cadastro local (fallback se Firebase não estiver disponível)
-        console.log('⚠️ Firebase não disponível, usando sistema local');
-        
-        // Verificar se email já existe
-        if (checkEmailExists(email)) {
-            showError('Erro no Cadastro', 'Este e-mail já está cadastrado no sistema!');
-            return;
-        }
-        
-        // Criar novo usuário
-        const newUser = createNewUser(firstName, lastName, email, password);
-        
-        // Salvar usuário
-        if (saveNewUser(newUser)) {
-            showSuccess('Cadastro Realizado!', 
-                `Bem-vindo(a) ${firstName}! Seu cadastro foi realizado com sucesso.\n\nVocê pode fazer login agora com suas credenciais.`);
-            
-            // Redirecionar para login após 2 segundos
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 2000);
-        } else {
-            showError('Erro no Cadastro', 'Erro interno. Tente novamente mais tarde.');
         }
     });
     
