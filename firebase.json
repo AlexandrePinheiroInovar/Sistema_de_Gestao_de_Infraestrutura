@@ -5,8 +5,6 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
-      "backups/**",
-      "server.js",
       "*.log",
       "package*.json",
       "deploy.sh",
@@ -15,8 +13,7 @@
       "DEPLOY_MANUAL.md",
       "deploy-instructions.md",
       "PERMISSIONS_GUIDE.md",
-      "firebase-init.js",
-      "firebase-config.js"
+      "README.md"
     ],
     "rewrites": [
       {
