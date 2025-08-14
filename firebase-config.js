@@ -188,6 +188,9 @@ async function apiRequest(endpoint, options = {}) {
 
 // ========== SISTEMA DE AUTENTICAÇÃO E ROLES ==========
 
+// Variável para evitar loops de redirecionamento
+let redirectInProgress = false;
+
 // Função chamada quando o estado de autenticação muda
 async function onAuthStateChanged(user) {
   currentUser = user;
@@ -198,30 +201,42 @@ async function onAuthStateChanged(user) {
     // Carregar dados do usuário do Firestore
     await loadUserData(user.uid);
     
-    // Se estiver na página de login ou cadastro, redirecionar para dashboard
+    // Se estiver na página de login ou cadastro, redirecionar para dashboard APENAS UMA VEZ
     const currentPath = window.location.pathname;
-    if (currentPath.includes('index.html') || currentPath === '/' || currentPath.includes('cadastro.html')) {
-      console.log('✅ Usuário autenticado - redirecionando para dashboard');
+    const shouldRedirectToDashboard = (currentPath.includes('index.html') || currentPath === '/' || currentPath.includes('cadastro.html'));
+    
+    if (shouldRedirectToDashboard && !redirectInProgress) {
+      console.log('✅ Usuário autenticado - redirecionando para dashboard (uma vez)');
+      redirectInProgress = true;
+      
+      // Delay maior para evitar conflitos
       setTimeout(() => {
-        window.location.href = 'dashboard.html';
-      }, 1000); // Delay para mostrar mensagens de sucesso
+        window.location.replace('dashboard.html'); // replace evita histórico
+      }, 1500);
     }
     
-    // Atualizar interface baseada no role do usuário
-    updateUIBasedOnRole();
+    // Atualizar interface baseada no role do usuário (se não estiver redirecionando)
+    if (!redirectInProgress) {
+      updateUIBasedOnRole();
+    }
     
   } else {
     console.log('❌ Usuário não autenticado');
+    redirectInProgress = false; // Reset flag quando logout
     
-    // Se não estiver na página de login ou cadastro, redirecionar
+    // Se não estiver na página de login ou cadastro, redirecionar APENAS UMA VEZ
     const currentPath = window.location.pathname;
     const isLoginPage = currentPath.includes('index.html') || currentPath === '/';
     const isCadastroPage = currentPath.includes('cadastro.html');
     
-    if (!isLoginPage && !isCadastroPage) {
-      console.log('🔄 Redirecionando usuário não autenticado para login');
-      window.location.href = 'index.html';
-    } else {
+    if (!isLoginPage && !isCadastroPage && !redirectInProgress) {
+      console.log('🔄 Redirecionando usuário não autenticado para login (uma vez)');
+      redirectInProgress = true;
+      
+      setTimeout(() => {
+        window.location.replace('index.html'); // replace evita histórico
+      }, 500);
+    } else if (isLoginPage || isCadastroPage) {
       console.log('✅ Usuário na página de login/cadastro - sem redirecionamento');
     }
   }
