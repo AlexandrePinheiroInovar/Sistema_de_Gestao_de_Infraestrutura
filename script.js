@@ -116,43 +116,72 @@ let fileHeaders = [];
 let activeSection = null;
 let sectionChangeTimeout = null;
 
-// ========== SISTEMA DE USUÁRIOS ==========
-let usersData = {
-    // Usuários padrão do sistema
-    'admin': { 
-        id: 'admin',
-        firstName: 'Administrador',
-        lastName: 'Sistema',
-        email: 'admin@inovar.com',
-        password: 'admin123', 
-        role: 'admin', 
-        name: 'Administrador',
-        createdAt: new Date().toISOString(),
-        status: 'active'
-    },
-    'gestor': { 
-        id: 'gestor',
-        firstName: 'Gestor',
-        lastName: 'Projeto',
-        email: 'gestor@inovar.com',
-        password: 'gestor123', 
-        role: 'manager', 
-        name: 'Gestor',
-        createdAt: new Date().toISOString(),
-        status: 'active'
-    },
-    'usuario': { 
-        id: 'usuario',
-        firstName: 'Usuário',
-        lastName: 'Comum',
-        email: 'usuario@inovar.com',
-        password: 'user123', 
-        role: 'user', 
-        name: 'Usuário',
-        createdAt: new Date().toISOString(),
-        status: 'active'
+// ========== SISTEMA FIREBASE APENAS ==========
+// REMOVIDO: Sistema local de usuários
+// Agora todos os usuários vêm do Firebase Auth + Firestore
+// ROLES: normal (início/dashboard), gestor (tudo exceto gestão), admin (tudo)
+
+// ========== FUNÇÕES AUXILIARES FIRESTORE ==========
+
+// Salvar dados no Firestore
+async function salvarDadosFirestore(documentId, data) {
+    if (!window.db || !window.currentUser) {
+        console.warn('⚠️ Firebase não disponível - dados não salvos');
+        return false;
     }
-};
+
+    try {
+        const docRef = window.db.collection('sistema').doc(documentId);
+        await docRef.set({
+            data: data,
+            lastUpdate: new Date(),
+            updatedBy: window.currentUser.uid
+        });
+        console.log(`✅ Dados ${documentId} salvos no Firestore`);
+        return true;
+    } catch (error) {
+        console.error(`❌ Erro ao salvar ${documentId}:`, error);
+        return false;
+    }
+}
+
+// Carregar dados do Firestore
+async function carregarDadosFirestore(documentId) {
+    if (!window.db) {
+        console.warn('⚠️ Firebase não disponível');
+        return null;
+    }
+
+    try {
+        const docRef = window.db.collection('sistema').doc(documentId);
+        const doc = await docRef.get();
+        
+        if (doc.exists) {
+            const docData = doc.data();
+            console.log(`✅ Dados ${documentId} carregados do Firestore`);
+            return docData.data;
+        } else {
+            console.log(`📝 Documento ${documentId} não existe no Firestore`);
+            return null;
+        }
+    } catch (error) {
+        console.error(`❌ Erro ao carregar ${documentId}:`, error);
+        return null;
+    }
+}
+
+// Limpar todos os dados locais e do navegador
+function limparTodosOsDados() {
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Limpar variáveis locais
+    gestaoData = { projetos: [], subprojetos: [], tiposAcao: [], supervisores: [], equipes: [], cidades: [] };
+    enderecosData = [];
+    dynamicTableData = { headers: [], data: [], metadata: { lastUpload: null, totalRecords: 0, source: null, tableStructure: 'dynamic' } };
+    
+    console.log('🧹 Todos os dados locais foram limpos - sistema zerado para usar apenas Firebase');
+}
 
 // ========== SISTEMA DE TABELA DINÂMICA ==========
 let dynamicTableData = {
@@ -188,9 +217,9 @@ let gestaoData = {
 // ==================== SISTEMA DE PERSISTÊNCIA - GESTÃO DE PROJETOS ====================
 
 // Função principal para salvar todos os dados de gestão
-function salvarDadosGestao() {
+async function salvarDadosGestao() {
     try {
-        localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+        await salvarDadosFirestore('gestaoData', gestaoData);
         console.log('✅ Dados de gestão salvos com sucesso:', {
             projetos: gestaoData.projetos?.length || 0,
             subprojetos: gestaoData.subprojetos?.length || 0,
@@ -206,11 +235,11 @@ function salvarDadosGestao() {
 }
 
 // Carregar dados de gestão do localStorage
-function carregarDadosGestao() {
+async function carregarDadosGestao() {
     try {
-        const savedData = localStorage.getItem('gestaoData');
+        const savedData = await carregarDadosFirestore('gestaoData');
         if (savedData) {
-            gestaoData = JSON.parse(savedData);
+            gestaoData = savedData || { projetos: [], subprojetos: [], tiposAcao: [], supervisores: [], equipes: [], cidades: [] };
             console.log('✅ Dados de gestão carregados:', {
                 projetos: gestaoData.projetos?.length || 0,
                 subprojetos: gestaoData.subprojetos?.length || 0,
@@ -425,9 +454,9 @@ function excluirItemGestao(tipo, id) {
 }
 
 // Função principal para salvar todos os dados de gestão
-function salvarDadosGestao() {
+async function salvarDadosGestao() {
     try {
-        localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+        await salvarDadosFirestore('gestaoData', gestaoData);
         console.log('✅ Dados de gestão salvos com sucesso:', {
             projetos: gestaoData.projetos?.length || 0,
             subprojetos: gestaoData.subprojetos?.length || 0,
@@ -443,11 +472,11 @@ function salvarDadosGestao() {
 }
 
 // Carregar dados de gestão do localStorage
-function carregarDadosGestao() {
+async function carregarDadosGestao() {
     try {
-        const savedData = localStorage.getItem('gestaoData');
+        const savedData = await carregarDadosFirestore('gestaoData');
         if (savedData) {
-            gestaoData = JSON.parse(savedData);
+            gestaoData = savedData || { projetos: [], subprojetos: [], tiposAcao: [], supervisores: [], equipes: [], cidades: [] };
             console.log('✅ Dados de gestão carregados:', {
                 projetos: gestaoData.projetos?.length || 0,
                 subprojetos: gestaoData.subprojetos?.length || 0,
@@ -1320,7 +1349,7 @@ window.repairModal = function() {
     };
     
     // Função para forçar criação de tipos de ação
-    window.forcarTiposAcao = function() {
+    window.forcarTiposAcao = async function() {
         console.log('🔧 Forçando criação de tipos de ação...');
         
         // 1. Verificar dados atuais
@@ -1334,7 +1363,7 @@ window.repairModal = function() {
         ];
         
         // 3. Salvar no localStorage
-        localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+        await salvarDadosFirestore('gestaoData', gestaoData);
         
         // 4. Verificar se foi salvo
         console.log('✅ Tipos de ação criados:', gestaoData.tiposAcao.map(ta => ta.nome));
@@ -1377,14 +1406,14 @@ window.repairModal = function() {
     };
     
     // Função para sincronizar dados da gestão com formulário dinâmico
-    window.sincronizarGestaoComFormulario = function() {
+    window.sincronizarGestaoComFormulario = async function() {
         console.log('🔄 Sincronizando dados da gestão com formulário dinâmico...');
         
         // 1. Recarregar tabelas da gestão para atualizar dados
         loadGestaoTables();
         
         // 2. Aguardar carregamento e verificar dados
-        setTimeout(() => {
+        setTimeout(async () => {
             console.log('📊 Dados da gestão após recarregamento:');
             console.log('  - Projetos:', gestaoData.projetos ? gestaoData.projetos.map(p => p.nome) : 'Nenhum');
             console.log('  - Sub Projetos:', gestaoData.subprojetos ? gestaoData.subprojetos.map(sp => sp.nome) : 'Nenhum');
@@ -1394,7 +1423,7 @@ window.repairModal = function() {
             console.log('  - Cidades:', gestaoData.cidades ? gestaoData.cidades.map(c => c.nome) : 'Nenhum');
             
             // 3. Salvar dados atualizados
-            localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+            await salvarDadosFirestore('gestaoData', gestaoData);
             
             // 4. Abrir formulário dinâmico
             abrirNovoEndereco();
@@ -1402,7 +1431,7 @@ window.repairModal = function() {
     };
     
     // Função para atualizar tipos de ação especificamente
-    window.atualizarTiposAcao = function() {
+    window.atualizarTiposAcao = async function() {
         console.log('🔧 Atualizando tipos de ação...');
         
         // 1. Verificar dados atuais
@@ -1412,11 +1441,11 @@ window.repairModal = function() {
         loadActionTypesTable();
         
         // 3. Aguardar e verificar se foram atualizados
-        setTimeout(() => {
+        setTimeout(async () => {
             console.log('✅ Tipos de ação após atualização:', gestaoData.tiposAcao);
             
             // 4. Salvar no localStorage
-            localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+            await salvarDadosFirestore('gestaoData', gestaoData);
             
             // 5. Abrir formulário para testar
             abrirNovoEndereco();
@@ -1431,7 +1460,7 @@ window.repairModal = function() {
         loadActionTypesTable();
         
         // 2. Aguardar carregamento
-        setTimeout(() => {
+        setTimeout(async () => {
             // 3. Verificar dados carregados
             console.log('📊 Tipos de ação carregados:');
             console.log('  - Dados completos:', gestaoData.tiposAcao);
@@ -1448,7 +1477,7 @@ window.repairModal = function() {
             }
             
             // 5. Salvar no localStorage
-            localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+            await salvarDadosFirestore('gestaoData', gestaoData);
             
             // 6. Verificar dados finais
             console.log('✅ Dados finais dos tipos de ação:', gestaoData.tiposAcao);
@@ -1521,14 +1550,14 @@ window.repairModal = function() {
         loadGestaoTables();
         
         // 2. Aguardar carregamento e verificar dados
-        setTimeout(() => {
+        setTimeout(async () => {
             console.log('📊 Dados da gestão carregados:');
             console.log('  - Tipos de ação:', gestaoData.tiposAcao);
             console.log('  - Quantidade:', gestaoData.tiposAcao ? gestaoData.tiposAcao.length : 0);
             console.log('  - Nomes:', gestaoData.tiposAcao ? gestaoData.tiposAcao.map(ta => ta.nome) : []);
             
             // 3. Salvar dados atualizados
-            localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+            await salvarDadosFirestore('gestaoData', gestaoData);
             
             // 4. Abrir formulário
             abrirNovoEndereco();
@@ -1575,13 +1604,13 @@ window.repairModal = function() {
         loadGestaoTables();
         
         // 3. Aguardar e verificar dados atualizados
-        setTimeout(() => {
+        setTimeout(async () => {
             console.log('📊 Dados da gestão após sincronização:');
             console.log('  - Tipos de ação:', gestaoData.tiposAcao ? gestaoData.tiposAcao.map(ta => ta.nome) : []);
             console.log('  - Quantidade:', gestaoData.tiposAcao ? gestaoData.tiposAcao.length : 0);
             
             // 4. Salvar dados atualizados
-            localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+            await salvarDadosFirestore('gestaoData', gestaoData);
             
             // 5. Abrir formulário para testar
             abrirNovoEndereco();
@@ -1602,14 +1631,14 @@ window.repairModal = function() {
         loadGestaoTables();
         
         // 3. Aguardar carregamento
-        setTimeout(() => {
+        setTimeout(async () => {
             console.log('✅ Dados da gestão carregados:');
             console.log('  - Projetos:', gestaoData.projetos ? gestaoData.projetos.map(p => p.nome) : []);
             console.log('  - Sub Projetos:', gestaoData.subprojetos ? gestaoData.subprojetos.map(sp => sp.nome) : []);
             console.log('  - Tipos de Ação:', gestaoData.tiposAcao ? gestaoData.tiposAcao.map(ta => ta.nome) : []);
             
             // 4. Salvar dados atualizados
-            localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+            await salvarDadosFirestore('gestaoData', gestaoData);
             
             // 5. Abrir formulário dinâmico
             abrirNovoEndereco();
@@ -1624,7 +1653,7 @@ window.repairModal = function() {
         loadActionTypesTable();
         
         // 2. Aguardar carregamento
-        setTimeout(() => {
+        setTimeout(async () => {
             console.log('📊 Dados da tabela "Tipos de Ação":');
             console.log('  - Dados completos:', gestaoData.tiposAcao);
             console.log('  - Nomes da coluna "nome":', gestaoData.tiposAcao ? gestaoData.tiposAcao.map(ta => ta.nome) : []);
@@ -1635,7 +1664,7 @@ window.repairModal = function() {
                 console.log('✅ Nomes únicos filtrados:', nomesUnicos);
                 
                 // 4. Salvar dados atualizados
-                localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+                await salvarDadosFirestore('gestaoData', gestaoData);
                 
                 // 5. Abrir formulário para testar
                 abrirNovoEndereco();
@@ -1646,7 +1675,7 @@ window.repairModal = function() {
     };
     
     // Função para sincronizar tipos de ação da planilha dinâmica com a gestão
-    window.sincronizarTiposAcaoDaPlanilha = function() {
+    window.sincronizarTiposAcaoDaPlanilha = async function() {
         console.log('🔄 Sincronizando tipos de ação da planilha dinâmica...');
         
         // 1. Verificar se há dados na planilha dinâmica
@@ -1706,7 +1735,7 @@ window.repairModal = function() {
         });
         
         // 6. Salvar dados atualizados
-        localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+        await salvarDadosFirestore('gestaoData', gestaoData);
         
         // 7. Recarregar tabela da gestão
         loadActionTypesTable();
@@ -1829,7 +1858,7 @@ window.repairModal = function() {
     };
     
     // Função para corrigir problema do tipo de ação
-    window.corrigirProblemaTipoAcao = function() {
+    window.corrigirProblemaTipoAcao = async function() {
         console.log('🔧 Corrigindo problema do "TIPO DE AÇÃO"...');
         
         // 1. Verificar se a coluna existe na planilha
@@ -1887,7 +1916,7 @@ window.repairModal = function() {
             });
             
             // 6. Salvar e recarregar
-            localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+            await salvarDadosFirestore('gestaoData', gestaoData);
             loadActionTypesTable();
             
             console.log(`🎉 Correção concluída! ${novosAdicionados} novos tipos de ação adicionados.`);
@@ -1956,7 +1985,7 @@ function initializeLogin() {
     const loginForm = document.getElementById('loginForm');
     if (!loginForm) return;
     
-    loginForm.addEventListener('submit', function(e) {
+    loginForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
         const username = document.getElementById('username').value;
@@ -1964,6 +1993,43 @@ function initializeLogin() {
         const remember = document.getElementById('remember').checked;
         
         console.log('🔑 Tentativa de login:', username);
+        
+        // Tentar login com Firebase primeiro (se disponível)
+        if (typeof window.loginWithEmailPassword === 'function') {
+            const submitBtn = loginForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            
+            try {
+                // Desabilitar botão durante o login
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Entrando...';
+                
+                // Fazer login com Firebase
+                const result = await window.loginWithEmailPassword(username, password);
+                
+                if (result.success) {
+                    console.log('✅ Login Firebase realizado com sucesso');
+                    // O redirecionamento será feito automaticamente pelo onAuthStateChanged
+                    return;
+                } else {
+                    console.log('❌ Erro no login Firebase:', result.error);
+                    showError('Erro no login', result.error);
+                }
+                
+            } catch (error) {
+                console.error('❌ Erro inesperado no login Firebase:', error);
+                showError('Erro no login', 'Erro interno. Tente novamente.');
+            } finally {
+                // Reabilitar botão
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+            
+            return; // Sair aqui para usar apenas Firebase
+        }
+        
+        // Sistema de login local (fallback se Firebase não estiver disponível)
+        console.log('⚠️ Firebase não disponível, usando sistema local');
         
         // Carregar usuários do localStorage
         loadUsersFromStorage();
@@ -2045,7 +2111,7 @@ function initializeRegister() {
     // Carregar usuários do localStorage se existirem
     loadUsersFromStorage();
     
-    registerForm.addEventListener('submit', function(e) {
+    registerForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
         const firstName = document.getElementById('firstName').value.trim();
@@ -2061,6 +2127,58 @@ function initializeRegister() {
         if (!validateRegisterForm(firstName, lastName, email, password, confirmPassword, agreeTerms)) {
             return;
         }
+        
+        // Debug: verificar se Firebase está disponível
+        console.log('🔍 Debug cadastro completo:', {
+            registerWithEmailPassword: typeof registerWithEmailPassword,
+            window_registerWithEmailPassword: typeof window.registerWithEmailPassword,
+            firebase_available: typeof firebase !== 'undefined',
+            auth_available: typeof window.auth,
+            db_available: typeof window.db,
+            firebase_config: typeof firebaseConfig
+        });
+        
+        // Tentar registro com Firebase primeiro (se disponível)
+        if (typeof window.registerWithEmailPassword === 'function') {
+            console.log('✅ Função window.registerWithEmailPassword encontrada, iniciando cadastro Firebase...');
+            const submitBtn = registerForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            
+            try {
+                // Desabilitar botão durante o registro
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Criando conta...';
+                
+                // Fazer registro com Firebase
+                const displayName = `${firstName} ${lastName}`;
+                const result = await window.registerWithEmailPassword(email, password, displayName);
+                
+                if (result.success) {
+                    console.log('✅ Cadastro Firebase realizado com sucesso');
+                    showSuccess('Cadastro Realizado!', 
+                        `Bem-vindo(a) ${firstName}! Seu cadastro foi realizado com sucesso.\n\nVocê será redirecionado automaticamente.`);
+                    
+                    // O redirecionamento será feito automaticamente pelo onAuthStateChanged
+                    return;
+                } else {
+                    console.log('❌ Erro no cadastro Firebase:', result.error);
+                    showError('Erro no Cadastro', result.error);
+                }
+                
+            } catch (error) {
+                console.error('❌ Erro inesperado no cadastro Firebase:', error);
+                showError('Erro no Cadastro', 'Erro interno. Tente novamente.');
+            } finally {
+                // Reabilitar botão
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+            
+            return; // Sair aqui para usar apenas Firebase
+        }
+        
+        // Sistema de cadastro local (fallback se Firebase não estiver disponível)
+        console.log('⚠️ Firebase não disponível, usando sistema local');
         
         // Verificar se email já existe
         if (checkEmailExists(email)) {
@@ -2125,75 +2243,9 @@ function validateRegisterForm(firstName, lastName, email, password, confirmPassw
     return true;
 }
 
-// Verificar se email já existe
-function checkEmailExists(email) {
-    // Verificar nos usuários padrão
-    for (const username in usersData) {
-        if (usersData[username].email === email) {
-            return true;
-        }
-    }
-    return false;
-}
-
-// Criar novo usuário
-function createNewUser(firstName, lastName, email, password) {
-    const userId = 'user_' + Date.now(); // ID único baseado em timestamp
-    
-    return {
-        id: userId,
-        firstName: firstName,
-        lastName: lastName,
-        email: email,
-        password: password, // Em produção, deve ser hash
-        role: 'user', // Novos usuários sempre começam como "user"
-        name: `${firstName} ${lastName}`,
-        createdAt: new Date().toISOString(),
-        status: 'active'
-    };
-}
-
-// Salvar novo usuário
-function saveNewUser(user) {
-    try {
-        // Adicionar ao objeto de usuários
-        usersData[user.id] = user;
-        
-        // Salvar no localStorage
-        saveUsersToStorage();
-        
-        console.log('✅ Usuário cadastrado com sucesso:', user.email);
-        return true;
-    } catch (error) {
-        console.error('❌ Erro ao salvar usuário:', error);
-        return false;
-    }
-}
-
-// Salvar usuários no localStorage
-function saveUsersToStorage() {
-    try {
-        localStorage.setItem('mdu_users', JSON.stringify(usersData));
-        console.log('💾 Usuários salvos no localStorage');
-    } catch (error) {
-        console.error('❌ Erro ao salvar usuários:', error);
-    }
-}
-
-// Carregar usuários do localStorage
-function loadUsersFromStorage() {
-    try {
-        const savedUsers = localStorage.getItem('mdu_users');
-        if (savedUsers) {
-            const loadedUsers = JSON.parse(savedUsers);
-            // Mesclar com usuários padrão, preservando os padrão
-            Object.assign(usersData, loadedUsers);
-            console.log('📚 Usuários carregados do localStorage');
-        }
-    } catch (error) {
-        console.error('❌ Erro ao carregar usuários:', error);
-    }
-}
+// ========== SISTEMA OBSOLETO REMOVIDO ==========
+// REMOVIDAS: Funções de usuários locais (checkEmailExists, createNewUser, saveNewUser, loadUsersFromStorage)
+// Agora tudo é gerenciado pelo Firebase Auth + Firestore
 
 // Configurar validação de senha em tempo real
 function setupPasswordValidation() {
@@ -2215,8 +2267,24 @@ function setupPasswordValidation() {
 }
 
 // Função para fazer logout
-function logout() {
+async function logout() {
     console.log('🚪 Fazendo logout...');
+    
+    // Tentar logout com Firebase primeiro (se disponível)
+    if (typeof logout === 'function' && window.firebase && window.firebase.auth) {
+        try {
+            const result = await window.logout();
+            if (result && result.success) {
+                console.log('✅ Logout Firebase realizado com sucesso');
+                return; // O redirecionamento será feito pelo onAuthStateChanged
+            }
+        } catch (error) {
+            console.error('❌ Erro no logout Firebase:', error);
+        }
+    }
+    
+    // Fallback para logout local
+    console.log('⚠️ Fazendo logout local');
     sessionStorage.removeItem('mdu_logged_in');
     sessionStorage.removeItem('mdu_user');
     sessionStorage.removeItem('mdu_user_role');
@@ -2879,16 +2947,12 @@ function loadSectionContent(sectionId) {
     }
 }
 
-// Função de logout
-function logout() {
-    console.log('👋 Fazendo logout...');
-    try {
-        sessionStorage.removeItem('loggedIn');
-        sessionStorage.removeItem('username');
-        window.location.href = 'index.html';
-    } catch (error) {
-        console.error('❌ Erro no logout:', error);
-    }
+// Função de logout secundária (para compatibilidade)
+async function logoutSecondary() {
+    console.log('👋 Fazendo logout secundário...');
+    
+    // Usar função principal de logout
+    await logout();
 }
 
 // Toggle de senha
@@ -5405,7 +5469,7 @@ function loadProjectsTable() {
 }
 
 // Função para limpar dados duplicados da gestão
-function limparDadosDuplicadosGestao() {
+async function limparDadosDuplicadosGestao() {
     console.log('🧹 Limpando dados duplicados da gestão...');
     
     if (gestaoData.projetos && gestaoData.projetos.length > 0) {
@@ -5418,7 +5482,7 @@ function limparDadosDuplicadosGestao() {
         });
         
         gestaoData.projetos = Array.from(projetosUnicos.values());
-        localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+        await salvarDadosFirestore('gestaoData', gestaoData);
         
         console.log(`✅ Dados limpos: ${gestaoData.projetos.length} projetos únicos`);
     }
@@ -5558,7 +5622,7 @@ function loadSubProjectsTable() {
     console.log('✅ Tabela de sub projetos carregada');
 }
 // Carregar tabela de tipos de ação
-function loadActionTypesTable() {
+async function loadActionTypesTable() {
     console.log('🔄 Carregando tabela de tipos de ação...');
     
     const tbody = document.getElementById('tiposAcaoTableBody');
@@ -5646,7 +5710,7 @@ function loadActionTypesTable() {
     // Atualizar gestaoData com os tipos de ação encontrados
     if (tiposAcaoArray.length > 0) {
         gestaoData.tiposAcao = tiposAcaoArray;
-        localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+        await salvarDadosFirestore('gestaoData', gestaoData);
         console.log('✅ gestaoData.tiposAcao atualizado com', tiposAcaoArray.length, 'tipos de ação');
     }
     
@@ -6930,7 +6994,7 @@ function initializeCRUD() {
 }
 
 // Inicializar dados de gestão
-function initializeGestaoData() {
+async function initializeGestaoData() {
     console.log('🗂️ Inicializando dados de gestão...');
     try {
         // Carregar dados existentes do localStorage ou usar padrão
@@ -6971,7 +7035,7 @@ function initializeGestaoData() {
                 ]
             };
             // Salvar dados iniciais
-            localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+            await salvarDadosFirestore('gestaoData', gestaoData);
         }
         
         // Limpar dados duplicados na inicialização
@@ -7205,7 +7269,7 @@ function setupGestaoFormListeners() {
     }
 }
 // Salvar projeto
-function saveProject() {
+async function saveProject() {
     console.log('💾 Salvando projeto...');
     
     const form = document.getElementById('projetoForm');
@@ -7245,7 +7309,7 @@ function saveProject() {
                     updated_at: new Date().toISOString()
                 };
                 gestaoData.projetos[index] = projeto;
-                localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+                await salvarDadosFirestore('gestaoData', gestaoData);
             } else {
                 showError('Erro', 'Projeto não encontrado para edição');
                 return;
@@ -7262,7 +7326,7 @@ function saveProject() {
                 source: 'manual'
             };
             gestaoData.projetos.push(projeto);
-            localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+            await salvarDadosFirestore('gestaoData', gestaoData);
             
             // Remover da tabela dinâmica se existir
             const dynamicIndex = dynamicTableData.data.findIndex(p => p.id == editId);
@@ -7351,7 +7415,7 @@ function saveSubProject() {
 }
 
 // Salvar tipo de ação
-function saveActionType() {
+async function saveActionType() {
     console.log('💾 Salvando tipo de ação...');
     
     const form = document.getElementById('tipoAcaoForm');
@@ -7380,7 +7444,7 @@ function saveActionType() {
 }
 
 // Salvar supervisor
-function saveSupervisor() {
+async function saveSupervisor() {
     console.log('💾 Salvando supervisor...');
     
     const form = document.getElementById('supervisorForm');
@@ -7409,7 +7473,7 @@ function saveSupervisor() {
                     updated_at: new Date().toISOString()
                 };
                 gestaoData.supervisores[index] = supervisor;
-                localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+                await salvarDadosFirestore('gestaoData', gestaoData);
             } else {
                 showError('Erro', 'Supervisor não encontrado para edição');
                 return;
@@ -7427,7 +7491,7 @@ function saveSupervisor() {
                 source: 'manual'
             };
             gestaoData.supervisores.push(supervisor);
-            localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+            await salvarDadosFirestore('gestaoData', gestaoData);
             
             // Remover da tabela dinâmica se existir
             const supervisorNome = editId.split('_')[2];
@@ -7450,7 +7514,7 @@ function saveSupervisor() {
                 source: 'manual'
             };
             gestaoData.supervisores.push(supervisor);
-            localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+            await salvarDadosFirestore('gestaoData', gestaoData);
         }
     } else {
         // Modo de criação
@@ -7465,7 +7529,7 @@ function saveSupervisor() {
             source: 'manual'
         };
         gestaoData.supervisores.push(supervisor);
-        localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+        await salvarDadosFirestore('gestaoData', gestaoData);
     }
     
     // Limpar modo de edição e fechar modal
@@ -7482,7 +7546,7 @@ function saveSupervisor() {
 }
 
 // Salvar equipe
-function saveTeam() {
+async function saveTeam() {
     console.log('💾 Salvando equipe...');
     
     const form = document.getElementById('equipeForm');
@@ -7512,7 +7576,7 @@ function saveTeam() {
 }
 
 // Salvar cidade
-function saveCity() {
+async function saveCity() {
     console.log('💾 Salvando cidade...');
     
     const form = document.getElementById('cidadeForm');
@@ -7595,7 +7659,7 @@ function editProject(id, source) {
     }
 }
 
-function deleteProject(id, source) {
+async function deleteProject(id, source) {
     console.log('🗑️ Deletando projeto:', id, '(Origem:', source, ')');
     showConfirm(
         'Confirmar Exclusão',
@@ -7691,7 +7755,7 @@ function editSubProject(id) {
     }
 }
 
-function deleteSubProject(id) {
+async function deleteSubProject(id) {
     console.log('🗑️ Deletando sub-projeto:', id);
     showConfirm(
         'Confirmar Exclusão',
@@ -7779,12 +7843,12 @@ function editActionType(id, source) {
         showError('Erro', 'Erro ao editar tipo de ação: ' + error.message);
     }
 }
-function deleteActionType(id, source) {
+async function deleteActionType(id, source) {
     console.log('🗑️ Deletando tipo de ação:', id, '(Origem:', source, ')');
     showConfirm(
         'Confirmar Exclusão',
         'Tem certeza que deseja deletar este tipo de ação? Esta ação não pode ser desfeita.',
-        () => {
+        async () => {
             try {
                 if (source === 'manual' || source === 'gestao') {
                     // Garantir que gestaoData.tiposAcao existe
@@ -7795,7 +7859,7 @@ function deleteActionType(id, source) {
                     const index = gestaoData.tiposAcao.findIndex(t => t.id == id);
                     if (index !== -1) {
                         gestaoData.tiposAcao.splice(index, 1);
-                        localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+                        await salvarDadosFirestore('gestaoData', gestaoData);
                         loadActionTypesTable();
                         
                         // Atualizar dropdowns de endereços
@@ -7923,18 +7987,18 @@ function editSupervisor(id, source) {
     }
 }
 
-function deleteSupervisor(id, source) {
+async function deleteSupervisor(id, source) {
     console.log('🗑️ Deletando supervisor:', id, '(Origem:', source, ')');
     showConfirm(
         'Confirmar Exclusão',
         'Tem certeza que deseja deletar este supervisor? Esta ação não pode ser desfeita.',
-        () => {
+        async () => {
             try {
                 if (source === 'manual' || source === 'gestao') {
                     const index = gestaoData.supervisores.findIndex(s => s.id == id);
                     if (index !== -1) {
                         gestaoData.supervisores.splice(index, 1);
-                        localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+                        await salvarDadosFirestore('gestaoData', gestaoData);
                         loadSupervisorsTable();
                         
                         // Atualizar dropdowns de endereços
@@ -8046,18 +8110,18 @@ function editTeam(id, source) {
     }
 }
 
-function deleteTeam(id, source) {
+async function deleteTeam(id, source) {
     console.log('🗑️ Deletando equipe:', id, '(Origem:', source, ')');
     showConfirm(
         'Confirmar Exclusão',
         'Tem certeza que deseja deletar esta equipe? Esta ação não pode ser desfeita.',
-        () => {
+        async () => {
             try {
                 if (source === 'manual' || source === 'gestao') {
                     const index = gestaoData.equipes.findIndex(e => e.id == id);
                     if (index !== -1) {
                         gestaoData.equipes.splice(index, 1);
-                        localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+                        await salvarDadosFirestore('gestaoData', gestaoData);
                         loadTeamsTable();
                         
                         // Atualizar dropdowns de endereços
@@ -8170,18 +8234,18 @@ function editCity(id, source) {
     }
 }
 
-function deleteCity(id, source) {
+async function deleteCity(id, source) {
     console.log('🗑️ Deletando cidade:', id, '(Origem:', source, ')');
     showConfirm(
         'Confirmar Exclusão',
         'Tem certeza que deseja deletar esta cidade? Esta ação não pode ser desfeita.',
-        () => {
+        async () => {
             try {
                 if (source === 'manual' || source === 'gestao') {
                     const index = gestaoData.cidades.findIndex(c => c.id == id);
                     if (index !== -1) {
                         gestaoData.cidades.splice(index, 1);
-                        localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+                        await salvarDadosFirestore('gestaoData', gestaoData);
                         loadCitiesTable();
                         
                         // Atualizar dropdowns de endereços
@@ -9014,14 +9078,14 @@ function criarFormularioDinamico() {
     loadGestaoTables();
     
     // Aguardar carregamento dos dados da gestão
-    setTimeout(() => {
+    setTimeout(async () => {
         console.log('✅ Dados da gestão carregados:');
         console.log('  - Projetos:', gestaoData.projetos ? gestaoData.projetos.map(p => p.nome) : []);
         console.log('  - Sub Projetos:', gestaoData.subprojetos ? gestaoData.subprojetos.map(sp => sp.nome) : []);
         console.log('  - Tipos de Ação:', gestaoData.tiposAcao ? gestaoData.tiposAcao.map(ta => ta.nome) : []);
         
         // Salvar dados atualizados
-        localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+        await salvarDadosFirestore('gestaoData', gestaoData);
         
         // Continuar com a criação do formulário
         criarFormularioDinamicoAuxiliar();
@@ -16424,7 +16488,7 @@ window.testEquipeStatusRanking = function() {
 
 // ========== FIM DO SISTEMA DINÂMICO ==========
 // Função para testar e resolver o problema do tipo de ação
-window.testarEResolverTipoAcao = function() {
+window.testarEResolverTipoAcao = async function() {
     console.log('🧪 Testando e resolvendo problema do "TIPO DE AÇÃO"...');
     
     // 1. Verificar dados da planilha
@@ -16494,7 +16558,7 @@ window.testarEResolverTipoAcao = function() {
         });
         
         // 6. Salvar e recarregar
-        localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+        await salvarDadosFirestore('gestaoData', gestaoData);
         loadActionTypesTable();
         
         console.log(`🎉 Concluído! ${novosAdicionados} novos tipos adicionados.`);
@@ -16511,7 +16575,7 @@ window.testarEResolverTipoAcao = function() {
     };
     
     // Função para forçar sincronização dos tipos de ação da tabela dinâmica
-    window.forcarSincronizacaoTiposAcaoGestao = function() {
+    window.forcarSincronizacaoTiposAcaoGestao = async function() {
         console.log('🔧 Forçando sincronização dos tipos de ação na gestão...');
         
         // 1. Verificar dados da tabela dinâmica
@@ -16563,7 +16627,7 @@ window.testarEResolverTipoAcao = function() {
         
         // 5. Atualizar gestaoData
         gestaoData.tiposAcao = tiposAcaoGestao;
-        localStorage.setItem('gestaoData', JSON.stringify(gestaoData));
+        await salvarDadosFirestore('gestaoData', gestaoData);
         
         console.log('✅ gestaoData.tiposAcao atualizado:', tiposAcaoGestao);
         

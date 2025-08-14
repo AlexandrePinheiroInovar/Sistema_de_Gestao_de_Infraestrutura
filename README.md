@@ -2,6 +2,16 @@
 
 Sistema completo para análise de dados de infraestrutura MDU (Multi Dwelling Unit) com dashboards interativos e relatórios em tempo real.
 
+## 🚀 Deploy Automático
+
+Este projeto está configurado para **deploy automático** no Firebase Hosting via GitHub Actions.
+
+### 📋 Configuração Inicial
+
+1. **Fork/Clone este repositório**
+2. **Configure os secrets no GitHub**
+3. **Push para branch main** = Deploy automático!
+
 ## ✨ Funcionalidades
 
 - 📊 **Dashboard Interativo**: Gráficos e KPIs em tempo real

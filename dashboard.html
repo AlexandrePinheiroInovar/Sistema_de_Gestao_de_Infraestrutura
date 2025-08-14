@@ -1632,8 +1632,17 @@
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+    
+    <!-- Debug script temporário -->
+    <script>
+        console.log('🔍 [DASHBOARD] Debug inicial - Firebase disponível?', typeof firebase);
+        setTimeout(() => {
+            console.log('🔍 [DASHBOARD] Debug após timeout - Firebase:', typeof firebase);
+        }, 100);
+    </script>
     
     <script src="firebase-config.js"></script>
     <script src="script.js"></script>

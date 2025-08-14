@@ -15,21 +15,13 @@ let auth = null;
 let analytics = null;
 let currentUser = null;
 
-// Log inicial para verificar se o arquivo está sendo carregado
-console.log('🔥 [CONFIG] Firebase-config.js INICIANDO carregamento...');
-console.log('🔥 [CONFIG] Firebase disponível no carregamento?', typeof firebase);
-
-// Tentar múltiplas estratégias de inicialização
-function initializeFirebaseSystem() {
+// Aguardar carregamento dos scripts do Firebase
+document.addEventListener('DOMContentLoaded', function() {
   console.log('🔄 Iniciando configuração do Firebase...');
-  console.log('🔍 Verificando disponibilidade do Firebase:', typeof firebase);
   
   // Verificar se Firebase está disponível
   if (typeof firebase !== 'undefined') {
     console.log('✅ Firebase SDK detectado');
-    console.log('🔍 Firebase.app:', typeof firebase.app);
-    console.log('🔍 Firebase.auth:', typeof firebase.auth);
-    console.log('🔍 Firebase.firestore:', typeof firebase.firestore);
     try {
       // Inicializar Firebase se ainda não foi inicializado
       if (!firebase.apps.length) {
@@ -129,17 +121,8 @@ function initializeFirebaseSystem() {
     }
   } else {
     console.error('❌ Firebase SDK não carregado - usando modo local');
-    console.log('🔍 Disponível no window:', Object.keys(window).filter(k => k.toLowerCase().includes('firebase')));
   }
-}
-
-// Múltiplas tentativas de inicialização
-document.addEventListener('DOMContentLoaded', initializeFirebaseSystem);
-window.addEventListener('load', initializeFirebaseSystem);
-
-// Timeout como backup
-setTimeout(initializeFirebaseSystem, 1000);
-setTimeout(initializeFirebaseSystem, 3000);
+});
 
 // URL base da API (vai ser a URL do Firebase Functions após o deploy)
 const API_BASE_URL = window.location.hostname === 'localhost' 
@@ -199,16 +182,9 @@ async function onAuthStateChanged(user) {
   } else {
     console.log('❌ Usuário não autenticado');
     
-    // Se não estiver na página de login ou cadastro, redirecionar
-    const currentPath = window.location.pathname;
-    const isLoginPage = currentPath.includes('index.html') || currentPath === '/';
-    const isCadastroPage = currentPath.includes('cadastro.html');
-    
-    if (!isLoginPage && !isCadastroPage) {
-      console.log('🔄 Redirecionando usuário não autenticado para login');
+    // Se não estiver na página de login, redirecionar
+    if (!window.location.pathname.includes('index.html') && window.location.pathname !== '/') {
       window.location.href = 'index.html';
-    } else {
-      console.log('✅ Usuário na página de login/cadastro - sem redirecionamento');
     }
   }
 }

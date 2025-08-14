@@ -65,6 +65,106 @@
             </div>
         </div>
     </div>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+    
+    <!-- Debug script temporário -->
+    <script>
+        console.log('🔍 [CADASTRO] Debug inicial - Firebase disponível?', typeof firebase);
+        console.log('🔍 [CADASTRO] Scripts carregados até aqui');
+        console.log('🔍 [CADASTRO] Window keys com firebase:', Object.keys(window).filter(k => k.toLowerCase().includes('firebase')));
+        
+        // Verificar depois que Firebase SDK carregar
+        setTimeout(() => {
+            console.log('🔍 [CADASTRO] Debug após timeout - Firebase:', typeof firebase);
+            if (typeof firebase !== 'undefined') {
+                console.log('🔍 Firebase.app:', typeof firebase.app);
+                console.log('🔍 Firebase.auth:', typeof firebase.auth);
+                console.log('🔍 Firebase.firestore:', typeof firebase.firestore);
+            } else {
+                console.error('❌ [CADASTRO] Firebase não foi carregado! Possíveis problemas:');
+                console.error('  1. Scripts do Firebase não carregaram da CDN');
+                console.error('  2. Conexão com internet');
+                console.error('  3. Bloqueador de scripts');
+            }
+        }, 500);
+        
+        // Verificar se firebase-config.js vai carregar
+        setTimeout(() => {
+            console.log('🔍 [CADASTRO] window.registerWithEmailPassword:', typeof window.registerWithEmailPassword);
+            if (!window.registerWithEmailPassword) {
+                console.error('❌ [CADASTRO] firebase-config.js não foi carregado ou não funcionou!');
+            }
+        }, 1000);
+    </script>
+    
+    <!-- Configuração Firebase inline para debug -->
+    <script>
+        console.log('🔥 [INLINE] Tentando configurar Firebase inline...');
+        
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDHKb34lNwFIEBmkO9WVVKVwMCL__O_u8A",
+            authDomain: "gestao-de-infraestrutura-4ee4a.firebaseapp.com",
+            projectId: "gestao-de-infraestrutura-4ee4a",
+            storageBucket: "gestao-de-infraestrutura-4ee4a.firebasestorage.app",
+            messagingSenderId: "1012042763792",
+            appId: "1:1012042763792:web:b2c183bcc490b1bbb24495",
+            measurementId: "G-TQCLQ72KYD"
+        };
+        
+        // Tentar inicializar Firebase
+        setTimeout(() => {
+            console.log('🔥 [INLINE] Verificando Firebase após timeout:', typeof firebase);
+            
+            if (typeof firebase !== 'undefined') {
+                console.log('✅ [INLINE] Firebase detectado! Tentando inicializar...');
+                
+                try {
+                    // Inicializar Firebase
+                    if (!firebase.apps.length) {
+                        firebase.initializeApp(firebaseConfig);
+                        console.log('✅ [INLINE] Firebase app inicializado');
+                    }
+                    
+                    // Inicializar Auth
+                    const auth = firebase.auth();
+                    console.log('✅ [INLINE] Auth inicializado');
+                    
+                    // Criar função de registro inline
+                    window.registerWithEmailPassword = async function(email, password, displayName) {
+                        console.log('🧪 [INLINE] Tentando registrar:', email);
+                        
+                        try {
+                            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                            
+                            if (displayName) {
+                                await userCredential.user.updateProfile({ displayName });
+                            }
+                            
+                            console.log('✅ [INLINE] Cadastro realizado com sucesso!', userCredential.user);
+                            return { success: true, user: userCredential.user };
+                        } catch (error) {
+                            console.error('❌ [INLINE] Erro no cadastro:', error);
+                            return { success: false, error: error.message };
+                        }
+                    };
+                    
+                    console.log('✅ [INLINE] Função registerWithEmailPassword criada!');
+                    
+                } catch (error) {
+                    console.error('❌ [INLINE] Erro ao configurar Firebase:', error);
+                }
+            } else {
+                console.error('❌ [INLINE] Firebase ainda não disponível após timeout');
+            }
+        }, 1500);
+    </script>
+    
+    <script src="firebase-config.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

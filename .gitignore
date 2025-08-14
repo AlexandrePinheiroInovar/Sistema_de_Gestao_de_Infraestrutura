@@ -86,3 +86,12 @@ tmp/
 .local/
 local.html
 test.html
+
+# Firebase
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+.firebaserc.local
+
+# Backups directory
+backups/
