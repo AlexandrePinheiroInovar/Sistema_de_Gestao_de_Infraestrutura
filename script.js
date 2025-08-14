@@ -2031,9 +2031,6 @@ function initializeLogin() {
         // Sistema de login local (fallback se Firebase não estiver disponível)
         console.log('⚠️ Firebase não disponível, usando sistema local');
         
-        // Carregar usuários do localStorage
-        loadUsersFromStorage();
-        
         // Buscar usuário por username ou email
         let user = null;
         const searchKey = username.toLowerCase();
@@ -2108,8 +2105,7 @@ function initializeRegister() {
     const registerForm = document.getElementById('registerForm');
     if (!registerForm) return;
 
-    // Carregar usuários do localStorage se existirem
-    loadUsersFromStorage();
+    // Sistema Firebase - não precisa carregar localStorage
     
     registerForm.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -2246,6 +2242,15 @@ function validateRegisterForm(firstName, lastName, email, password, confirmPassw
 // ========== SISTEMA OBSOLETO REMOVIDO ==========
 // REMOVIDAS: Funções de usuários locais (checkEmailExists, createNewUser, saveNewUser, loadUsersFromStorage)
 // Agora tudo é gerenciado pelo Firebase Auth + Firestore
+
+// Função stub para compatibilidade (evita erros undefined)
+function loadUsersFromStorage() {
+    console.log('⚠️ loadUsersFromStorage() obsoleta - usando Firebase Auth');
+    // Inicializar usersData vazio para evitar erros
+    if (typeof usersData === 'undefined') {
+        window.usersData = {};
+    }
+}
 
 // Configurar validação de senha em tempo real
 function setupPasswordValidation() {
@@ -2470,7 +2475,7 @@ function getRoleDisplayName(role) {
 
 // Encontrar dados completos do usuário atual
 function findCurrentUserData(username) {
-    loadUsersFromStorage();
+    // Firebase Auth - não precisa carregar localStorage
     
     // Procurar por username/email
     for (const userId in usersData) {

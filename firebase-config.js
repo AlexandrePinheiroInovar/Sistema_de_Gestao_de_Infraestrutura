@@ -1,72 +1,51 @@
-// Configuração do Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyDHKb34lNwFIEBmkO9WVVKVwMCL__O_u8A",
-  authDomain: "gestao-de-infraestrutura-4ee4a.firebaseapp.com",
-  projectId: "gestao-de-infraestrutura-4ee4a",
-  storageBucket: "gestao-de-infraestrutura-4ee4a.firebasestorage.app",
-  messagingSenderId: "1012042763792",
-  appId: "1:1012042763792:web:b2c183bcc490b1bbb24495",
-  measurementId: "G-TQCLQ72KYD"
-};
+// ============================================================================
+// FIREBASE CONFIG - Sistema de configuração controlado
+// ============================================================================
 
-// Verificar se Firebase SDK está carregado e inicializar
+console.log('🔥 [CONFIG] Firebase-config.js carregado');
+
+// Variáveis globais Firebase
 let db = null;
 let auth = null;
 let analytics = null;
 let currentUser = null;
 
-// Log inicial para verificar se o arquivo está sendo carregado
-console.log('🔥 [CONFIG] Firebase-config.js INICIANDO carregamento...');
-console.log('🔥 [CONFIG] Firebase disponível no carregamento?', typeof firebase);
-
-// Tentar múltiplas estratégias de inicialização
-function initializeFirebaseSystem() {
-  console.log('🔄 Iniciando configuração do Firebase...');
-  console.log('🔍 Verificando disponibilidade do Firebase:', typeof firebase);
+// Aguardar inicialização do Firebase
+function waitForFirebaseInit() {
+  console.log('🔄 [CONFIG] Aguardando inicialização do Firebase...');
   
-  // Verificar se Firebase está disponível
-  if (typeof firebase !== 'undefined') {
-    console.log('✅ Firebase SDK detectado');
-    console.log('🔍 Firebase.app:', typeof firebase.app);
-    console.log('🔍 Firebase.auth:', typeof firebase.auth);
-    console.log('🔍 Firebase.firestore:', typeof firebase.firestore);
-    try {
-      // Inicializar Firebase se ainda não foi inicializado
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-        console.log('✅ Firebase app inicializado');
-      } else {
-        console.log('ℹ️ Firebase app já estava inicializado');
-      }
-      
-      // Inicializar Authentication
-      if (firebase.auth) {
-        auth = firebase.auth();
-        console.log('✅ Authentication inicializado');
-        
-        // Configurar listener de mudança de estado de autenticação
-        auth.onAuthStateChanged(onAuthStateChanged);
-        console.log('✅ Auth state listener configurado');
-      } else {
-        console.error('❌ Firebase Auth não disponível');
-      }
-      
-      // Inicializar Firestore
-      if (firebase.firestore) {
-        db = firebase.firestore();
-        console.log('✅ Firestore inicializado');
-      } else {
-        console.error('❌ Firebase Firestore não disponível');
-      }
-      
-      // Inicializar Analytics (opcional)
-      if (firebase.analytics) {
-        analytics = firebase.analytics();
-        console.log('✅ Analytics inicializado');
-      }
-      
-      // Expor funções e variáveis globalmente para uso nos formulários
-      window.loginWithEmailPassword = loginWithEmailPassword;
+  // Se já foi inicializado, configurar imediatamente
+  if (window.FIREBASE_INITIALIZED) {
+    setupFirebaseServices();
+    return;
+  }
+  
+  // Senão, aguardar evento de inicialização
+  window.addEventListener('firebaseInitialized', setupFirebaseServices);
+}
+
+// Configurar serviços Firebase após inicialização
+function setupFirebaseServices() {
+  console.log('✅ [CONFIG] Configurando serviços Firebase...');
+  
+  try {
+    // Usar instâncias globais já inicializadas
+    auth = window.auth;
+    db = window.db;
+    analytics = window.analytics;
+    
+    if (auth) {
+      // Configurar listener de mudança de estado de autenticação
+      auth.onAuthStateChanged(onAuthStateChanged);
+      console.log('✅ [CONFIG] Auth state listener configurado');
+    }
+    
+    if (db) {
+      console.log('✅ [CONFIG] Firestore configurado');
+    }
+    
+    // Expor funções e variáveis globalmente para uso nos formulários
+    window.loginWithEmailPassword = loginWithEmailPassword;
       window.registerWithEmailPassword = registerWithEmailPassword;
       window.logout = logout;
       window.db = db;
@@ -131,16 +110,19 @@ function initializeFirebaseSystem() {
         auth: typeof window.auth
       });
       
-      console.log('🧪 Para testar, execute: window.testarFirebaseAuth()');
-      
-    } catch (error) {
-      console.error('❌ Erro ao inicializar Firebase:', error);
-      console.log('📝 Sistema funcionará em modo local');
-    }
-  } else {
-    console.error('❌ Firebase SDK não carregado - usando modo local');
-    console.log('🔍 Disponível no window:', Object.keys(window).filter(k => k.toLowerCase().includes('firebase')));
+    console.log('🧪 Para testar, execute: window.testarFirebaseAuth()');
+    console.log('✅ [CONFIG] Firebase configurado com sucesso!');
+    
+  } catch (error) {
+    console.error('❌ [CONFIG] Erro ao configurar Firebase:', error);
   }
+}
+
+// Inicializar quando DOM carregar ou imediatamente se já carregou
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', waitForFirebaseInit);
+} else {
+  waitForFirebaseInit();
 }
 
 // Múltiplas tentativas de inicialização

@@ -65,47 +65,14 @@
             </div>
         </div>
     </div>
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK - ORDEM CORRETA -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
     
-    <!-- Debug script temporário -->
-    <script>
-        console.log('🔍 [CADASTRO] Debug inicial - Firebase disponível?', typeof firebase);
-        console.log('🔍 [CADASTRO] Scripts carregados até aqui');
-        console.log('🔍 [CADASTRO] Window keys com firebase:', Object.keys(window).filter(k => k.toLowerCase().includes('firebase')));
-        
-        // Verificar depois que Firebase SDK carregar
-        setTimeout(() => {
-            console.log('🔍 [CADASTRO] Debug após timeout - Firebase:', typeof firebase);
-            if (typeof firebase !== 'undefined') {
-                console.log('🔍 Firebase.app:', typeof firebase.app);
-                console.log('🔍 Firebase.auth:', typeof firebase.auth);
-                console.log('🔍 Firebase.firestore:', typeof firebase.firestore);
-            } else {
-                console.error('❌ [CADASTRO] Firebase não foi carregado! Possíveis problemas:');
-                console.error('  1. Scripts do Firebase não carregaram da CDN');
-                console.error('  2. Conexão com internet');
-                console.error('  3. Bloqueador de scripts');
-            }
-        }, 500);
-        
-        // Verificar se firebase-config.js vai carregar
-        setTimeout(() => {
-            console.log('🔍 [CADASTRO] window.registerWithEmailPassword:', typeof window.registerWithEmailPassword);
-            if (!window.registerWithEmailPassword) {
-                console.error('❌ [CADASTRO] firebase-config.js não foi carregado ou não funcionou!');
-            }
-        }, 1000);
-    </script>
-    
-    <!-- Aguardar carregamento do firebase-config.js -->
-    <script>
-        console.log('🔥 [CADASTRO] Aguardando firebase-config.js carregar...');
-    </script>
-    
+    <!-- Inicialização Firebase Controlada -->
+    <script src="firebase-init.js"></script>
     <script src="firebase-config.js"></script>
     <script src="script.js"></script>
 </body>
