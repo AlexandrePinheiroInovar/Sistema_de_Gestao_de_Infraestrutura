@@ -1,8 +1,14 @@
 // ============================================================================
-// FIREBASE CONFIG - Sistema de configuração controlado
+// FIREBASE CONFIG - Sistema de configuração controlado (SEM DUPLICAÇÃO)
 // ============================================================================
 
 console.log('🔥 [CONFIG] Firebase-config.js carregado');
+
+// Verificar se firebase-init.js foi carregado
+if (!window.FIREBASE_SYSTEM_LOADED) {
+    console.error('❌ [CONFIG] ERRO: firebase-init.js deve ser carregado ANTES de firebase-config.js');
+    throw new Error('Ordem incorreta: firebase-init.js deve vir antes de firebase-config.js');
+}
 
 // Variáveis globais Firebase
 let db = null;

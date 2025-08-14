@@ -1,31 +1,41 @@
 // ============================================================================
-// FIREBASE INITIALIZATION - Ordem de carregamento controlada
+// FIREBASE INITIALIZATION - Sistema de inicialização único e controlado
 // ============================================================================
 
-console.log('🔥 [INIT] Iniciando sistema Firebase de forma controlada...');
+console.log('🔥 [INIT] Sistema Firebase iniciando...');
 
-// Variável global para controlar se Firebase já foi inicializado
-window.FIREBASE_INITIALIZED = false;
-window.FIREBASE_INIT_ATTEMPTS = 0;
+// Verificar se já foi inicializado (evita duplicação)
+if (window.FIREBASE_SYSTEM_LOADED) {
+    console.log('✅ [INIT] Sistema Firebase já carregado - pulando inicialização');
+} else {
+    window.FIREBASE_SYSTEM_LOADED = true;
+    
+    // Controle de inicialização
+    window.FIREBASE_INITIALIZED = false;
+    window.FIREBASE_INIT_ATTEMPTS = 0;
 
-// Configuração do Firebase (centralizada)
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyDHKb34lNwFIEBmkO9WVVKVwMCL__O_u8A",
-  authDomain: "gestao-de-infraestrutura-4ee4a.firebaseapp.com",
-  projectId: "gestao-de-infraestrutura-4ee4a",
-  storageBucket: "gestao-de-infraestrutura-4ee4a.firebasestorage.app",
-  messagingSenderId: "1012042763792",
-  appId: "1:1012042763792:web:b2c183bcc490b1bbb24495",
-  measurementId: "G-TQCLQ72KYD"
-};
+    // Configuração única do Firebase
+    window.FIREBASE_CONFIG = {
+        apiKey: "AIzaSyDHKb34lNwFIEBmkO9WVVKVwMCL__O_u8A",
+        authDomain: "gestao-de-infraestrutura-4ee4a.firebaseapp.com",
+        projectId: "gestao-de-infraestrutura-4ee4a",
+        storageBucket: "gestao-de-infraestrutura-4ee4a.firebasestorage.app",
+        messagingSenderId: "1012042763792",
+        appId: "1:1012042763792:web:b2c183bcc490b1bbb24495",
+        measurementId: "G-TQCLQ72KYD"
+    };
 
-// Função stub para compatibilidade com código legado
-window.loadUsersFromStorage = function() {
-    console.log('⚠️ loadUsersFromStorage() obsoleta - usando Firebase Auth');
-    if (typeof window.usersData === 'undefined') {
-        window.usersData = {};
-    }
-};
+    // Função para compatibilidade com código legado
+    window.loadUsersFromStorage = function() {
+        console.log('⚠️ [COMPAT] loadUsersFromStorage() chamada - redirecionando para Firebase Auth');
+        if (typeof window.usersData === 'undefined') {
+            window.usersData = {};
+        }
+        return window.usersData;
+    };
+    
+    console.log('✅ [INIT] Funções de compatibilidade criadas');
+}
 
 // Função principal de inicialização Firebase
 async function initializeFirebaseSafely() {
@@ -52,8 +62,8 @@ async function initializeFirebaseSafely() {
     try {
         // Inicializar Firebase App (se ainda não foi inicializado)
         if (!firebase.apps || firebase.apps.length === 0) {
-            firebase.initializeApp(FIREBASE_CONFIG);
-            console.log('✅ [INIT] Firebase App inicializado');
+            firebase.initializeApp(window.FIREBASE_CONFIG);
+            console.log('✅ [INIT] Firebase App inicializado com configuração única');
         }
         
         // Inicializar serviços Firebase

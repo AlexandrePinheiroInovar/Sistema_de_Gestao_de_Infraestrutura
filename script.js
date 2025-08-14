@@ -2243,14 +2243,7 @@ function validateRegisterForm(firstName, lastName, email, password, confirmPassw
 // REMOVIDAS: Funções de usuários locais (checkEmailExists, createNewUser, saveNewUser, loadUsersFromStorage)
 // Agora tudo é gerenciado pelo Firebase Auth + Firestore
 
-// Função stub para compatibilidade (evita erros undefined)
-function loadUsersFromStorage() {
-    console.log('⚠️ loadUsersFromStorage() obsoleta - usando Firebase Auth');
-    // Inicializar usersData vazio para evitar erros
-    if (typeof usersData === 'undefined') {
-        window.usersData = {};
-    }
-}
+// NOTA: loadUsersFromStorage() definida em firebase-init.js (evita duplicação)
 
 // Configurar validação de senha em tempo real
 function setupPasswordValidation() {
