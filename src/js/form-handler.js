@@ -1,5 +1,5 @@
-// ============= FORM HANDLER - CADASTRO E LOGIN =============
-console.log('📝 [FORM-HANDLER] Inicializando handlers de formulário...');
+// ============= FORM HANDLER - CADASTRO E LOGIN (SEM CONFLITOS DE AUTH) =============
+console.log('📝 [FORM-HANDLER] Inicializando handlers de formulário v2.0...');
 
 (function() {
     'use strict';
@@ -11,9 +11,8 @@ console.log('📝 [FORM-HANDLER] Inicializando handlers de formulário...');
     }
     window.formHandlerLoaded = true;
     
-    // Variáveis de controle para evitar loops
+    // Variáveis de controle
     let isProcessing = false;
-    let isRedirecting = false;
     
     // ============= UTILITÁRIOS =============
     
@@ -134,15 +133,11 @@ console.log('📝 [FORM-HANDLER] Inicializando handlers de formulário...');
                 
                 if (result.success) {
                     console.log('✅ [REGISTER] Cadastro realizado com sucesso!');
-                    showMessage('Conta criada com sucesso! Redirecionando...', 'success');
+                    showMessage('Conta criada com sucesso! Aguarde o redirecionamento...', 'success');
                     
-                    // Redirecionar após sucesso
-                    setTimeout(() => {
-                        if (!isRedirecting) {
-                            isRedirecting = true;
-                            window.location.href = 'dashboard.html';
-                        }
-                    }, 1500);
+                    // NÃO redirecionar aqui - firebase-complete.js vai fazer isso
+                    // O onAuthStateChanged vai detectar o novo usuário e redirecionar automaticamente
+                    console.log('🔄 [REGISTER] Redirecionamento será feito pelo firebase-complete.js');
                     
                 } else {
                     throw new Error(result.message || 'Erro ao criar conta');
@@ -152,7 +147,7 @@ console.log('📝 [FORM-HANDLER] Inicializando handlers de formulário...');
                 console.error('❌ [REGISTER] Erro:', error);
                 showMessage(error.message, 'error');
                 
-                // Reabilitar botão
+                // Reabilitar botão apenas em caso de erro
                 submitBtn.disabled = false;
                 submitBtn.textContent = originalText;
                 isProcessing = false;
@@ -235,15 +230,11 @@ console.log('📝 [FORM-HANDLER] Inicializando handlers de formulário...');
                 
                 if (result.success) {
                     console.log('✅ [LOGIN] Login realizado com sucesso!');
-                    showMessage('Login realizado com sucesso! Redirecionando...', 'success');
+                    showMessage('Login realizado com sucesso! Aguarde o redirecionamento...', 'success');
                     
-                    // Redirecionar após sucesso (o onAuthStateChanged já deve fazer isso, mas garantir)
-                    setTimeout(() => {
-                        if (!isRedirecting) {
-                            isRedirecting = true;
-                            window.location.href = 'dashboard.html';
-                        }
-                    }, 1500);
+                    // NÃO redirecionar aqui - firebase-complete.js vai fazer isso
+                    // O onAuthStateChanged vai detectar o login e redirecionar automaticamente
+                    console.log('🔄 [LOGIN] Redirecionamento será feito pelo firebase-complete.js');
                     
                 } else {
                     throw new Error(result.message || 'Erro ao fazer login');
@@ -253,7 +244,7 @@ console.log('📝 [FORM-HANDLER] Inicializando handlers de formulário...');
                 console.error('❌ [LOGIN] Erro:', error);
                 showMessage(error.message, 'error');
                 
-                // Reabilitar botão
+                // Reabilitar botão apenas em caso de erro
                 submitBtn.disabled = false;
                 submitBtn.textContent = originalText;
                 isProcessing = false;
@@ -263,63 +254,13 @@ console.log('📝 [FORM-HANDLER] Inicializando handlers de formulário...');
         console.log('✅ [LOGIN] Formulário de login configurado');
     }
     
-    // ============= CORREÇÃO DO LOOP DE LOGIN/LOGOUT =============
-    
-    function fixAuthLoop() {
-        console.log('🔄 [AUTH-FIX] Aplicando correção do loop de login/logout...');
-        
-        // Interceptar onAuthStateChanged se já existir para evitar loops
-        if (window.auth && window.auth.onAuthStateChanged) {
-            let authChangeTimeout;
-            let lastAuthState = null;
-            let authChangeCount = 0;
-            
-            // Wrapper para prevenir loops
-            const originalOnAuthStateChanged = window.auth.onAuthStateChanged;
-            window.auth.onAuthStateChanged = function(callback) {
-                return originalOnAuthStateChanged.call(this, function(user) {
-                    // Detectar mudanças muito rápidas (possível loop)
-                    authChangeCount++;
-                    const currentState = user ? 'logged-in' : 'logged-out';
-                    
-                    if (authChangeTimeout) {
-                        clearTimeout(authChangeTimeout);
-                    }
-                    
-                    authChangeTimeout = setTimeout(() => {
-                        // Reset contador após 2 segundos
-                        authChangeCount = 0;
-                    }, 2000);
-                    
-                    // Se muitas mudanças em pouco tempo, ignorar
-                    if (authChangeCount > 3) {
-                        console.warn('🔄 [AUTH-FIX] Loop detectado, ignorando mudança de estado');
-                        return;
-                    }
-                    
-                    // Se é a mesma mudança de estado, ignorar
-                    if (lastAuthState === currentState) {
-                        console.log('🔄 [AUTH-FIX] Estado duplicado ignorado:', currentState);
-                        return;
-                    }
-                    
-                    lastAuthState = currentState;
-                    console.log('🔄 [AUTH-FIX] Estado alterado para:', currentState);
-                    
-                    // Chamar callback original
-                    callback(user);
-                });
-            };
-        }
-    }
-    
-    // ============= INICIALIZAÇÃO =============
+    // ============= INICIALIZAÇÃO SEM CONFLITOS =============
     
     function init() {
         console.log('🚀 [FORM-HANDLER] Inicializando sistema...');
         
-        // Aplicar correção do loop primeiro
-        fixAuthLoop();
+        // IMPORTANTE: NÃO interceptar onAuthStateChanged
+        // Deixar completamente para o firebase-complete.js gerenciar
         
         // Aguardar DOM estar pronto
         if (document.readyState === 'loading') {
@@ -343,7 +284,7 @@ console.log('📝 [FORM-HANDLER] Inicializando handlers de formulário...');
                 initLoginForm();
             }
             
-            console.log('✅ [FORM-HANDLER] Sistema configurado com sucesso');
+            console.log('✅ [FORM-HANDLER] Sistema configurado sem conflitos');
         }, 300);
     }
     
@@ -352,4 +293,4 @@ console.log('📝 [FORM-HANDLER] Inicializando handlers de formulário...');
     
 })();
 
-console.log('✅ [FORM-HANDLER] Form handler carregado com sucesso');
+console.log('✅ [FORM-HANDLER] Form handler carregado sem conflitos de autenticação');

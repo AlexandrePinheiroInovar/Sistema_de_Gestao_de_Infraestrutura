@@ -3,20 +3,7 @@
     "public": ".",
     "ignore": [
       "firebase.json",
-      "**/.*",
-      "**/node_modules/**",
-      "functions/**",
-      "backup/**",
-      "docs/**",
-      "scripts/**",
-      "deploy/**",
-      "*.log",
-      "*.md",
-      "*.json",
-      "*.sh",
-      "*.bat",
-      "*.env*",
-      "*.yml"
+      "firebase-deploy.json"
     ],
     "rewrites": [
       {
@@ -35,9 +22,5 @@
         ]
       }
     ]
-  },
-  "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
   }
 }

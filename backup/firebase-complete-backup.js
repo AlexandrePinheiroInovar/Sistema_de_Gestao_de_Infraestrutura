@@ -278,9 +278,10 @@ window.auth.onAuthStateChanged(function(user) {
             console.log('🔄 [AUTH-PROD] Redirecionando para dashboard em PRODUÇÃO...');
             setTimeout(() => {
                 if (!preventLoop) {
+                    console.log('🔄 [AUTH-PROD] Executando redirecionamento para dashboard');
                     window.location.href = 'dashboard.html';
                 }
-            }, 500);
+            }, 1000);
         }
         
     } else {
