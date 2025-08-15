@@ -683,12 +683,25 @@ window.fecharModal = window.closeModal;
 // Função para salvar endereço
 window.saveEndereco = async function(formData) {
     try {
-        console.log('💾 [ENDERECO] Salvando endereço...', formData);
+        console.log('💾 [ENDERECO] Iniciando salvamento...', formData);
+        
+        // Verificar se Firebase está disponível
+        if (!window.firestore) {
+            console.error('❌ [ENDERECO] Firestore não está disponível!');
+            throw new Error('Sistema não conectado ao Firebase. Tente recarregar a página.');
+        }
+        
+        if (!firebase || !firebase.firestore) {
+            console.error('❌ [ENDERECO] Firebase não está disponível!');
+            throw new Error('Firebase não carregado. Tente recarregar a página.');
+        }
         
         const user = window.getCurrentUser();
         if (!user) {
-            throw new Error('Usuário não autenticado');
+            throw new Error('Usuário não autenticado. Faça login novamente.');
         }
+        
+        console.log('✅ [ENDERECO] Verificações passou - Firebase OK, User OK');
         
         // Preparar dados para salvar
         const enderecoData = {
@@ -700,9 +713,12 @@ window.saveEndereco = async function(formData) {
             status: formData.status || 'ATIVO'
         };
         
+        console.log('📊 [ENDERECO] Dados preparados:', enderecoData);
+        
         let docRef;
         if (isEditMode && currentEditId) {
             // Atualizar existente
+            console.log('✏️ [ENDERECO] Atualizando endereço existente:', currentEditId);
             docRef = window.firestore.collection('enderecos').doc(currentEditId);
             await docRef.update({
                 ...formData,
@@ -713,33 +729,40 @@ window.saveEndereco = async function(formData) {
             console.log('✅ [ENDERECO] Endereço atualizado com sucesso');
         } else {
             // Criar novo
+            console.log('➕ [ENDERECO] Criando novo endereço...');
             docRef = await window.firestore.collection('enderecos').add(enderecoData);
             console.log('✅ [ENDERECO] Novo endereço criado:', docRef.id);
         }
         
         // Fechar modal e recarregar tabela
+        console.log('🔄 [ENDERECO] Fechando modal e recarregando...');
         closeModal();
-        loadEnderecos();
+        
+        // Aguardar um pouco antes de recarregar
+        setTimeout(() => {
+            loadEnderecos();
+        }, 500);
         
         // Mostrar notificação de sucesso
+        const message = `Endereço ${isEditMode ? 'atualizado' : 'criado'} com sucesso!`;
+        console.log('✅ [ENDERECO] ' + message);
+        
         if (typeof window.showCustomNotification === 'function') {
-            window.showCustomNotification(
-                '✅ Sucesso', 
-                `Endereço ${isEditMode ? 'atualizado' : 'criado'} com sucesso!`, 
-                'success'
-            );
+            window.showCustomNotification('✅ Sucesso', message, 'success');
+        } else {
+            alert(message);
         }
         
         return true;
     } catch (error) {
         console.error('❌ [ENDERECO] Erro ao salvar:', error);
         
+        const errorMsg = `Erro ao salvar endereço: ${error.message}`;
+        
         if (typeof window.showCustomNotification === 'function') {
-            window.showCustomNotification(
-                '❌ Erro', 
-                `Erro ao salvar endereço: ${error.message}`, 
-                'error'
-            );
+            window.showCustomNotification('❌ Erro', errorMsg, 'error');
+        } else {
+            alert(errorMsg);
         }
         
         return false;
@@ -749,41 +772,76 @@ window.saveEndereco = async function(formData) {
 // Função para carregar endereços na tabela
 window.loadEnderecos = async function() {
     try {
-        console.log('🔄 [ENDERECO] Carregando endereços...');
+        console.log('🔄 [ENDERECO] Iniciando carregamento de endereços...');
+        
+        // Verificar se Firebase está disponível
+        if (!window.firestore) {
+            console.error('❌ [ENDERECO] Firestore não disponível para carregamento');
+            throw new Error('Firebase Firestore não está conectado');
+        }
         
         const tableBody = document.getElementById('enderecosTableBody');
         if (!tableBody) {
-            console.warn('⚠️ [ENDERECO] Tabela de endereços não encontrada');
+            console.warn('⚠️ [ENDERECO] Tabela de endereços não encontrada no DOM');
             return;
         }
         
-        // Limpar tabela
-        tableBody.innerHTML = '<tr><td colspan="25">Carregando...</td></tr>';
+        console.log('📊 [ENDERECO] Elementos OK, buscando dados...');
         
-        // Buscar endereços
+        // Limpar tabela e mostrar loading
+        tableBody.innerHTML = '<tr><td colspan="25" style="text-align: center;">🔄 Carregando endereços...</td></tr>';
+        
+        // Buscar endereços no Firestore
         const snapshot = await window.firestore.collection('enderecos')
             .orderBy('createdAt', 'desc')
             .get();
         
+        console.log('📦 [ENDERECO] Snapshot obtido:', snapshot.size, 'documentos');
+        
+        // Limpar tabela novamente
         tableBody.innerHTML = '';
         
         if (snapshot.empty) {
-            tableBody.innerHTML = '<tr><td colspan="25">Nenhum endereço cadastrado</td></tr>';
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="25" style="text-align: center; padding: 20px;">
+                        📝 Nenhum endereço cadastrado ainda.<br>
+                        <small>Clique em "Novo" para adicionar o primeiro endereço.</small>
+                    </td>
+                </tr>
+            `;
+            console.log('ℹ️ [ENDERECO] Nenhum endereço encontrado');
             return;
         }
         
+        // Adicionar cada endereço à tabela
+        let count = 0;
         snapshot.forEach(doc => {
-            const data = doc.data();
-            const row = createEnderecoTableRow(doc.id, data);
-            tableBody.appendChild(row);
+            try {
+                const data = doc.data();
+                const row = createEnderecoTableRow(doc.id, data);
+                tableBody.appendChild(row);
+                count++;
+            } catch (rowError) {
+                console.error('❌ [ENDERECO] Erro ao criar linha para:', doc.id, rowError);
+            }
         });
         
-        console.log(`✅ [ENDERECO] ${snapshot.size} endereços carregados`);
+        console.log(`✅ [ENDERECO] ${count}/${snapshot.size} endereços carregados na tabela`);
+        
     } catch (error) {
-        console.error('❌ [ENDERECO] Erro ao carregar:', error);
+        console.error('❌ [ENDERECO] Erro ao carregar endereços:', error);
+        
         const tableBody = document.getElementById('enderecosTableBody');
         if (tableBody) {
-            tableBody.innerHTML = '<tr><td colspan="25">Erro ao carregar endereços</td></tr>';
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="25" style="text-align: center; color: #f44336; padding: 20px;">
+                        ❌ Erro ao carregar endereços: ${error.message}<br>
+                        <small>Verifique sua conexão e tente recarregar a página.</small>
+                    </td>
+                </tr>
+            `;
         }
     }
 };
@@ -1083,6 +1141,18 @@ window.processUpload = async function() {
 
 // Função para criar dados de exemplo a partir do upload
 async function createSampleDataFromUpload(uploadType) {
+    console.log('📊 [UPLOAD] Criando dados de exemplo para:', uploadType);
+    
+    // Verificar Firebase
+    if (!window.firestore || !firebase) {
+        throw new Error('Firebase não está conectado');
+    }
+    
+    const user = window.getCurrentUser();
+    if (!user) {
+        throw new Error('Usuário não autenticado');
+    }
+    
     if (uploadType === 'enderecos') {
         // Criar alguns endereços de exemplo
         const sampleEnderecos = [
@@ -1090,25 +1160,42 @@ async function createSampleDataFromUpload(uploadType) {
                 projeto: 'Projeto Teste Upload',
                 subProjeto: 'Sub-projeto A',
                 condominio: 'Condomínio Via Upload',
-                endereco: 'Rua Exemplo, 123',
+                endereco: 'Rua Exemplo, 123 - Teste Upload',
                 cidade: 'São Paulo',
-                status: 'ATIVO',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                pep: 'PEP-UPLOAD-001',
+                status: 'ATIVO'
+            },
+            {
+                projeto: 'Projeto Upload 2',
+                subProjeto: 'Sub-projeto B', 
+                condominio: 'Edifício Upload',
+                endereco: 'Av. Teste Upload, 456',
+                cidade: 'Rio de Janeiro',
+                pep: 'PEP-UPLOAD-002',
+                status: 'ATIVO'
             }
         ];
         
-        const user = window.getCurrentUser();
+        console.log(`📊 [UPLOAD] Criando ${sampleEnderecos.length} endereços de exemplo...`);
         
         for (const endereco of sampleEnderecos) {
-            await window.firestore.collection('enderecos').add({
+            const enderecoData = {
                 ...endereco,
-                createdBy: user?.uid || 'upload-system',
-                createdByEmail: user?.email || 'sistema@upload.com',
-                uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
+                createdBy: user.uid,
+                createdByEmail: user.email,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                uploadedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                source: 'UPLOAD'
+            };
+            
+            const docRef = await window.firestore.collection('enderecos').add(enderecoData);
+            console.log(`✅ [UPLOAD] Endereço criado: ${docRef.id}`);
         }
         
-        console.log('📊 [UPLOAD] Dados de exemplo criados');
+        console.log('✅ [UPLOAD] Todos os dados de exemplo criados');
+    } else {
+        console.log('⚠️ [UPLOAD] Tipo de upload não implementado:', uploadType);
     }
 }
 
@@ -1502,7 +1589,7 @@ window.clearCacheAndReload = function() {
 
 // Função para verificar status das funções
 window.checkSystemStatus = function() {
-    console.log('🔍 [STATUS] Verificando status do sistema...');
+    console.log('🔍 [STATUS] Verificando status detalhado do sistema...');
     
     const functions = {
         abrirNovoEndereco: typeof window.abrirNovoEndereco,
@@ -1510,19 +1597,57 @@ window.checkSystemStatus = function() {
         loadEnderecos: typeof window.loadEnderecos,
         saveEndereco: typeof window.saveEndereco,
         getCurrentUser: typeof window.getCurrentUser,
-        firestore: typeof window.firestore
+        firestore: typeof window.firestore,
+        firebase: typeof firebase,
+        FirebaseAuthIsolated: typeof window.FirebaseAuthIsolated
     };
     
     console.log('📊 [STATUS] Funções disponíveis:', functions);
     
-    // Testar Firebase
+    // Testar Firebase detalhadamente
     if (window.firestore) {
-        console.log('✅ [STATUS] Firebase Firestore conectado');
+        console.log('✅ [STATUS] Firebase Firestore conectado via window.firestore');
+        
+        // Testar uma operação simples
+        try {
+            const testCollection = window.firestore.collection('_test');
+            console.log('✅ [STATUS] Firestore collection test OK');
+        } catch (e) {
+            console.log('⚠️ [STATUS] Firestore collection test ERROR:', e.message);
+        }
     } else {
         console.log('❌ [STATUS] Firebase Firestore NÃO conectado');
     }
     
-    return functions;
+    if (typeof firebase !== 'undefined' && firebase.firestore) {
+        console.log('✅ [STATUS] Firebase global disponível');
+        console.log('📋 [STATUS] Firebase apps:', firebase.apps.length);
+    } else {
+        console.log('❌ [STATUS] Firebase global NÃO disponível');
+    }
+    
+    // Testar usuário
+    try {
+        const user = window.getCurrentUser();
+        if (user) {
+            console.log('✅ [STATUS] Usuário logado:', user.email);
+        } else {
+            console.log('⚠️ [STATUS] Nenhum usuário logado');
+        }
+    } catch (e) {
+        console.log('❌ [STATUS] Erro ao verificar usuário:', e.message);
+    }
+    
+    // Verificar elementos do DOM
+    const domElements = {
+        crudModal: !!document.getElementById('crudModal'),
+        enderecoForm: !!document.getElementById('enderecoForm'),
+        enderecosTableBody: !!document.getElementById('enderecosTableBody')
+    };
+    
+    console.log('🏗️ [STATUS] Elementos DOM:', domElements);
+    
+    return { functions, domElements };
 };
 
 console.log('✅ [DASHBOARD-MINIMAL] Sistema mínimo carregado - VERSÃO 2.0');
