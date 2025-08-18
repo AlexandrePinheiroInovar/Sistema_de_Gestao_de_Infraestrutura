@@ -83,11 +83,7 @@ function setupUploadHandlers() {
         fileInput.addEventListener('change', handleFileSelect);
     }
     
-    // Radio buttons para tipo de upload
-    const uploadTypeRadios = document.querySelectorAll('input[name="uploadType"]');
-    uploadTypeRadios.forEach(radio => {
-        radio.addEventListener('change', handleUploadTypeChange);
-    });
+    // Radio buttons removidos - apenas upload local
 }
 
 // ============= HANDLERS DE FORMULÁRIOS =============
@@ -329,14 +325,7 @@ function handleFileSelect(event) {
     }
 }
 
-function handleUploadTypeChange(event) {
-    const webUrlInput = document.getElementById('webUrlInput');
-    if (event.target.value === 'web') {
-        webUrlInput.style.display = 'block';
-    } else {
-        webUrlInput.style.display = 'none';
-    }
-}
+// Função removida - apenas upload local
 
 async function processFile(file) {
     try {
@@ -463,7 +452,24 @@ async function processUpload() {
         const mapping = {};
         const mappingSelects = document.querySelectorAll('.mapping-select');
         mappingSelects.forEach(select => {
-            const systemField = select.id.replace('map', '').toLowerCase();
+            // Converter ID do select para campo do sistema, mantendo camelCase
+            let systemField = select.id.replace('map', '');
+            
+            // Converter para formato correto
+            switch(systemField) {
+                case 'Projeto':
+                    systemField = 'projeto';
+                    break;
+                case 'SubProjeto':
+                    systemField = 'subProjeto';
+                    break;
+                case 'TipoAcao':
+                    systemField = 'tipoAcao';
+                    break;
+                default:
+                    systemField = systemField.toLowerCase();
+            }
+            
             if (select.value) {
                 mapping[systemField] = select.value;
             }
@@ -660,10 +666,196 @@ window.deleteEndereco = async function(id) {
 };
 
 window.processUpload = processUpload;
-window.processWebUrl = function() {
-    // TODO: Implementar processamento de URL web
-    showMessage('📝 Funcionalidade de URL web em desenvolvimento', 'info');
+window.processWebUrl = async function() {
+    try {
+        const urlInput = document.getElementById('webUrl');
+        if (!urlInput || !urlInput.value.trim()) {
+            showMessage('❌ Por favor, insira uma URL válida', 'error');
+            return;
+        }
+        
+        const url = urlInput.value.trim();
+        
+        // Validar URL
+        if (!isValidUrl(url)) {
+            showMessage('❌ URL inválida. Use uma URL completa (http:// ou https://)', 'error');
+            return;
+        }
+        
+        showMessage('🌐 Baixando planilha da web...', 'info');
+        
+        // Processar diferentes tipos de URL
+        let processedUrl = url;
+        
+        // Converter Google Sheets URL para CSV
+        if (url.includes('docs.google.com/spreadsheets')) {
+            processedUrl = convertGoogleSheetsUrl(url);
+        }
+        
+        // Baixar dados
+        const data = await downloadWebSpreadsheet(processedUrl);
+        
+        if (!data || data.length === 0) {
+            throw new Error('Nenhum dado encontrado na planilha');
+        }
+        
+        // Usar os mesmos processos do upload local
+        currentUploadData = data;
+        
+        showPreview(data);
+        setupColumnMapping(data);
+        
+        showMessage('✅ Planilha web carregada com sucesso!', 'success');
+        
+    } catch (error) {
+        console.error('❌ Erro no processamento de URL web:', error);
+        showMessage(`❌ Erro: ${error.message}`, 'error');
+    }
 };
+
+// ============= FUNÇÕES AUXILIARES PARA UPLOAD WEB =============
+function isValidUrl(string) {
+    try {
+        new URL(string);
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+function convertGoogleSheetsUrl(url) {
+    // Converter URL do Google Sheets para formato CSV
+    // Exemplo: https://docs.google.com/spreadsheets/d/SHEET_ID/edit#gid=0
+    // Para: https://docs.google.com/spreadsheets/d/SHEET_ID/export?format=csv&gid=0
+    
+    try {
+        const regex = /\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/;
+        const match = url.match(regex);
+        
+        if (!match) {
+            throw new Error('URL do Google Sheets inválida');
+        }
+        
+        const sheetId = match[1];
+        
+        // Extrair GID se existir
+        let gid = '0';
+        const gidMatch = url.match(/gid=(\d+)/);
+        if (gidMatch) {
+            gid = gidMatch[1];
+        }
+        
+        return `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+    } catch (error) {
+        console.error('Erro ao converter URL do Google Sheets:', error);
+        throw new Error('Não foi possível converter a URL do Google Sheets');
+    }
+}
+
+async function downloadWebSpreadsheet(url) {
+    try {
+        console.log('📥 Baixando planilha de:', url);
+        
+        // Usar CORS proxy se necessário
+        let fetchUrl = url;
+        
+        // Para URLs que podem ter CORS, tentar proxy
+        if (!url.includes('docs.google.com')) {
+            fetchUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+        }
+        
+        const response = await fetch(fetchUrl);
+        
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
+        }
+        
+        let text;
+        if (fetchUrl.includes('allorigins.win')) {
+            const json = await response.json();
+            text = json.contents;
+        } else {
+            text = await response.text();
+        }
+        
+        // Determinar tipo de dados baseado no conteúdo
+        if (url.includes('format=csv') || text.includes(',') || text.includes(';')) {
+            // Processar como CSV
+            return processCSVData(text);
+        } else {
+            throw new Error('Formato de arquivo não suportado. Use CSV ou Google Sheets.');
+        }
+        
+    } catch (error) {
+        console.error('❌ Erro ao baixar planilha web:', error);
+        
+        if (error.message.includes('CORS')) {
+            throw new Error('Erro de CORS. Certifique-se de que a planilha é pública ou use Google Sheets.');
+        } else if (error.message.includes('404')) {
+            throw new Error('Planilha não encontrada. Verifique se a URL está correta e a planilha é pública.');
+        } else if (error.message.includes('403')) {
+            throw new Error('Acesso negado. Certifique-se de que a planilha é pública.');
+        } else {
+            throw new Error(`Erro ao baixar planilha: ${error.message}`);
+        }
+    }
+}
+
+function processCSVData(csvText) {
+    try {
+        // Usar PapaParse para processar CSV
+        if (typeof Papa !== 'undefined') {
+            const parsed = Papa.parse(csvText, { 
+                header: true,
+                skipEmptyLines: true,
+                transformHeader: function(header) {
+                    // Limpar cabeçalhos
+                    return header.trim();
+                }
+            });
+            
+            if (parsed.errors.length > 0) {
+                console.warn('Avisos no processamento CSV:', parsed.errors);
+            }
+            
+            return parsed.data;
+        } else {
+            // Fallback manual se PapaParse não estiver disponível
+            return processCSVManually(csvText);
+        }
+    } catch (error) {
+        console.error('❌ Erro ao processar CSV:', error);
+        throw new Error('Erro ao processar dados CSV');
+    }
+}
+
+function processCSVManually(csvText) {
+    const lines = csvText.split('\n');
+    if (lines.length < 2) {
+        throw new Error('CSV deve ter pelo menos cabeçalho e uma linha de dados');
+    }
+    
+    // Processar cabeçalho
+    const headers = lines[0].split(',').map(h => h.trim().replace(/['"]/g, ''));
+    
+    // Processar dados
+    const data = [];
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        const values = line.split(',').map(v => v.trim().replace(/['"]/g, ''));
+        const row = {};
+        
+        headers.forEach((header, index) => {
+            row[header] = values[index] || '';
+        });
+        
+        data.push(row);
+    }
+    
+    return data;
+}
 
 // ============= FUNÇÕES DE MODAL =============
 function closeModal() {

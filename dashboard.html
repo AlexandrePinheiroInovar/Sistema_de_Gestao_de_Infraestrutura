@@ -1400,69 +1400,61 @@
 
     <!-- Modal de Upload de Planilha -->
     <div id="uploadModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-upload"></i> Upload de Planilha</h3>
+        <div class="modal-content upload-modal-modern">
+            <div class="modal-header upload-header">
+                <div class="header-content">
+                    <div class="header-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="header-text">
+                        <h3>Upload de Planilha</h3>
+                        <p class="header-subtitle">Importe dados de endereços para o sistema</p>
+                    </div>
+                </div>
                 <span class="close" onclick="closeUploadModal()">&times;</span>
             </div>
             <div class="upload-content">
-                <div class="upload-section">
-                    <h4>📁 Selecione o arquivo</h4>
-                    <p>Faça upload de planilhas Excel (.xlsx, .xls) ou CSV (.csv)</p>
-                    
-                    <!-- Botão para download da planilha padrão -->
-                    <div class="template-download-section">
-                        <div class="template-info">
-                            <h5>📋 Planilha Padrão</h5>
-                            <p>Baixe nossa planilha modelo para preencher os dados corretamente</p>
+                <!-- Template Download Section -->
+                <div class="template-section">
+                    <div class="template-card">
+                        <div class="template-icon">
+                            <i class="fas fa-file-excel"></i>
                         </div>
-                        <button type="button" class="btn-template-download" onclick="downloadTemplate()">
-                            <i class="fas fa-download"></i> Baixar Planilha Padrão (.xlsx)
+                        <div class="template-info">
+                            <h4>Planilha Modelo</h4>
+                            <p>Baixe nossa planilha modelo com o formato correto</p>
+                        </div>
+                        <button type="button" class="btn-template" onclick="downloadTemplate()">
+                            <i class="fas fa-download"></i>
+                            <span>Baixar Modelo</span>
                         </button>
                     </div>
+                </div>
+                
+                <!-- Upload Section -->
+                <div class="upload-section">
+                    <div class="upload-instructions">
+                        <h4><i class="fas fa-info-circle"></i> Como fazer upload</h4>
+                        <ul class="instruction-list">
+                            <li><i class="fas fa-check"></i> Use o modelo baixado acima</li>
+                            <li><i class="fas fa-check"></i> Preencha os dados nos campos corretos</li>
+                            <li><i class="fas fa-check"></i> Salve como Excel (.xlsx) ou CSV</li>
+                            <li><i class="fas fa-check"></i> Faça upload do arquivo abaixo</li>
+                        </ul>
+                    </div>
                     
-                    <div class="file-upload-area" id="fileUploadArea">
-                        <div class="upload-icon">📄</div>
-                        <div class="upload-text">
-                            <span class="upload-title">Arraste e solte arquivos aqui</span>
-                            <span class="upload-subtitle">ou clique para selecionar</span>
+                    <div class="file-upload-area modern-upload" id="fileUploadArea">
+                        <div class="upload-visual">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <div class="upload-text">
+                                <h5>Selecione seu arquivo</h5>
+                                <p>Arraste e solte ou clique para selecionar</p>
+                                <span class="supported-formats">Excel (.xlsx, .xls) ou CSV (.csv)</span>
+                            </div>
                         </div>
                         <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display: none;">
-                    </div>
-                    
-                    <div class="upload-options">
-                        <div class="option-group">
-                            <label>
-                                <input type="radio" name="uploadType" value="local" checked>
-                                <span class="radio-custom"></span>
-                                <span class="option-text">
-                                    <strong>Arquivo Local</strong>
-                                    <small>Selecione arquivo do seu computador</small>
-                                </span>
-                            </label>
-                        </div>
-                        
-                        <div class="option-group">
-                            <label>
-                                <input type="radio" name="uploadType" value="web">
-                                <span class="radio-custom"></span>
-                                <span class="option-text">
-                                    <strong>URL da Web</strong>
-                                    <small>Cole o link da planilha online</small>
-                                </span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="web-url-input" id="webUrlInput" style="display: none;">
-                        <label for="webUrl">URL da Planilha:</label>
-                        <div class="url-input-container">
-                            <input type="url" id="webUrl" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
-                            <button type="button" class="btn-url-process" onclick="processWebUrl()">
-                                <i class="fas fa-download"></i> Baixar
-                            </button>
-                        </div>
-                        <small class="url-help">Cole o link do Google Sheets ou URL direta da planilha (CSV, Excel)</small>
                     </div>
                 </div>
                 

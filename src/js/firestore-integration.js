@@ -89,6 +89,12 @@ window.FirestoreIntegration = (function() {
         
         log('📊 Iniciando processamento de planilha...');
         
+        // ETAPA 1: Extrair dados únicos para gestão de projetos
+        log('🔄 Extraindo dados únicos para gestão de projetos...');
+        await extractManagementData(data, mapping, user);
+        
+        // ETAPA 2: Processar endereços
+        log('🏠 Processando endereços...');
         const batch = firestore.batch();
         const results = {
             success: 0,
@@ -107,8 +113,8 @@ window.FirestoreIntegration = (function() {
                 
                 Object.keys(mapping).forEach(systemField => {
                     const excelColumn = mapping[systemField];
-                    if (excelColumn && row[excelColumn] !== undefined) {
-                        enderecoData[systemField] = row[excelColumn];
+                    if (excelColumn && row[excelColumn] !== undefined && row[excelColumn] !== '') {
+                        enderecoData[systemField] = row[excelColumn].toString().trim();
                     }
                 });
                 
@@ -150,13 +156,156 @@ window.FirestoreIntegration = (function() {
             }
         }
         
-        // Executar batch
+        // Executar batch de endereços
         if (results.success > 0) {
             await batch.commit();
-            log(`✅ Batch commit executado: ${results.success} registros salvos`);
+            log(`✅ Endereços salvos: ${results.success} registros`);
         }
         
         return results;
+    }
+    
+    // ============= EXTRAÇÃO AUTOMÁTICA PARA GESTÃO =============
+    async function extractManagementData(data, mapping, user) {
+        try {
+            const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+            const metadata = {
+                createdAt: timestamp,
+                updatedAt: timestamp,
+                createdBy: user.uid,
+                source: 'upload_planilha'
+            };
+            
+            // Extrair dados únicos de cada categoria
+            const uniqueProjects = extractUniqueValues(data, mapping, 'projeto');
+            const uniqueSubProjects = extractUniqueValues(data, mapping, 'subProjeto');
+            const uniqueTiposAcao = extractUniqueValues(data, mapping, 'tipoAcao');
+            const uniqueSupervisors = extractUniqueValues(data, mapping, 'supervisor');
+            const uniqueEquipes = extractUniqueValues(data, mapping, 'equipe');
+            const uniqueCidades = extractUniqueValues(data, mapping, 'cidade');
+            
+            // Salvar projetos
+            for (const projeto of uniqueProjects) {
+                await saveUniqueIfNotExists('projetos', {
+                    nome: projeto,
+                    cliente: 'Auto-extraído',
+                    descricao: `Projeto extraído automaticamente do upload de planilha`,
+                    status: 'ATIVO',
+                    ...metadata
+                }, 'nome', projeto);
+            }
+            
+            // Salvar sub projetos
+            for (const subProjeto of uniqueSubProjects) {
+                await saveUniqueIfNotExists('subprojetos', {
+                    nome: subProjeto,
+                    projetoPrincipal: 'Auto-vinculado',
+                    descricao: `Sub projeto extraído automaticamente`,
+                    status: 'ATIVO',
+                    ...metadata
+                }, 'nome', subProjeto);
+            }
+            
+            // Salvar tipos de ação
+            for (const tipo of uniqueTiposAcao) {
+                const categoria = getCategoriaFromTipo(tipo);
+                await saveUniqueIfNotExists('tiposacao', {
+                    nome: tipo,
+                    categoria: categoria,
+                    descricao: `Tipo de ação extraído automaticamente`,
+                    status: 'ATIVO',
+                    ...metadata
+                }, 'nome', tipo);
+            }
+            
+            // Salvar supervisores
+            for (const supervisor of uniqueSupervisors) {
+                await saveUniqueIfNotExists('supervisores', {
+                    nome: supervisor,
+                    email: `${supervisor.toLowerCase().replace(/\s+/g, '.')}@empresa.com`,
+                    telefone: '',
+                    area: 'Supervisão',
+                    status: 'ATIVO',
+                    ...metadata
+                }, 'nome', supervisor);
+            }
+            
+            // Salvar equipes
+            for (const equipe of uniqueEquipes) {
+                await saveUniqueIfNotExists('equipes', {
+                    nome: equipe,
+                    lider: 'A definir',
+                    membros: 'Auto-extraído da planilha',
+                    especialidade: 'Geral',
+                    status: 'ATIVO',
+                    ...metadata
+                }, 'nome', equipe);
+            }
+            
+            // Salvar cidades
+            for (const cidade of uniqueCidades) {
+                await saveUniqueIfNotExists('cidades', {
+                    nome: cidade,
+                    estado: 'A definir',
+                    regiao: 'Auto-extraído',
+                    status: 'ATIVO',
+                    ...metadata
+                }, 'nome', cidade);
+            }
+            
+            log(`✅ Dados de gestão extraídos: ${uniqueProjects.length} projetos, ${uniqueSubProjects.length} sub-projetos, ${uniqueTiposAcao.length} tipos, ${uniqueSupervisors.length} supervisores, ${uniqueEquipes.length} equipes, ${uniqueCidades.length} cidades`);
+            
+        } catch (error) {
+            console.error('❌ Erro ao extrair dados de gestão:', error);
+        }
+    }
+    
+    // Extrair valores únicos de uma coluna específica
+    function extractUniqueValues(data, mapping, fieldKey) {
+        const columnName = mapping[fieldKey];
+        if (!columnName) return [];
+        
+        const uniqueValues = new Set();
+        
+        data.forEach(row => {
+            const value = row[columnName];
+            if (value && typeof value === 'string' && value.trim() !== '') {
+                uniqueValues.add(value.trim());
+            }
+        });
+        
+        return Array.from(uniqueValues);
+    }
+    
+    // Salvar apenas se não existir
+    async function saveUniqueIfNotExists(collection, data, fieldToCheck, valueToCheck) {
+        try {
+            const existing = await firestore.collection(collection)
+                .where(fieldToCheck, '==', valueToCheck)
+                .limit(1)
+                .get();
+                
+            if (existing.empty) {
+                await firestore.collection(collection).add(data);
+                log(`➕ Adicionado ${collection}: ${valueToCheck}`);
+            } else {
+                log(`⏭️ ${collection} já existe: ${valueToCheck}`);
+            }
+        } catch (error) {
+            console.error(`❌ Erro ao salvar ${collection}:`, error);
+        }
+    }
+    
+    // Determinar categoria do tipo de ação
+    function getCategoriaFromTipo(tipo) {
+        const tipoLower = tipo.toLowerCase();
+        
+        if (tipoLower.includes('vistoria')) return 'VISTORIA';
+        if (tipoLower.includes('construção') || tipoLower.includes('construcao')) return 'CONSTRUÇÃO';
+        if (tipoLower.includes('ativação') || tipoLower.includes('ativacao')) return 'ATIVAÇÃO';
+        if (tipoLower.includes('manutenção') || tipoLower.includes('manutencao')) return 'MANUTENÇÃO';
+        
+        return 'OUTROS';
     }
     
     // ============= CRUD DE ENDEREÇOS =============

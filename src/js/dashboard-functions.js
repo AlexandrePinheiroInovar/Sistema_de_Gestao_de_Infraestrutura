@@ -465,50 +465,7 @@ function formatDate(timestamp) {
 }
 
 function testUploadWithSampleData() {
-    console.log('🧪 Testando com dados de exemplo');
-    
-    // Dados de exemplo
-    const sampleData = [
-        {
-            'Projeto': 'CLARO',
-            'Sub Projeto': 'FTTH',
-            'Tipo Ação': 'ATIVAÇÃO',
-            'Condomínio': 'Residencial Vista Alegre',
-            'Endereço': 'Rua das Flores, 123',
-            'Cidade': 'Salvador',
-            'HP': '5',
-            'Equipe': 'Equipe A',
-            'Supervisor': 'João Silva',
-            'Status': 'PRODUTIVA'
-        },
-        {
-            'Projeto': 'VIVO',
-            'Sub Projeto': 'HFC',
-            'Tipo Ação': 'CONSTRUÇÃO',
-            'Condomínio': 'Condomínio Bela Vista',
-            'Endereço': 'Av. Principal, 456',
-            'Cidade': 'São Paulo',
-            'HP': '10',
-            'Equipe': 'Equipe B',
-            'Supervisor': 'Maria Santos',
-            'Status': 'IMPRODUTIVA'
-        }
-    ];
-    
-    // Simular upload dos dados de exemplo
-    if (typeof window.currentUploadData !== 'undefined') {
-        window.currentUploadData = sampleData;
-        
-        // Mostrar preview
-        const showPreview = window.showPreview || function() {};
-        showPreview(sampleData);
-        
-        // Setup mapping
-        const setupColumnMapping = window.setupColumnMapping || function() {};
-        setupColumnMapping(sampleData);
-        
-        showMessage('🧪 Dados de exemplo carregados! Configure o mapeamento e clique em Processar.', 'success');
-    }
+    showMessage('⚠️ Função de teste removida. Faça upload do arquivo Excel real.', 'warning');
 }
 
 function downloadTemplate() {
