@@ -1398,153 +1398,50 @@
         </div>
     </div>
 
-    <!-- Modal de Upload de Planilha -->
+    <!-- Modal de Upload Simples -->
     <div id="uploadModal" class="modal">
-        <div class="modal-content upload-modal-modern">
-            <div class="modal-header upload-header">
-                <div class="header-content">
-                    <div class="header-icon">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                    </div>
-                    <div class="header-text">
-                        <h3>Upload de Planilha</h3>
-                        <p class="header-subtitle">Importe dados de endereços para o sistema</p>
-                    </div>
-                </div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-upload"></i> Upload de Planilha Excel</h3>
                 <span class="close" onclick="closeUploadModal()">&times;</span>
             </div>
-            <div class="upload-content">
-                <!-- Template Download Section -->
-                <div class="template-section">
-                    <div class="template-card">
-                        <div class="template-icon">
-                            <i class="fas fa-file-excel"></i>
-                        </div>
-                        <div class="template-info">
-                            <h4>Planilha Modelo</h4>
-                            <p>Baixe nossa planilha modelo com o formato correto</p>
-                        </div>
-                        <button type="button" class="btn-template" onclick="downloadTemplate()">
-                            <i class="fas fa-download"></i>
-                            <span>Baixar Modelo</span>
-                        </button>
-                    </div>
+            <div class="upload-simple-content">
+                <div class="upload-info">
+                    <p><strong>📋 Instruções:</strong></p>
+                    <ul>
+                        <li>Selecione um arquivo Excel (.xlsx ou .xls)</li>
+                        <li>A planilha deve conter colunas com dados de endereços</li>
+                        <li>Os dados serão importados diretamente para a tabela</li>
+                    </ul>
                 </div>
                 
-                <!-- Upload Section -->
-                <div class="upload-section">
-                    <div class="upload-instructions">
-                        <h4><i class="fas fa-info-circle"></i> Como fazer upload</h4>
-                        <ul class="instruction-list">
-                            <li><i class="fas fa-check"></i> Use o modelo baixado acima</li>
-                            <li><i class="fas fa-check"></i> Preencha os dados nos campos corretos</li>
-                            <li><i class="fas fa-check"></i> Salve como Excel (.xlsx) ou CSV</li>
-                            <li><i class="fas fa-check"></i> Faça upload do arquivo abaixo</li>
-                        </ul>
+                <div class="upload-area-simple" id="uploadAreaSimple">
+                    <div class="upload-icon-simple">
+                        <i class="fas fa-file-excel"></i>
                     </div>
-                    
-                    <div class="file-upload-area modern-upload" id="fileUploadArea">
-                        <div class="upload-visual">
-                            <div class="upload-icon">
-                                <i class="fas fa-cloud-upload-alt"></i>
-                            </div>
-                            <div class="upload-text">
-                                <h5>Selecione seu arquivo</h5>
-                                <p>Arraste e solte ou clique para selecionar</p>
-                                <span class="supported-formats">Excel (.xlsx, .xls) ou CSV (.csv)</span>
-                            </div>
-                        </div>
-                        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display: none;">
-                    </div>
+                    <p class="upload-text-simple">
+                        <strong>Clique aqui ou arraste um arquivo Excel</strong><br>
+                        <small>Formatos aceitos: .xlsx, .xls</small>
+                    </p>
+                    <input type="file" id="fileInputSimple" accept=".xlsx,.xls" style="display: none;">
                 </div>
-                
-                <div class="upload-preview" id="uploadPreview" style="display: none;">
-                    <h4>📊 Prévia dos Dados</h4>
-                    <div class="preview-table-container">
-                        <table class="preview-table" id="previewTable">
-                            <thead id="previewTableHead">
-                                <!-- Cabeçalhos serão inseridos aqui -->
-                            </thead>
-                            <tbody id="previewTableBody">
-                                <!-- Dados serão inseridos aqui -->
-                            </tbody>
-                        </table>
+
+                <div id="uploadStatus" class="upload-status" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
                     </div>
+                    <p id="statusText">Processando...</p>
                 </div>
-                
-                <div class="upload-mapping" id="uploadMapping" style="display: none;">
-                    <h4>🔗 Mapeamento de Colunas</h4>
-                    <p>Selecione quais colunas da planilha correspondem aos campos do sistema:</p>
-                    
-                    <div class="mapping-grid">
-                        <div class="mapping-item">
-                            <label>Projeto:</label>
-                            <select id="mapProjeto" class="mapping-select">
-                                <option value="">Selecione a coluna...</option>
-                            </select>
-                        </div>
-                        <div class="mapping-item">
-                            <label>Sub Projeto:</label>
-                            <select id="mapSubProjeto" class="mapping-select">
-                                <option value="">Selecione a coluna...</option>
-                            </select>
-                        </div>
-                        <div class="mapping-item">
-                            <label>Tipo de Ação:</label>
-                            <select id="mapTipoAcao" class="mapping-select">
-                                <option value="">Selecione a coluna...</option>
-                            </select>
-                        </div>
-                        <div class="mapping-item">
-                            <label>Condomínio:</label>
-                            <select id="mapCondominio" class="mapping-select">
-                                <option value="">Selecione a coluna...</option>
-                            </select>
-                        </div>
-                        <div class="mapping-item">
-                            <label>Endereço:</label>
-                            <select id="mapEndereco" class="mapping-select">
-                                <option value="">Selecione a coluna...</option>
-                            </select>
-                        </div>
-                        <div class="mapping-item">
-                            <label>Cidade:</label>
-                            <select id="mapCidade" class="mapping-select">
-                                <option value="">Selecione a coluna...</option>
-                            </select>
-                        </div>
-                        <div class="mapping-item">
-                            <label>Equipe:</label>
-                            <select id="mapEquipe" class="mapping-select">
-                                <option value="">Selecione a coluna...</option>
-                            </select>
-                        </div>
-                        <div class="mapping-item">
-                            <label>Supervisor:</label>
-                            <select id="mapSupervisor" class="mapping-select">
-                                <option value="">Selecione a coluna...</option>
-                            </select>
-                        </div>
-                        <div class="mapping-item">
-                            <label>Status:</label>
-                            <select id="mapStatus" class="mapping-select">
-                                <option value="">Selecione a coluna...</option>
-                            </select>
-                        </div>
-                    </div>
+
+                <div id="uploadResults" class="upload-results" style="display: none;">
+                    <div class="results-content" id="resultsContent"></div>
                 </div>
             </div>
             
             <div class="modal-footer">
-                <button type="button" class="btn-test" onclick="testUploadWithSampleData()" style="margin-right: auto;">
-                    <span class="btn-icon">🧪</span>
-                    Testar com Dados de Exemplo
+                <button type="button" class="btn-cancel" onclick="closeUploadModal()">
+                    <i class="fas fa-times"></i> Fechar
                 </button>
-                <button type="button" class="btn-upload-process" id="processBtn" onclick="processUpload()" style="display: none;">
-                    <span class="btn-icon">⚡</span>
-                    Processar Upload
-                </button>
-                <button type="button" class="btn-cancel" onclick="closeUploadModal()">❌ Cancelar</button>
             </div>
         </div>
     </div>
@@ -1638,11 +1535,12 @@
     
     <script src="src/js/firebase-complete.js"></script>
     <script src="src/js/firestore-integration.js"></script>
-    <script src="src/js/dashboard-handlers.js"></script>
+    <script src="src/js/dashboard-minimal.js"></script>
     <script src="src/js/dashboard-functions.js"></script>
     <!-- <script src="script.js"></script> TEMPORARIAMENTE DESABILITADO PARA TESTAR LOOP -->
     <!-- <script src="new-dropdown.js"></script> TEMPORARIAMENTE DESABILITADO PARA TESTAR LOOP -->
-    <script src="src/js/dashboard-minimal.js"></script>
+    <script src="src/js/dashboard-handlers.js"></script>
+    <script src="src/js/upload-simple.js"></script>
     <script src="src/js/checkbox-dropdown.js"></script>
     <script src="src/js/force-init-dropdowns.js"></script>
     <script>

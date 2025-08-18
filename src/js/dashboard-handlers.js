@@ -644,6 +644,9 @@ async function loadEnderecosTable() {
     }
 }
 
+// Expor função globalmente para uso em outros módulos
+window.loadEnderecosTable = loadEnderecosTable;
+
 // ============= FUNÇÕES AUXILIARES GLOBAIS =============
 window.editEndereco = function(id) {
     console.log('✏️ Editando endereço:', id);

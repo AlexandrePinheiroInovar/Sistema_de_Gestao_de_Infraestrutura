@@ -1070,8 +1070,8 @@ window.closeUploadModal = function() {
     }
 };
 
-// Função para processar upload
-window.processUpload = async function() {
+// Função desabilitada - usar dashboard-handlers.js
+window.processUploadOLD = async function() {
     const fileInput = document.getElementById('uploadFile');
     const uploadType = document.getElementById('uploadType').value;
     const progressDiv = document.getElementById('uploadProgress');
@@ -1104,9 +1104,8 @@ window.processUpload = async function() {
         statusText.textContent = 'Salvando no Firebase...';
         progressBar.style.width = '80%';
         
-        // Aqui seria a lógica real de processamento do arquivo
-        // Por enquanto, simular sucesso
-        await createSampleDataFromUpload(uploadType);
+        // Upload foi removido - usar sistema principal de upload
+        console.log('⚠️ [UPLOAD] Esta função foi desabilitada. Use o sistema principal de upload.');
         
         statusText.textContent = 'Upload concluído!';
         progressBar.style.width = '100%';
@@ -1139,65 +1138,7 @@ window.processUpload = async function() {
     }
 };
 
-// Função para criar dados de exemplo a partir do upload
-async function createSampleDataFromUpload(uploadType) {
-    console.log('📊 [UPLOAD] Criando dados de exemplo para:', uploadType);
-    
-    // Verificar Firebase
-    if (!window.firestore || !firebase) {
-        throw new Error('Firebase não está conectado');
-    }
-    
-    const user = window.getCurrentUser();
-    if (!user) {
-        throw new Error('Usuário não autenticado');
-    }
-    
-    if (uploadType === 'enderecos') {
-        // Criar alguns endereços de exemplo
-        const sampleEnderecos = [
-            {
-                projeto: 'Projeto Teste Upload',
-                subProjeto: 'Sub-projeto A',
-                condominio: 'Condomínio Via Upload',
-                endereco: 'Rua Exemplo, 123 - Teste Upload',
-                cidade: 'São Paulo',
-                pep: 'PEP-UPLOAD-001',
-                status: 'ATIVO'
-            },
-            {
-                projeto: 'Projeto Upload 2',
-                subProjeto: 'Sub-projeto B', 
-                condominio: 'Edifício Upload',
-                endereco: 'Av. Teste Upload, 456',
-                cidade: 'Rio de Janeiro',
-                pep: 'PEP-UPLOAD-002',
-                status: 'ATIVO'
-            }
-        ];
-        
-        console.log(`📊 [UPLOAD] Criando ${sampleEnderecos.length} endereços de exemplo...`);
-        
-        for (const endereco of sampleEnderecos) {
-            const enderecoData = {
-                ...endereco,
-                createdBy: user.uid,
-                createdByEmail: user.email,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                uploadedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                source: 'UPLOAD'
-            };
-            
-            const docRef = await window.firestore.collection('enderecos').add(enderecoData);
-            console.log(`✅ [UPLOAD] Endereço criado: ${docRef.id}`);
-        }
-        
-        console.log('✅ [UPLOAD] Todos os dados de exemplo criados');
-    } else {
-        console.log('⚠️ [UPLOAD] Tipo de upload não implementado:', uploadType);
-    }
-}
+// Função removida - usar sistema principal de upload
 
 // ============= FUNÇÕES DO PERFIL DE USUÁRIO =============
 
