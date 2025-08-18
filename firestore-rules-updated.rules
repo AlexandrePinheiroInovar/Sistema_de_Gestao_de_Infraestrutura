@@ -1,0 +1,201 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============= FUNÇÕES AUXILIARES =============
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    function hasRole(role) {
+      return isAuthenticated() && getUserRole() == role;
+    }
+    
+    function hasAnyRole(roles) {
+      return isAuthenticated() && getUserRole() in roles;
+    }
+    
+    function isOwner(resource) {
+      return isAuthenticated() && resource.data.createdBy == request.auth.uid;
+    }
+    
+    function validateEnderecoData() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['projeto', 'subProjeto', 'tipoAcao', 'condominio', 'endereco', 'cidade', 'hp', 'equipe', 'supervisor', 'status']) &&
+             data.hp is number &&
+             data.hp > 0 &&
+             data.status in ['PRODUTIVA', 'IMPRODUTIVA'] &&
+             data.projeto is string && data.projeto.size() > 0 &&
+             data.endereco is string && data.endereco.size() > 0;
+    }
+    
+    // ============= COLEÇÃO DE USUÁRIOS =============
+    match /users/{userId} {
+      // Usuários só podem ler e editar seus próprios dados
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      
+      // Admins podem fazer qualquer operação
+      allow read, write: if hasRole('ADMIN');
+      
+      // Validação na criação
+      allow create: if isAuthenticated() && 
+        request.resource.data.keys().hasAll(['email', 'role']) &&
+        request.resource.data.role in ['USER', 'SUPERVISOR', 'GESTOR', 'ADMIN'];
+    }
+    
+    // ============= COLEÇÃO DE ENDEREÇOS =============
+    match /enderecos/{enderecoId} {
+      // Leitura: todos os usuários autenticados
+      allow read: if isAuthenticated();
+      
+      // Criação: SUPERVISOR, GESTOR ou ADMIN
+      allow create: if hasAnyRole(['SUPERVISOR', 'GESTOR', 'ADMIN']) && 
+        validateEnderecoData() &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.updatedAt == request.time;
+      
+      // Atualização: SUPERVISOR, GESTOR, ADMIN ou criador
+      allow update: if (hasAnyRole(['SUPERVISOR', 'GESTOR', 'ADMIN']) || isOwner(resource)) && 
+        validateEnderecoData() &&
+        request.resource.data.updatedAt == request.time &&
+        request.resource.data.updatedBy == request.auth.uid;
+      
+      // Exclusão: apenas GESTOR ou ADMIN
+      allow delete: if hasAnyRole(['GESTOR', 'ADMIN']);
+    }
+    
+    // ============= COLEÇÃO DE PROJETOS =============
+    match /projetos/{projetoId} {
+      // Leitura: todos os usuários autenticados
+      allow read: if isAuthenticated();
+      
+      // Escrita: apenas GESTOR ou ADMIN
+      allow write: if hasAnyRole(['GESTOR', 'ADMIN']) &&
+        request.resource.data.keys().hasAll(['nome', 'cliente', 'status']) &&
+        request.resource.data.nome is string && request.resource.data.nome.size() > 0 &&
+        request.resource.data.status in ['ATIVO', 'INATIVO', 'PAUSADO'];
+      
+      // Exclusão: apenas ADMIN
+      allow delete: if hasRole('ADMIN');
+    }
+    
+    // ============= COLEÇÃO DE SUB PROJETOS =============
+    match /subprojetos/{subprojetoId} {
+      // Leitura: todos os usuários autenticados
+      allow read: if isAuthenticated();
+      
+      // Escrita: apenas GESTOR ou ADMIN
+      allow write: if hasAnyRole(['GESTOR', 'ADMIN']) &&
+        request.resource.data.keys().hasAll(['nome', 'projetoPrincipal', 'status']) &&
+        request.resource.data.nome is string && request.resource.data.nome.size() > 0 &&
+        request.resource.data.status in ['ATIVO', 'INATIVO', 'PAUSADO'];
+      
+      // Exclusão: apenas ADMIN
+      allow delete: if hasRole('ADMIN');
+    }
+    
+    // ============= COLEÇÃO DE TIPOS DE AÇÃO =============
+    match /tiposacao/{tipoId} {
+      // Leitura: todos os usuários autenticados
+      allow read: if isAuthenticated();
+      
+      // Escrita: apenas GESTOR ou ADMIN
+      allow write: if hasAnyRole(['GESTOR', 'ADMIN']) &&
+        request.resource.data.keys().hasAll(['nome', 'categoria', 'status']) &&
+        request.resource.data.nome is string && request.resource.data.nome.size() > 0 &&
+        request.resource.data.categoria in ['VISTORIA', 'CONSTRUÇÃO', 'ATIVAÇÃO', 'MANUTENÇÃO', 'ADMINISTRATIVO'] &&
+        request.resource.data.status in ['ATIVO', 'INATIVO'];
+      
+      // Exclusão: apenas ADMIN
+      allow delete: if hasRole('ADMIN');
+    }
+    
+    // ============= COLEÇÃO DE SUPERVISORES =============
+    match /supervisores/{supervisorId} {
+      // Leitura: todos os usuários autenticados
+      allow read: if isAuthenticated();
+      
+      // Escrita: apenas GESTOR ou ADMIN
+      allow write: if hasAnyRole(['GESTOR', 'ADMIN']) &&
+        request.resource.data.keys().hasAll(['nome', 'email', 'area', 'status']) &&
+        request.resource.data.nome is string && request.resource.data.nome.size() > 0 &&
+        request.resource.data.email is string && request.resource.data.email.matches('.*@.*\\..*') &&
+        request.resource.data.status in ['ATIVO', 'INATIVO', 'FERIAS'];
+      
+      // Exclusão: apenas ADMIN
+      allow delete: if hasRole('ADMIN');
+    }
+    
+    // ============= COLEÇÃO DE EQUIPES =============
+    match /equipes/{equipeId} {
+      // Leitura: todos os usuários autenticados
+      allow read: if isAuthenticated();
+      
+      // Escrita: apenas GESTOR ou ADMIN
+      allow write: if hasAnyRole(['GESTOR', 'ADMIN']) &&
+        request.resource.data.keys().hasAll(['nome', 'lider', 'especialidade', 'status']) &&
+        request.resource.data.nome is string && request.resource.data.nome.size() > 0 &&
+        request.resource.data.status in ['ATIVO', 'INATIVO', 'EM_CAMPO'];
+      
+      // Exclusão: apenas ADMIN
+      allow delete: if hasRole('ADMIN');
+    }
+    
+    // ============= COLEÇÃO DE CIDADES =============
+    match /cidades/{cidadeId} {
+      // Leitura: todos os usuários autenticados
+      allow read: if isAuthenticated();
+      
+      // Escrita: apenas GESTOR ou ADMIN
+      allow write: if hasAnyRole(['GESTOR', 'ADMIN']) &&
+        request.resource.data.keys().hasAll(['nome', 'estado', 'status']) &&
+        request.resource.data.nome is string && request.resource.data.nome.size() > 0 &&
+        request.resource.data.estado is string && request.resource.data.estado.size() == 2 &&
+        request.resource.data.status in ['ATIVO', 'INATIVO'];
+      
+      // Exclusão: apenas ADMIN
+      allow delete: if hasRole('ADMIN');
+    }
+    
+    // ============= COLEÇÃO DE LOGS/AUDITORIA =============
+    match /logs/{logId} {
+      // Leitura: apenas GESTOR ou ADMIN
+      allow read: if hasAnyRole(['GESTOR', 'ADMIN']);
+      
+      // Escrita: todos os usuários autenticados (para logs de ações)
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasAll(['action', 'userId', 'timestamp']) &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.timestamp == request.time;
+      
+      // Não permitir atualização ou exclusão de logs
+      allow update, delete: if false;
+    }
+    
+    // ============= COLEÇÃO DE RELATÓRIOS =============
+    match /relatorios/{relatorioId} {
+      // Leitura e escrita: todos os usuários autenticados
+      allow read, write: if isAuthenticated();
+    }
+    
+    // ============= COLEÇÃO DE CONFIGURAÇÕES DO SISTEMA =============
+    match /sistema/{configId} {
+      // Leitura: todos os usuários autenticados
+      allow read: if isAuthenticated();
+      
+      // Escrita: apenas ADMIN
+      allow write: if hasRole('ADMIN');
+    }
+    
+    // ============= REGRA PADRÃO - NEGAR TUDO =============
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
