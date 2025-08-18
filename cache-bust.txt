@@ -1,0 +1,3 @@
+Cache bust timestamp: 2025-08-18 13:00:00
+Version: 1.3
+Dynamic Excel Upload System Active

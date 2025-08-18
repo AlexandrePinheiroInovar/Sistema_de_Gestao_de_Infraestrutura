@@ -988,87 +988,87 @@ window.filterTable = function() {
     }
 };
 
-// Função para upload modal - VERSÃO NOVA
-window.openUploadModal = function() {
-    console.log('📁 [MODAL-V2] Abrindo modal de upload VERSÃO NOVA...');
-    
-    try {
-        // Verificar se já existe um modal de upload e removê-lo
-        const existingModal = document.getElementById('uploadModal');
-        if (existingModal) {
-            existingModal.remove();
-            console.log('🗑️ [MODAL-V2] Modal antigo removido');
-        }
-        
-        // Criar modal de upload dinamicamente
-        const uploadModal = createUploadModal();
-        document.body.appendChild(uploadModal);
-        uploadModal.style.display = 'block';
-        
-        console.log('✅ [MODAL-V2] Modal de upload criado e exibido');
-    } catch (error) {
-        console.error('❌ [MODAL-V2] Erro ao abrir modal:', error);
-        alert('Erro ao abrir modal de upload: ' + error.message);
-    }
-};
+// Função para upload modal - VERSÃO NOVA - DESABILITADA PARA USAR SISTEMA DINÂMICO
+// window.openUploadModal = function() {
+//     console.log('📁 [MODAL-V2] Abrindo modal de upload VERSÃO NOVA...');
+//     
+//     try {
+//         // Verificar se já existe um modal de upload e removê-lo
+//         const existingModal = document.getElementById('uploadModal');
+//         if (existingModal) {
+//             existingModal.remove();
+//             console.log('🗑️ [MODAL-V2] Modal antigo removido');
+//         }
+//         
+//         // Criar modal de upload dinamicamente
+//         const uploadModal = createUploadModal();
+//         document.body.appendChild(uploadModal);
+//         uploadModal.style.display = 'block';
+//         
+//         console.log('✅ [MODAL-V2] Modal de upload criado e exibido');
+//     } catch (error) {
+//         console.error('❌ [MODAL-V2] Erro ao abrir modal:', error);
+//         alert('Erro ao abrir modal de upload: ' + error.message);
+//     }
+// };
 
-// Função para criar modal de upload
-function createUploadModal() {
-    const modalHTML = `
-        <div id="uploadModal" class="modal" style="display: none;">
-            <div class="modal-content" style="max-width: 600px;">
-                <div class="modal-header">
-                    <h3>📁 Upload de Arquivo</h3>
-                    <span class="close" onclick="closeUploadModal()">&times;</span>
-                </div>
-                <div class="modal-body">
-                    <div style="margin-bottom: 20px;">
-                        <label>Selecione o arquivo (Excel/CSV):</label>
-                        <input type="file" id="uploadFile" accept=".xlsx,.xls,.csv" style="width: 100%; padding: 10px; margin: 10px 0;">
-                    </div>
-                    <div style="margin-bottom: 20px;">
-                        <label>Tipo de dados:</label>
-                        <select id="uploadType" style="width: 100%; padding: 10px; margin: 10px 0;">
-                            <option value="enderecos">Endereços</option>
-                            <option value="gestao">Gestão de Projetos</option>
-                        </select>
-                    </div>
-                    <div id="uploadProgress" style="display: none;">
-                        <div style="background: #f0f0f0; border-radius: 10px; overflow: hidden; margin: 10px 0;">
-                            <div id="uploadProgressBar" style="height: 20px; background: #4CAF50; width: 0%; transition: width 0.3s;"></div>
-                        </div>
-                        <p id="uploadStatus">Preparando upload...</p>
-                    </div>
-                    <div id="uploadResults" style="display: none; margin-top: 20px;">
-                        <h4>Resultados:</h4>
-                        <div id="uploadResultsContent"></div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-cancel" onclick="closeUploadModal()">
-                        <i class="fas fa-times"></i> Cancelar
-                    </button>
-                    <button type="button" class="btn-save" onclick="processUpload()">
-                        <i class="fas fa-upload"></i> Fazer Upload
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    const div = document.createElement('div');
-    div.innerHTML = modalHTML;
-    return div.firstElementChild;
-}
+// Função para criar modal de upload - DESABILITADA
+// function createUploadModal() {
+//     const modalHTML = `
+//         <div id="uploadModal" class="modal" style="display: none;">
+//             <div class="modal-content" style="max-width: 600px;">
+//                 <div class="modal-header">
+//                     <h3>📁 Upload de Arquivo</h3>
+//                     <span class="close" onclick="closeUploadModal()">&times;</span>
+//                 </div>
+//                 <div class="modal-body">
+//                     <div style="margin-bottom: 20px;">
+//                         <label>Selecione o arquivo (Excel/CSV):</label>
+//                         <input type="file" id="uploadFile" accept=".xlsx,.xls,.csv" style="width: 100%; padding: 10px; margin: 10px 0;">
+//                     </div>
+//                     <div style="margin-bottom: 20px;">
+//                         <label>Tipo de dados:</label>
+//                         <select id="uploadType" style="width: 100%; padding: 10px; margin: 10px 0;">
+//                             <option value="enderecos">Endereços</option>
+//                             <option value="gestao">Gestão de Projetos</option>
+//                         </select>
+//                     </div>
+//                     <div id="uploadProgress" style="display: none;">
+//                         <div style="background: #f0f0f0; border-radius: 10px; overflow: hidden; margin: 10px 0;">
+//                             <div id="uploadProgressBar" style="height: 20px; background: #4CAF50; width: 0%; transition: width 0.3s;"></div>
+//                         </div>
+//                         <p id="uploadStatus">Preparando upload...</p>
+//                     </div>
+//                     <div id="uploadResults" style="display: none; margin-top: 20px;">
+//                         <h4>Resultados:</h4>
+//                         <div id="uploadResultsContent"></div>
+//                     </div>
+//                 </div>
+//                 <div class="modal-footer">
+//                     <button type="button" class="btn-cancel" onclick="closeUploadModal()">
+//                         <i class="fas fa-times"></i> Cancelar
+//                     </button>
+//                     <button type="button" class="btn-save" onclick="processUpload()">
+//                         <i class="fas fa-upload"></i> Fazer Upload
+//                     </button>
+//                 </div>
+//             </div>
+//         </div>
+//     `;
+//     
+//     const div = document.createElement('div');
+//     div.innerHTML = modalHTML;
+//     return div.firstElementChild;
+// }
 
-// Função para fechar modal de upload
-window.closeUploadModal = function() {
-    const modal = document.getElementById('uploadModal');
-    if (modal) {
-        modal.style.display = 'none';
-        modal.remove();
-    }
-};
+// Função para fechar modal de upload - DESABILITADA
+// window.closeUploadModal = function() {
+//     const modal = document.getElementById('uploadModal');
+//     if (modal) {
+//         modal.style.display = 'none';
+//         modal.remove();
+//     }
+// };
 
 // Função desabilitada - usar dashboard-handlers.js
 window.processUploadOLD = async function() {

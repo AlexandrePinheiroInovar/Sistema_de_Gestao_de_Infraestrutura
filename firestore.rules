@@ -3,58 +3,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // REGRAS TEMPORÁRIAS MAIS PERMISSIVAS PARA TESTE
+    // ============= REGRAS DE DESENVOLVIMENTO - MUITO PERMISSIVAS =============
+    // APENAS PARA TESTE - REMOVER EM PRODUÇÃO
     
-    // ============= COLEÇÃO DE USUÁRIOS =============
-    match /users/{userId} {
-      // Permitir que usuários autenticados criem e leiam seus próprios dados
-      allow read, create, update: if request.auth != null && request.auth.uid == userId;
-      
-      // Permitir que usuários com role ADMIN façam qualquer operação
-      allow read, write: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
-    }
-    
-    // ============= COLEÇÃO DE ENDEREÇOS =============
-    match /enderecos/{enderecoId} {
-      // Permitir leitura para usuários autenticados
-      allow read: if request.auth != null;
-      
-      // Permitir escrita para usuários com role SUPERVISOR, GESTOR ou ADMIN
-      allow write: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['SUPERVISOR', 'GESTOR', 'ADMIN'];
-    }
-    
-    // ============= OUTRAS COLEÇÕES =============
-    match /gestao/{document=**} {
-      allow read, write: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['GESTOR', 'ADMIN'];
-    }
-    
-    match /sistema/{document=**} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['GESTOR', 'ADMIN'];
-    }
-    
-    match /relatorios/{document=**} {
-      allow read, write: if request.auth != null;
-    }
-    
-    match /logs/{document=**} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['GESTOR', 'ADMIN'];
-    }
-    
-    // ============= REGRA PADRÃO =============
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write: if true;
     }
   }
 }

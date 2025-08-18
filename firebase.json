@@ -18,12 +18,6 @@
       "*.env*",
       "*.yml"
     ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ],
     "headers": [
       {
         "source": "**/*.@(js|css|html)",
