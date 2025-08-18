@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Análises - Dashboard</title>
-    <link rel="stylesheet" href="src/css/styles.css">
-    <link rel="stylesheet" href="src/css/checkbox-dropdown.css">
+    <link rel="stylesheet" href="src/css/styles.css?v=1.2">
+    <link rel="stylesheet" href="src/css/checkbox-dropdown.css?v=1.2">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="src/assets/images/Inovar-Telecom-Logo-Site_.png">
 </head>
@@ -583,10 +583,13 @@
                                 <span class="btn-icon">➕</span>
                                 Novo Endereço
                             </button>
-                            <button class="btn-upload" onclick="openUploadModal()">
-                                <span class="btn-icon">📁</span>
-                                Upload Planilha
-                            </button>
+                            <div class="upload-excel-container">
+                                <input type="file" id="excelUpload" accept=".xlsx,.xls" style="display: none;">
+                                <button class="btn-upload-excel" onclick="document.getElementById('excelUpload').click()">
+                                    <span class="btn-icon">📊</span>
+                                    Importar Excel
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -1398,53 +1401,6 @@
         </div>
     </div>
 
-    <!-- Modal de Upload Simples -->
-    <div id="uploadModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-upload"></i> Upload de Planilha Excel</h3>
-                <span class="close" onclick="closeUploadModal()">&times;</span>
-            </div>
-            <div class="upload-simple-content">
-                <div class="upload-info">
-                    <p><strong>📋 Instruções:</strong></p>
-                    <ul>
-                        <li>Selecione um arquivo Excel (.xlsx ou .xls)</li>
-                        <li>A planilha deve conter colunas com dados de endereços</li>
-                        <li>Os dados serão importados diretamente para a tabela</li>
-                    </ul>
-                </div>
-                
-                <div class="upload-area-simple" id="uploadAreaSimple">
-                    <div class="upload-icon-simple">
-                        <i class="fas fa-file-excel"></i>
-                    </div>
-                    <p class="upload-text-simple">
-                        <strong>Clique aqui ou arraste um arquivo Excel</strong><br>
-                        <small>Formatos aceitos: .xlsx, .xls</small>
-                    </p>
-                    <input type="file" id="fileInputSimple" accept=".xlsx,.xls" style="display: none;">
-                </div>
-
-                <div id="uploadStatus" class="upload-status" style="display: none;">
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill"></div>
-                    </div>
-                    <p id="statusText">Processando...</p>
-                </div>
-
-                <div id="uploadResults" class="upload-results" style="display: none;">
-                    <div class="results-content" id="resultsContent"></div>
-                </div>
-            </div>
-            
-            <div class="modal-footer">
-                <button type="button" class="btn-cancel" onclick="closeUploadModal()">
-                    <i class="fas fa-times"></i> Fechar
-                </button>
-            </div>
-        </div>
-    </div>
 
     <!-- ===== NOVA TELA DE PERFIL DO USUÁRIO ===== -->
     <div id="userProfileScreen" class="profile-screen" style="display: none;">
@@ -1533,16 +1489,16 @@
         }, 100);
     </script>
     
-    <script src="src/js/firebase-complete.js"></script>
-    <script src="src/js/firestore-integration.js"></script>
-    <script src="src/js/dashboard-minimal.js"></script>
-    <script src="src/js/dashboard-functions.js"></script>
+    <script src="src/js/firebase-complete.js?v=1.2"></script>
+    <script src="src/js/firestore-integration.js?v=1.2"></script>
+    <script src="src/js/dashboard-minimal.js?v=1.2"></script>
+    <script src="src/js/dashboard-functions.js?v=1.2"></script>
     <!-- <script src="script.js"></script> TEMPORARIAMENTE DESABILITADO PARA TESTAR LOOP -->
     <!-- <script src="new-dropdown.js"></script> TEMPORARIAMENTE DESABILITADO PARA TESTAR LOOP -->
-    <script src="src/js/dashboard-handlers.js"></script>
-    <script src="src/js/upload-simple.js"></script>
-    <script src="src/js/checkbox-dropdown.js"></script>
-    <script src="src/js/force-init-dropdowns.js"></script>
+    <script src="src/js/dashboard-handlers.js?v=1.2"></script>
+    <script src="src/js/dynamic-excel-upload.js?v=1.2"></script>
+    <script src="src/js/checkbox-dropdown.js?v=1.2"></script>
+    <script src="src/js/force-init-dropdowns.js?v=1.2"></script>
     <script>
         // O script.js já tem o event listener DOMContentLoaded
         // Não precisamos duplicar aqui

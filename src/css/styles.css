@@ -13033,3 +13033,104 @@ body.colorblind-mode .user-role-simple {
     50% { opacity: 0.7; }
     100% { opacity: 1; }
 }
+
+/* ========== SISTEMA DE UPLOAD EXCEL DINÂMICO ========== */
+
+/* Container do botão de upload */
+.upload-excel-container {
+    position: relative;
+}
+
+/* Botão de upload Excel */
+.btn-upload-excel {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.btn-upload-excel:hover {
+    background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+}
+
+.btn-upload-excel:active {
+    transform: translateY(0);
+}
+
+/* Botões pequenos para ações da tabela dinâmica */
+.btn-edit-small,
+.btn-delete-small {
+    background: none;
+    border: none;
+    padding: 4px 8px;
+    margin: 0 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.btn-edit-small:hover {
+    background: #e3f2fd;
+    transform: scale(1.1);
+}
+
+.btn-delete-small:hover {
+    background: #ffebee;
+    transform: scale(1.1);
+}
+
+/* Tabela dinâmica */
+.crud-table.dynamic {
+    border: 2px solid #28a745;
+}
+
+.crud-table.dynamic thead tr {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.crud-table.dynamic thead th {
+    color: white;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Modal dinâmico de edição */
+#dynamicEditModal .modal-content {
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+#dynamicEditModal .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+}
+
+/* Responsividade para botão de upload */
+@media (max-width: 768px) {
+    .btn-upload-excel {
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+    
+    .btn-upload-excel .btn-icon {
+        font-size: 16px;
+    }
+}
