@@ -13134,3 +13134,278 @@ body.colorblind-mode .user-role-simple {
         font-size: 16px;
     }
 }
+
+/* ========== NOVA TABELA FIREBASE DINÂMICA ========== */
+
+/* Status da Conexão Firebase */
+.firebase-status {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.firebase-status .status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.firebase-status .status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.firebase-status .status-dot.connecting {
+    background: #ffc107;
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+}
+
+.firebase-status .status-dot.connected {
+    background: #28a745;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+}
+
+.firebase-status .status-dot.error {
+    background: #dc3545;
+    box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
+}
+
+.firebase-status .status-text {
+    font-weight: 500;
+    color: #495057;
+    font-size: 14px;
+}
+
+/* Filtros com ação de refresh */
+.search-filters {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.search-filters .search-bar {
+    flex: 1;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-refresh {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-refresh:hover {
+    background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Container da Nova Tabela Firebase */
+.firebase-table-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    border: 1px solid #e3e6f0;
+    overflow: hidden;
+}
+
+.firebase-table-container .table-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.firebase-table-container .table-header h4 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.table-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: right;
+}
+
+.table-stats span {
+    font-size: 13px;
+    opacity: 0.9;
+}
+
+/* Wrapper da tabela com scroll */
+.table-wrapper {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 600px;
+}
+
+/* Nova Tabela Firebase */
+.firebase-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    background: white;
+}
+
+.firebase-table thead {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.firebase-table thead th {
+    padding: 15px 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.firebase-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.firebase-table tbody tr:nth-child(even) {
+    background: #f8f9fa;
+}
+
+.firebase-table tbody tr:hover {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f0f7ff 100%);
+    transform: scale(1.001);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.firebase-table tbody td {
+    padding: 12px;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.firebase-table tbody td[title] {
+    cursor: help;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    color: #6c757d;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Mensagem quando não há dados */
+.no-data-message {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+}
+
+.no-data-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.no-data-message h3 {
+    margin: 0 0 10px 0;
+    color: #495057;
+    font-size: 18px;
+}
+
+.no-data-message p {
+    margin: 0 0 25px 0;
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+/* Animação de pulse para status */
+@keyframes pulse {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(1.1);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Responsividade para a nova tabela */
+@media (max-width: 768px) {
+    .firebase-table-container .table-header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .table-stats {
+        text-align: center;
+    }
+    
+    .search-filters {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .firebase-table {
+        font-size: 12px;
+    }
+    
+    .firebase-table thead th,
+    .firebase-table tbody td {
+        padding: 8px 6px;
+        min-width: 80px;
+    }
+}

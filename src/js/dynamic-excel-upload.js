@@ -30,8 +30,8 @@ async function loadExistingDataOnPageLoad() {
     console.log('🚀 [DYNAMIC-EXCEL-UPLOAD] Carregando dados existentes do Firestore...');
     
     try {
-        // Aguardar um pouco para garantir que o Firebase está pronto
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Aguardar o sistema principal carregar primeiro
+        await new Promise(resolve => setTimeout(resolve, 4000));
         
         // Verificar se estamos na página correta (seção de endereços)
         const enderecosSection = document.getElementById('enderecos');
@@ -40,21 +40,32 @@ async function loadExistingDataOnPageLoad() {
             return;
         }
         
-        // Carregar dados do Firestore
+        // Verificar se o sistema principal já carregou dados
+        const tbody = document.getElementById('enderecosTableBody');
+        if (tbody && tbody.children.length > 0) {
+            console.log('✅ [DYNAMIC-EXCEL-UPLOAD] Sistema principal já carregou dados, não interferindo');
+            return;
+        }
+        
+        // Se não há dados, tentar carregar com nosso sistema
+        console.log('🔄 [DYNAMIC-EXCEL-UPLOAD] Sistema principal não carregou dados, carregando...');
         await reloadTableFromFirestore();
         
     } catch (error) {
         console.error('❌ [DYNAMIC-EXCEL-UPLOAD] Erro ao carregar dados na inicialização:', error);
         
-        // Tentar novamente após mais tempo
+        // Tentar novamente após mais tempo só se não houver dados
         setTimeout(async () => {
             try {
-                console.log('🔄 [DYNAMIC-EXCEL-UPLOAD] Tentativa de carregamento tardio...');
-                await reloadTableFromFirestore();
+                const tbody = document.getElementById('enderecosTableBody');
+                if (!tbody || tbody.children.length === 0) {
+                    console.log('🔄 [DYNAMIC-EXCEL-UPLOAD] Tentativa de carregamento tardio...');
+                    await reloadTableFromFirestore();
+                }
             } catch (retryError) {
                 console.error('❌ [DYNAMIC-EXCEL-UPLOAD] Erro na tentativa tardia:', retryError);
             }
-        }, 5000);
+        }, 8000);
     }
 }
 

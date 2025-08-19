@@ -595,49 +595,67 @@
 
 
 
-                    <!-- Filtros de Busca -->
-                    <div class="search-filters">
-                        <div class="search-bar">
-                            <input type="text" id="searchInput" placeholder="🔍 Buscar por endereço, condomínio, equipe..." onkeyup="filterTable()">
+                    <!-- Status da Conexão Firebase -->
+                    <div id="firebaseStatus" class="firebase-status">
+                        <div class="status-indicator">
+                            <span class="status-dot connecting"></span>
+                            <span class="status-text">Conectando ao Firebase...</span>
                         </div>
                     </div>
 
-                    <!-- Tabela de Endereços -->
-                    <div class="crud-table-container">
-                        <table class="crud-table" id="enderecosTable">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Projeto</th>
-                                    <th>Sub Projeto</th>
-                                    <th>Tipo de Ação</th>
-                                    <th>Condomínio</th>
-                                    <th>Endereço</th>
-                                    <th>Cidade</th>
-                                    <th>PEP</th>
-                                    <th>COD IMOVEL GED</th>
-                                    <th>NODE GERENCIAL</th>
-                                    <th>Área Técnica</th>
-                                    <th>HP</th>
-                                    <th>ANDAR</th>
-                                    <th>Data Recebimento</th>
-                                    <th>Data Início</th>
-                                    <th>Data Final</th>
-                                    <th>Equipe</th>
-                                    <th>Supervisor</th>
-                                    <th>Status</th>
-                                    <th>RDO</th>
-                                    <th>BOOK</th>
-                                    <th>PROJETO</th>
-                                    <th>Situação</th>
-                                    <th>Justificativa</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="enderecosTableBody">
-                                <!-- Dados serão inseridos aqui via JavaScript -->
-                            </tbody>
-                        </table>
+                    <!-- Filtros de Busca -->
+                    <div class="search-filters">
+                        <div class="search-bar">
+                            <input type="text" id="dynamicSearchInput" placeholder="🔍 Buscar..." onkeyup="filterDynamicTable()">
+                        </div>
+                        <div class="filter-actions">
+                            <button onclick="refreshTableData()" class="btn-refresh" title="Recarregar dados">
+                                <span class="btn-icon">🔄</span>
+                                Atualizar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Nova Tabela Firebase Dinâmica -->
+                    <div class="firebase-table-container">
+                        <div class="table-header">
+                            <h4>📊 Dados da Planilha</h4>
+                            <div class="table-stats">
+                                <span id="tableRecordCount">0 registros</span>
+                                <span id="tableLastUpdate">Última atualização: --</span>
+                            </div>
+                        </div>
+                        
+                        <div class="table-wrapper">
+                            <table class="firebase-table" id="firebaseTable">
+                                <thead id="firebaseTableHead">
+                                    <tr>
+                                        <th>Carregando...</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="firebaseTableBody">
+                                    <tr>
+                                        <td style="text-align: center; padding: 40px;">
+                                            <div class="loading-spinner">
+                                                <div class="spinner"></div>
+                                                <p>Carregando dados do Firebase...</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Mensagem quando não há dados -->
+                        <div id="noDataMessage" class="no-data-message" style="display: none;">
+                            <div class="no-data-icon">📊</div>
+                            <h3>Nenhum dado encontrado</h3>
+                            <p>Faça o upload de uma planilha Excel para começar.</p>
+                            <button onclick="document.getElementById('excelUpload').click()" class="btn-primary">
+                                <span class="btn-icon">📊</span>
+                                Importar Excel
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -1496,7 +1514,7 @@
     <!-- <script src="script.js"></script> TEMPORARIAMENTE DESABILITADO PARA TESTAR LOOP -->
     <!-- <script src="new-dropdown.js"></script> TEMPORARIAMENTE DESABILITADO PARA TESTAR LOOP -->
     <script src="src/js/dashboard-handlers.js?v=1.3&t=2025081813"></script>
-    <script src="src/js/dynamic-excel-upload.js?v=1.3&t=2025081813"></script>
+    <script src="src/js/firebase-table-system.js?v=2.0&t=2025081914"></script>
     <script src="test-firebase-debug.js?v=1.0"></script>
     <script src="src/js/checkbox-dropdown.js?v=1.3&t=2025081813"></script>
     <script src="src/js/force-init-dropdowns.js?v=1.3&t=2025081813"></script>

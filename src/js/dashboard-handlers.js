@@ -519,6 +519,10 @@ async function loadInitialData() {
         // Carregar estatísticas
         await loadStatistics();
         
+        // IMPORTANTE: Carregar tabela de endereços
+        await loadEnderecosTable();
+        console.log('✅ [DASHBOARD-HANDLERS] Tabela de endereços carregada');
+        
         console.log('✅ [DASHBOARD-HANDLERS] Dados iniciais carregados');
     } catch (error) {
         console.error('❌ Erro ao carregar dados iniciais:', error);
