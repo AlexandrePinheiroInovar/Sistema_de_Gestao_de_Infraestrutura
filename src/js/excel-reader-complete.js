@@ -844,9 +844,164 @@ function showNotification(title, message, type) {
     }
 }
 
+// ============= LIMPEZA COMPLETA DO FIREBASE =============
+window.clearAllFirebaseData = async function() {
+    const confirmed = confirm(`🗑️ LIMPEZA COMPLETA DOS DADOS\n\n⚠️ ATENÇÃO: Esta ação vai remover TODOS os dados das seguintes coleções:\n\n• enderecos (tabela principal)\n• projetos\n• subprojetos  \n• tiposacao\n• supervisores\n• equipes\n• cidades\n\nEsta ação NÃO PODE ser desfeita!\n\nDeseja continuar?`);
+    
+    if (!confirmed) {
+        showNotification('ℹ️ Cancelado', 'Limpeza cancelada pelo usuário', 'info');
+        return;
+    }
+    
+    // Segunda confirmação para segurança
+    const doubleConfirmed = confirm(`🚨 CONFIRMAÇÃO FINAL\n\nTem CERTEZA ABSOLUTA que deseja apagar TODOS os dados?\n\nEsta é sua última chance para cancelar!`);
+    
+    if (!doubleConfirmed) {
+        showNotification('ℹ️ Cancelado', 'Limpeza cancelada pelo usuário', 'info');
+        return;
+    }
+    
+    try {
+        showNotification('🗑️ Limpando...', 'Removendo todos os dados do Firebase...', 'info');
+        
+        if (!firebase || !firebase.firestore) {
+            throw new Error('Firebase não disponível');
+        }
+        
+        const user = window.getCurrentUser();
+        if (!user) {
+            throw new Error('Usuário não autenticado');
+        }
+        
+        console.log('🗑️ [FIREBASE-CLEANUP] Iniciando limpeza completa...');
+        
+        // Coleções para limpar
+        const collections = [
+            'enderecos',
+            'projetos', 
+            'subprojetos',
+            'tiposacao',
+            'supervisores',
+            'equipes',
+            'cidades'
+        ];
+        
+        let totalDeleted = 0;
+        
+        // Limpar cada coleção
+        for (const collectionName of collections) {
+            console.log(`🗑️ Limpando coleção: ${collectionName}...`);
+            
+            try {
+                const snapshot = await firebase.firestore()
+                    .collection(collectionName)
+                    .limit(500) // Limitar para não sobrecarregar
+                    .get();
+                
+                if (!snapshot.empty) {
+                    const batch = firebase.firestore().batch();
+                    let batchCount = 0;
+                    
+                    snapshot.docs.forEach(doc => {
+                        batch.delete(doc.ref);
+                        batchCount++;
+                    });
+                    
+                    if (batchCount > 0) {
+                        await batch.commit();
+                        totalDeleted += batchCount;
+                        console.log(`✅ ${collectionName}: ${batchCount} documentos removidos`);
+                    }
+                    
+                    // Se há mais documentos, continuar limpeza
+                    if (snapshot.docs.length === 500) {
+                        console.log(`🔄 ${collectionName}: Continuando limpeza...`);
+                        // Recursivamente limpar o resto (simplified approach)
+                        const remainingSnapshot = await firebase.firestore()
+                            .collection(collectionName)
+                            .limit(500)
+                            .get();
+                        
+                        if (!remainingSnapshot.empty) {
+                            const remainingBatch = firebase.firestore().batch();
+                            remainingSnapshot.docs.forEach(doc => {
+                                remainingBatch.delete(doc.ref);
+                            });
+                            await remainingBatch.commit();
+                            totalDeleted += remainingSnapshot.docs.length;
+                        }
+                    }
+                } else {
+                    console.log(`✅ ${collectionName}: Já está vazia`);
+                }
+                
+            } catch (error) {
+                console.error(`❌ Erro ao limpar ${collectionName}:`, error);
+            }
+        }
+        
+        // Limpar tabela da interface
+        const tableBody = document.getElementById('enderecosTableBody');
+        if (tableBody) {
+            tableBody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 40px; color: #999;">Nenhum dado - Tabela limpa</td></tr>';
+        }
+        
+        // Limpar dados em memória
+        completeExcelData = [];
+        exactColumnOrder = [];
+        
+        showNotification('✅ Limpeza Concluída!', `Todos os dados foram removidos com sucesso!\n\nTotal: ${totalDeleted} documentos excluídos`, 'success');
+        
+        console.log(`🎉 [FIREBASE-CLEANUP] Limpeza concluída! ${totalDeleted} documentos removidos`);
+        
+    } catch (error) {
+        console.error('❌ [FIREBASE-CLEANUP] Erro na limpeza:', error);
+        showNotification('❌ Erro', `Erro na limpeza: ${error.message}`, 'error');
+    }
+};
+
+// ============= LIMPEZA APENAS DA TABELA PRINCIPAL =============
+window.clearMainTableOnly = async function() {
+    const confirmed = confirm(`🗑️ LIMPEZA DA TABELA PRINCIPAL\n\nEsta ação vai remover apenas os dados da tabela de endereços.\n\nAs tabelas de gestão (projetos, equipes, etc.) serão preservadas.\n\nDeseja continuar?`);
+    
+    if (!confirmed) return;
+    
+    try {
+        showNotification('🗑️ Limpando...', 'Removendo dados da tabela principal...', 'info');
+        
+        const snapshot = await firebase.firestore()
+            .collection('enderecos')
+            .limit(500)
+            .get();
+        
+        if (!snapshot.empty) {
+            const batch = firebase.firestore().batch();
+            snapshot.docs.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            
+            await batch.commit();
+            
+            // Limpar interface
+            const tableBody = document.getElementById('enderecosTableBody');
+            if (tableBody) {
+                tableBody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 40px; color: #999;">Tabela limpa - Faça um novo upload</td></tr>';
+            }
+            
+            showNotification('✅ Sucesso!', `${snapshot.docs.length} registros da tabela principal removidos`, 'success');
+        } else {
+            showNotification('ℹ️ Info', 'Tabela já está vazia', 'info');
+        }
+        
+    } catch (error) {
+        console.error('❌ Erro na limpeza:', error);
+        showNotification('❌ Erro', `Erro: ${error.message}`, 'error');
+    }
+};
+
 // ============= EXPOSIÇÃO GLOBAL =============
 window.completeExcelData = completeExcelData;
 window.exactColumnOrder = exactColumnOrder;
 window.recreateMainTable = recreateMainTable;
 
-console.log('✅ [EXCEL-READER-COMPLETE] Sistema completo carregado');
+console.log('✅ [EXCEL-READER-COMPLETE] Sistema completo carregado com funções de limpeza');
