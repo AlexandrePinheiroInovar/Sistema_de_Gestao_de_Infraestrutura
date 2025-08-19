@@ -719,7 +719,10 @@ window.FirestoreIntegration = (function() {
         
         // Utilitárias
         showMessage,
-        log
+        log,
+        
+        // Funções especiais para Excel
+        saveUniqueIfNotExists
     };
 })();
 
