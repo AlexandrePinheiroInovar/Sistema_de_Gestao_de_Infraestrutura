@@ -91,16 +91,34 @@ class FirebaseManager {
             return;
         }
 
-        // Fazer login anônimo se necessário
-        console.log('👤 [FIREBASE-MANAGER] Fazendo login anônimo...');
+        // AGUARDAR USUÁRIO SE AUTENTICAR (não fazer login anônimo)
+        console.log('⏳ [FIREBASE-MANAGER] Aguardando usuário se autenticar...');
         try {
-            const result = await this.auth.signInAnonymously();
-            this.currentUser = result.user;
-            console.log('✅ [FIREBASE-MANAGER] Login anônimo realizado:', this.currentUser.uid);
+            // Aguardar até que um usuário se autentique
+            await this._waitForUserAuthentication();
+            console.log('✅ [FIREBASE-MANAGER] Usuário autenticado:', this.currentUser.uid);
         } catch (error) {
-            console.error('❌ [FIREBASE-MANAGER] Erro no login anônimo:', error);
-            throw new Error('Falha na autenticação');
+            console.error('❌ [FIREBASE-MANAGER] Erro na autenticação:', error);
+            throw new Error('Usuário precisa estar logado para usar o sistema');
         }
+    }
+
+    async _waitForUserAuthentication() {
+        return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error('Timeout: Usuário precisa fazer login'));
+            }, 30000); // 30 segundos para o usuário fazer login
+
+            const unsubscribe = this.auth.onAuthStateChanged((user) => {
+                if (user && !user.isAnonymous) { // Apenas usuários reais, não anônimos
+                    clearTimeout(timeout);
+                    unsubscribe();
+                    this.currentUser = user;
+                    console.log('✅ [FIREBASE-MANAGER] Usuário real autenticado:', user.uid);
+                    resolve();
+                }
+            });
+        });
     }
 
     // Métodos públicos para verificar estado
@@ -125,14 +143,36 @@ class FirebaseManager {
 
     // Método para garantir que está pronto para uso
     async ensureReady() {
+        console.log('🔍 [FIREBASE-MANAGER] Verificando se Firebase está pronto...');
+        
         if (!this.initialized) {
+            console.log('⏳ [FIREBASE-MANAGER] Inicializando Firebase...');
             await this.initialize();
         }
 
-        if (!this.isConnected()) {
-            throw new Error('Firebase não está conectado');
+        // Verificação rigorosa da conexão e autenticação
+        if (!this.isConnected() || !this.currentUser || !this.auth.currentUser) {
+            console.error('❌ [FIREBASE-MANAGER] Estado inadequado:', {
+                initialized: this.initialized,
+                connected: this.connected,
+                hasCurrentUser: !!this.currentUser,
+                hasAuthCurrentUser: !!this.auth?.currentUser
+            });
+            throw new Error('Usuário precisa estar logado para usar o sistema');
         }
 
+        // Verificar se não é usuário anônimo
+        if (this.currentUser.isAnonymous) {
+            throw new Error('Sistema requer usuário cadastrado (não anônimo)');
+        }
+
+        // Verificação adicional para garantir que o usuário está realmente autenticado
+        if (this.currentUser.uid !== this.auth.currentUser.uid) {
+            console.error('❌ [FIREBASE-MANAGER] Inconsistência nos dados do usuário');
+            throw new Error('Inconsistência na autenticação do usuário');
+        }
+
+        console.log('✅ [FIREBASE-MANAGER] Firebase está pronto para uso:', this.currentUser.uid);
         return true;
     }
 }
@@ -215,9 +255,26 @@ async function loadFirebaseTableData() {
             // Atualizar estatísticas
             updateTableStats(data.length);
             
+            // ATUALIZAR CARDS, FILTROS E GRÁFICOS DO DASHBOARD
+            try {
+                await updateDashboardCards();
+                await updateDashboardFilters();
+                await updateDashboardCharts();
+                console.log('✅ [FIREBASE-TABLE] Cards, filtros e gráficos atualizados');
+            } catch (error) {
+                console.warn('⚠️ [FIREBASE-TABLE] Erro ao atualizar dashboard:', error);
+            }
+            
         } else {
             console.log('📋 [FIREBASE-TABLE] Nenhum dado encontrado');
             showNoDataMessage();
+            
+            // Atualizar com estatísticas vazias
+            try {
+                await updateDashboardCards();
+            } catch (error) {
+                console.warn('⚠️ [FIREBASE-TABLE] Erro ao atualizar cards vazios:', error);
+            }
         }
         
     } catch (error) {
@@ -602,16 +659,20 @@ async function saveExcelDataToFirebase(data) {
     console.log('💾 [FIREBASE-TABLE] Salvando dados no Firebase...');
     
     try {
-        // Garantir que Firebase está pronto
+        // GARANTIR QUE FIREBASE ESTÁ PRONTO E USUÁRIO AUTENTICADO
+        console.log('🔍 [FIREBASE-TABLE] Verificando estado do Firebase...');
         await firebaseManager.ensureReady();
         
         // Obter referências através do manager
         const firestore = firebaseManager.getFirestore();
         const user = firebaseManager.getCurrentUser();
         
-        if (!user) {
-            throw new Error('Usuário não autenticado');
+        // Verificação adicional de segurança
+        if (!user || !user.uid) {
+            throw new Error('Usuário não autenticado ou sem UID');
         }
+        
+        console.log('👤 [FIREBASE-TABLE] Usuário confirmado para salvamento:', user.uid);
         
         // Criar batch operation
         const batch = firestore.batch();
@@ -620,11 +681,11 @@ async function saveExcelDataToFirebase(data) {
         
         for (const row of data) {
             try {
-                // Preparar dados
+                // Preparar dados - USAR firebase.firestore.FieldValue CORRETAMENTE
                 const documentData = {
                     ...row,
-                    createdAt: firestore.FieldValue.serverTimestamp(),
-                    updatedAt: firestore.FieldValue.serverTimestamp(),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                     createdBy: user.uid,
                     source: 'excel_upload'
                 };
@@ -646,14 +707,18 @@ async function saveExcelDataToFirebase(data) {
         }
         
         if (savedCount > 0) {
+            console.log(`💾 [FIREBASE-TABLE] Salvando ${savedCount} registros no Firebase...`);
             await batch.commit();
-            console.log(`✅ [FIREBASE-TABLE] ${savedCount} registros salvos no Firebase`);
+            console.log(`✅ [FIREBASE-TABLE] ${savedCount} registros salvos com sucesso no Firebase`);
+        } else {
+            console.warn('⚠️ [FIREBASE-TABLE] Nenhum registro válido para salvar');
         }
         
         return savedCount;
         
     } catch (error) {
-        console.error('❌ [FIREBASE-TABLE] Erro ao salvar no Firebase:', error);
+        console.error('❌ [FIREBASE-TABLE] Erro detalhado ao salvar no Firebase:', error);
+        console.error('❌ [FIREBASE-TABLE] Stack trace:', error.stack);
         throw error;
     }
 }
@@ -667,6 +732,562 @@ function showNotification(title, message, type) {
     }
 }
 
+// ============= ESTATÍSTICAS E ANÁLISE DE DADOS =============
+async function getFirebaseTableStatistics() {
+    console.log('📊 [FIREBASE-TABLE] Calculando estatísticas...');
+    
+    try {
+        await firebaseManager.ensureReady();
+        const firestore = firebaseManager.getFirestore();
+        const snapshot = await firestore.collection('enderecos').get();
+        
+        const allData = [];
+        snapshot.forEach(doc => {
+            allData.push(doc.data());
+        });
+        
+        if (allData.length === 0) {
+            return getEmptyStatistics();
+        }
+        
+        // Calcular estatísticas
+        const stats = {
+            totalRegistros: allData.length,
+            enderecosDistintos: getUniqueCount(allData, 'endereco'),
+            condominiosDistintos: getUniqueCount(allData, 'condominio'),
+            cidadesDistintas: getUniqueCount(allData, 'cidade'),
+            equipesDistintas: getUniqueCount(allData, 'equipe'),
+            supervisoresDistintos: getUniqueCount(allData, 'supervisor'),
+            projetosDistintos: getUniqueCount(allData, 'projeto'),
+            statusCounts: getStatusCounts(allData),
+            produtividade: calculateProductivity(allData),
+            registrosPorMes: getRecordsByMonth(allData),
+            topEquipes: getTopEquipes(allData),
+            topCidades: getTopCidades(allData)
+        };
+        
+        console.log('📊 [FIREBASE-TABLE] Estatísticas calculadas:', stats);
+        return stats;
+        
+    } catch (error) {
+        console.error('❌ [FIREBASE-TABLE] Erro ao calcular estatísticas:', error);
+        return getEmptyStatistics();
+    }
+}
+
+function getEmptyStatistics() {
+    return {
+        totalRegistros: 0,
+        enderecosDistintos: 0,
+        condominiosDistintos: 0,
+        cidadesDistintas: 0,
+        equipesDistintas: 0,
+        supervisoresDistintos: 0,
+        projetosDistintos: 0,
+        statusCounts: {},
+        produtividade: 0,
+        registrosPorMes: {},
+        topEquipes: [],
+        topCidades: []
+    };
+}
+
+function getUniqueCount(data, field) {
+    const unique = new Set();
+    data.forEach(item => {
+        if (item[field] && item[field] !== '') {
+            unique.add(item[field]);
+        }
+    });
+    return unique.size;
+}
+
+function getStatusCounts(data) {
+    const counts = {};
+    data.forEach(item => {
+        const status = item.status || 'Sem Status';
+        counts[status] = (counts[status] || 0) + 1;
+    });
+    return counts;
+}
+
+function calculateProductivity(data) {
+    const withStatus = data.filter(item => item.status && item.status !== '').length;
+    if (data.length === 0) return 0;
+    return Math.round((withStatus / data.length) * 100);
+}
+
+function getRecordsByMonth(data) {
+    const byMonth = {};
+    data.forEach(item => {
+        let date = null;
+        
+        // Tentar diferentes campos de data
+        if (item.createdAt && item.createdAt.seconds) {
+            date = new Date(item.createdAt.seconds * 1000);
+        } else if (item.dataInicio) {
+            date = new Date(item.dataInicio);
+        } else if (item.dataRecebimento) {
+            date = new Date(item.dataRecebimento);
+        }
+        
+        if (date && !isNaN(date)) {
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            byMonth[monthKey] = (byMonth[monthKey] || 0) + 1;
+        }
+    });
+    
+    return byMonth;
+}
+
+function getTopEquipes(data) {
+    const equipeCounts = {};
+    data.forEach(item => {
+        if (item.equipe && item.equipe !== '') {
+            equipeCounts[item.equipe] = (equipeCounts[item.equipe] || 0) + 1;
+        }
+    });
+    
+    return Object.entries(equipeCounts)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 5)
+        .map(([name, count]) => ({ name, count }));
+}
+
+function getTopCidades(data) {
+    const cidadeCounts = {};
+    data.forEach(item => {
+        if (item.cidade && item.cidade !== '') {
+            cidadeCounts[item.cidade] = (cidadeCounts[item.cidade] || 0) + 1;
+        }
+    });
+    
+    return Object.entries(cidadeCounts)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 5)
+        .map(([name, count]) => ({ name, count }));
+}
+
+// ============= ATUALIZAÇÃO DE CARDS DO DASHBOARD =============
+async function updateDashboardCards() {
+    console.log('🎯 [FIREBASE-TABLE] Atualizando cards do dashboard...');
+    
+    try {
+        const stats = await getFirebaseTableStatistics();
+        
+        // Atualizar cards principais
+        updateStatCard('statTotalRegistros', stats.totalRegistros);
+        updateStatCard('statEnderecosDistintos', stats.enderecosDistintos);
+        updateStatCard('statEquipesDistintas', stats.equipesDistintas);
+        updateStatCard('statProdutividade', `${stats.produtividade}%`);
+        
+        // Também atualizar cards da infraestrutura se existirem
+        updateStatCard('infraStatTotalRegistros', stats.totalRegistros);
+        updateStatCard('infraStatEnderecosDistintos', stats.enderecosDistintos);
+        updateStatCard('infraStatEquipesDistintas', stats.equipesDistintas);
+        updateStatCard('infraStatProdutividade', `${stats.produtividade}%`);
+        
+        // Cards adicionais
+        updateStatCard('statCondominios', stats.condominiosDistintos);
+        updateStatCard('statCidades', stats.cidadesDistintas);
+        updateStatCard('statSupervisores', stats.supervisoresDistintos);
+        updateStatCard('statProjetos', stats.projetosDistintos);
+        
+        console.log('✅ [FIREBASE-TABLE] Cards do dashboard atualizados');
+        return stats;
+        
+    } catch (error) {
+        console.error('❌ [FIREBASE-TABLE] Erro ao atualizar cards:', error);
+        return null;
+    }
+}
+
+function updateStatCard(elementId, value) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        // Animação de atualização
+        element.style.transition = 'all 0.3s ease';
+        element.style.transform = 'scale(1.05)';
+        element.textContent = value;
+        
+        setTimeout(() => {
+            element.style.transform = 'scale(1)';
+        }, 300);
+    }
+}
+
+// ============= FILTROS DINÂMICOS =============
+async function updateDashboardFilters() {
+    console.log('🔍 [FIREBASE-TABLE] Atualizando filtros do dashboard...');
+    
+    try {
+        await firebaseManager.ensureReady();
+        const firestore = firebaseManager.getFirestore();
+        const snapshot = await firestore.collection('enderecos').get();
+        
+        const allData = [];
+        snapshot.forEach(doc => {
+            allData.push(doc.data());
+        });
+        
+        // Extrair valores únicos para filtros
+        const filterData = {
+            projetos: getUniqueValues(allData, 'projeto'),
+            cidades: getUniqueValues(allData, 'cidade'),
+            equipes: getUniqueValues(allData, 'equipe'),
+            supervisores: getUniqueValues(allData, 'supervisor'),
+            status: getUniqueValues(allData, 'status'),
+            condominios: getUniqueValues(allData, 'condominio')
+        };
+        
+        // Atualizar selects de filtro
+        populateFilterSelect('filterProjeto', filterData.projetos);
+        populateFilterSelect('filterCidade', filterData.cidades);
+        populateFilterSelect('filterEquipe', filterData.equipes);
+        populateFilterSelect('filterSupervisor', filterData.supervisores);
+        populateFilterSelect('filterStatus', filterData.status);
+        populateFilterSelect('filterCondominio', filterData.condominios);
+        
+        console.log('✅ [FIREBASE-TABLE] Filtros atualizados');
+        return filterData;
+        
+    } catch (error) {
+        console.error('❌ [FIREBASE-TABLE] Erro ao atualizar filtros:', error);
+        return null;
+    }
+}
+
+function getUniqueValues(data, field) {
+    const unique = new Set();
+    data.forEach(item => {
+        if (item[field] && item[field] !== '') {
+            unique.add(item[field]);
+        }
+    });
+    return Array.from(unique).sort();
+}
+
+function populateFilterSelect(selectId, values) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    
+    // Preservar valor selecionado
+    const currentValue = select.value;
+    
+    // Limpar e recriar options
+    select.innerHTML = '<option value="">Todos</option>';
+    
+    values.forEach(value => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = value;
+        if (value === currentValue) {
+            option.selected = true;
+        }
+        select.appendChild(option);
+    });
+}
+
+// ============= ATUALIZAÇÃO DE GRÁFICOS DO DASHBOARD =============
+async function updateDashboardCharts() {
+    console.log('📈 [FIREBASE-TABLE] Atualizando gráficos do dashboard...');
+    
+    try {
+        const stats = await getFirebaseTableStatistics();
+        
+        // Atualizar diferentes tipos de gráficos
+        updateStatusChart(stats.statusCounts);
+        updateMonthlyChart(stats.registrosPorMes);
+        updateEquipesChart(stats.topEquipes);
+        updateCidadesChart(stats.topCidades);
+        
+        console.log('✅ [FIREBASE-TABLE] Gráficos atualizados');
+        return true;
+        
+    } catch (error) {
+        console.error('❌ [FIREBASE-TABLE] Erro ao atualizar gráficos:', error);
+        return false;
+    }
+}
+
+function updateStatusChart(statusCounts) {
+    // Procurar por canvas de gráfico de status
+    const chartCanvas = document.getElementById('statusChart') || 
+                       document.getElementById('pieChart') ||
+                       document.getElementById('donutChart');
+    
+    if (!chartCanvas) {
+        console.warn('⚠️ [FIREBASE-TABLE] Canvas de gráfico de status não encontrado');
+        return;
+    }
+    
+    const ctx = chartCanvas.getContext('2d');
+    
+    // Preparar dados
+    const labels = Object.keys(statusCounts);
+    const data = Object.values(statusCounts);
+    const colors = generateChartColors(labels.length);
+    
+    // Destruir gráfico existente se houver
+    if (chartCanvas.chart) {
+        chartCanvas.chart.destroy();
+    }
+    
+    // Verificar se Chart.js está disponível
+    if (typeof Chart !== 'undefined') {
+        chartCanvas.chart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: colors,
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Distribuição por Status'
+                    }
+                }
+            }
+        });
+    }
+}
+
+function updateMonthlyChart(monthlyData) {
+    const chartCanvas = document.getElementById('monthlyChart') || 
+                       document.getElementById('lineChart') ||
+                       document.getElementById('barChart');
+    
+    if (!chartCanvas) {
+        console.warn('⚠️ [FIREBASE-TABLE] Canvas de gráfico mensal não encontrado');
+        return;
+    }
+    
+    const ctx = chartCanvas.getContext('2d');
+    
+    // Ordenar por mês
+    const sortedMonths = Object.keys(monthlyData).sort();
+    const labels = sortedMonths.map(month => {
+        const [year, monthNum] = month.split('-');
+        return `${monthNum}/${year}`;
+    });
+    const data = sortedMonths.map(month => monthlyData[month]);
+    
+    // Destruir gráfico existente se houver
+    if (chartCanvas.chart) {
+        chartCanvas.chart.destroy();
+    }
+    
+    if (typeof Chart !== 'undefined') {
+        chartCanvas.chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Registros por Mês',
+                    data: data,
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Registros ao Longo do Tempo'
+                    }
+                }
+            }
+        });
+    }
+}
+
+function updateEquipesChart(topEquipes) {
+    const chartCanvas = document.getElementById('equipesChart') || 
+                       document.getElementById('teamChart');
+    
+    if (!chartCanvas || topEquipes.length === 0) {
+        console.warn('⚠️ [FIREBASE-TABLE] Canvas de gráfico de equipes não encontrado');
+        return;
+    }
+    
+    const ctx = chartCanvas.getContext('2d');
+    
+    const labels = topEquipes.map(item => item.name);
+    const data = topEquipes.map(item => item.count);
+    const colors = generateChartColors(labels.length);
+    
+    // Destruir gráfico existente se houver
+    if (chartCanvas.chart) {
+        chartCanvas.chart.destroy();
+    }
+    
+    if (typeof Chart !== 'undefined') {
+        chartCanvas.chart = new Chart(ctx, {
+            type: 'horizontalBar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Registros',
+                    data: data,
+                    backgroundColor: colors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Top 5 Equipes'
+                    }
+                }
+            }
+        });
+    }
+}
+
+function updateCidadesChart(topCidades) {
+    const chartCanvas = document.getElementById('cidadesChart') || 
+                       document.getElementById('cityChart');
+    
+    if (!chartCanvas || topCidades.length === 0) {
+        console.warn('⚠️ [FIREBASE-TABLE] Canvas de gráfico de cidades não encontrado');
+        return;
+    }
+    
+    const ctx = chartCanvas.getContext('2d');
+    
+    const labels = topCidades.map(item => item.name);
+    const data = topCidades.map(item => item.count);
+    const colors = generateChartColors(labels.length);
+    
+    // Destruir gráfico existente se houver
+    if (chartCanvas.chart) {
+        chartCanvas.chart.destroy();
+    }
+    
+    if (typeof Chart !== 'undefined') {
+        chartCanvas.chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Registros',
+                    data: data,
+                    backgroundColor: colors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Top 5 Cidades'
+                    }
+                }
+            }
+        });
+    }
+}
+
+function generateChartColors(count) {
+    const colors = [
+        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+        '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#36A2EB'
+    ];
+    
+    const result = [];
+    for (let i = 0; i < count; i++) {
+        result.push(colors[i % colors.length]);
+    }
+    
+    return result;
+}
+
+// ============= HOOK PARA INTEGRAÇÃO COM OUTROS SISTEMAS =============
+function integrateWithExistingSystems() {
+    // Integrar com sistema de estatísticas existente se disponível
+    if (window.FirestoreIntegration && window.FirestoreIntegration.getStatistics) {
+        // Substituir função de estatísticas existente
+        const originalGetStats = window.FirestoreIntegration.getStatistics;
+        window.FirestoreIntegration.getStatistics = async function() {
+            try {
+                return await getFirebaseTableStatistics();
+            } catch (error) {
+                console.warn('⚠️ Fallback para estatísticas originais:', error);
+                return await originalGetStats();
+            }
+        };
+    }
+    
+    // Integrar com dashboard handlers se disponível
+    if (window.loadStatistics) {
+        const originalLoadStats = window.loadStatistics;
+        window.loadStatistics = async function() {
+            try {
+                await updateDashboardCards();
+                console.log('✅ [FIREBASE-TABLE] Estatísticas atualizadas via hook');
+            } catch (error) {
+                console.warn('⚠️ Fallback para carregamento original:', error);
+                await originalLoadStats();
+            }
+        };
+    }
+}
+
+// Executar integração quando o sistema carregar
+setTimeout(integrateWithExistingSystems, 3000);
+
 // ============= EXPOSIÇÃO GLOBAL =============
 window.FirebaseTableSystem = {
     loadData: loadFirebaseTableData,
@@ -675,6 +1296,10 @@ window.FirebaseTableSystem = {
     isInitialized: () => firebaseManager.isInitialized(),
     getData: () => firebaseTableData,
     getColumns: () => firebaseTableColumns,
+    getStatistics: getFirebaseTableStatistics,
+    updateCards: updateDashboardCards,
+    updateFilters: updateDashboardFilters,
+    updateCharts: updateDashboardCharts,
     manager: firebaseManager
 };
 

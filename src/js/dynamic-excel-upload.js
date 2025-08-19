@@ -297,18 +297,15 @@ async function saveDataToFirestore(data) {
     // Aguardar o Firebase estar pronto
     await waitForFirebase();
     
-    // Obter usuário atual - fazer login anônimo se necessário
+    // Obter usuário atual - REQUER USUÁRIO JÁ AUTENTICADO
     let user = getCurrentUser();
     if (!user) {
-        console.warn('⚠️ [DYNAMIC-EXCEL-UPLOAD] Usuário não autenticado, fazendo login anônimo...');
-        try {
-            const result = await firebase.auth().signInAnonymously();
-            user = result.user;
-            console.log('✅ [DYNAMIC-EXCEL-UPLOAD] Login anônimo realizado:', user.uid);
-        } catch (error) {
-            console.error('❌ [DYNAMIC-EXCEL-UPLOAD] Erro no login anônimo:', error);
-            throw new Error('Não foi possível autenticar no sistema');
-        }
+        throw new Error('Usuário precisa estar logado para usar o sistema. Por favor, faça login primeiro.');
+    }
+    
+    // Verificar se não é usuário anônimo
+    if (user.isAnonymous) {
+        throw new Error('Sistema requer usuário cadastrado. Login anônimo não é permitido.');
     }
     
     console.log('👤 [DYNAMIC-EXCEL-UPLOAD] Usuário autenticado:', user.uid);
