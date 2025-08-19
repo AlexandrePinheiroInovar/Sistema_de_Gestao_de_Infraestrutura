@@ -648,8 +648,202 @@ async function loadEnderecosTable() {
     }
 }
 
+// ============= FUNÇÕES DE CARREGAMENTO DAS TABELAS DE GESTÃO =============
+async function loadProjetosTable() {
+    try {
+        const projetos = await window.FirestoreIntegration.loadProjetos();
+        const tbody = document.getElementById('projetosTableBody');
+        
+        if (!tbody) return;
+        
+        tbody.innerHTML = projetos.map(projeto => `
+            <tr>
+                <td>${projeto.id}</td>
+                <td>${projeto.nome || ''}</td>
+                <td>${projeto.cliente || ''}</td>
+                <td>${projeto.descricao || ''}</td>
+                <td><span class="status-badge ${projeto.status?.toLowerCase()}">${projeto.status || ''}</span></td>
+                <td>${formatDate(projeto.createdAt)}</td>
+                <td>
+                    <button class="btn-edit" onclick="editProjeto('${projeto.id}')" title="Editar">✏️</button>
+                    <button class="btn-delete" onclick="deleteProjeto('${projeto.id}')" title="Excluir">🗑️</button>
+                </td>
+            </tr>
+        `).join('');
+        
+        console.log('✅ [DASHBOARD-HANDLERS] Tabela de projetos carregada');
+    } catch (error) {
+        console.error('❌ Erro ao carregar tabela de projetos:', error);
+    }
+}
+
+async function loadSubProjetosTable() {
+    try {
+        const subprojetos = await window.FirestoreIntegration.loadSubProjetos();
+        const tbody = document.getElementById('subprojetosTableBody');
+        
+        if (!tbody) return;
+        
+        tbody.innerHTML = subprojetos.map(subprojeto => `
+            <tr>
+                <td>${subprojeto.id}</td>
+                <td>${subprojeto.nome || ''}</td>
+                <td>${subprojeto.projetoPrincipal || ''}</td>
+                <td>${subprojeto.descricao || ''}</td>
+                <td><span class="status-badge ${subprojeto.status?.toLowerCase()}">${subprojeto.status || ''}</span></td>
+                <td>${formatDate(subprojeto.createdAt)}</td>
+                <td>
+                    <button class="btn-edit" onclick="editSubProjeto('${subprojeto.id}')" title="Editar">✏️</button>
+                    <button class="btn-delete" onclick="deleteSubProjeto('${subprojeto.id}')" title="Excluir">🗑️</button>
+                </td>
+            </tr>
+        `).join('');
+        
+        console.log('✅ [DASHBOARD-HANDLERS] Tabela de sub-projetos carregada');
+    } catch (error) {
+        console.error('❌ Erro ao carregar tabela de sub-projetos:', error);
+    }
+}
+
+async function loadTiposAcaoTable() {
+    try {
+        const tiposAcao = await window.FirestoreIntegration.loadTiposAcao();
+        const tbody = document.getElementById('tiposAcaoTableBody');
+        
+        if (!tbody) return;
+        
+        tbody.innerHTML = tiposAcao.map(tipo => `
+            <tr>
+                <td>${tipo.id}</td>
+                <td>${tipo.nome || ''}</td>
+                <td>${tipo.descricao || ''}</td>
+                <td>${tipo.categoria || ''}</td>
+                <td><span class="status-badge ${tipo.status?.toLowerCase()}">${tipo.status || ''}</span></td>
+                <td>${formatDate(tipo.createdAt)}</td>
+                <td>
+                    <button class="btn-edit" onclick="editTipoAcao('${tipo.id}')" title="Editar">✏️</button>
+                    <button class="btn-delete" onclick="deleteTipoAcao('${tipo.id}')" title="Excluir">🗑️</button>
+                </td>
+            </tr>
+        `).join('');
+        
+        console.log('✅ [DASHBOARD-HANDLERS] Tabela de tipos de ação carregada');
+    } catch (error) {
+        console.error('❌ Erro ao carregar tabela de tipos de ação:', error);
+    }
+}
+
+async function loadSupervisoresTable() {
+    try {
+        const supervisores = await window.FirestoreIntegration.loadSupervisores();
+        const tbody = document.getElementById('supervisoresTableBody');
+        
+        if (!tbody) return;
+        
+        tbody.innerHTML = supervisores.map(supervisor => `
+            <tr>
+                <td>${supervisor.id}</td>
+                <td>${supervisor.nome || ''}</td>
+                <td>${supervisor.email || ''}</td>
+                <td>${supervisor.telefone || ''}</td>
+                <td>${supervisor.area || ''}</td>
+                <td><span class="status-badge ${supervisor.status?.toLowerCase()}">${supervisor.status || ''}</span></td>
+                <td>${formatDate(supervisor.createdAt)}</td>
+                <td>
+                    <button class="btn-edit" onclick="editSupervisor('${supervisor.id}')" title="Editar">✏️</button>
+                    <button class="btn-delete" onclick="deleteSupervisor('${supervisor.id}')" title="Excluir">🗑️</button>
+                </td>
+            </tr>
+        `).join('');
+        
+        console.log('✅ [DASHBOARD-HANDLERS] Tabela de supervisores carregada');
+    } catch (error) {
+        console.error('❌ Erro ao carregar tabela de supervisores:', error);
+    }
+}
+
+async function loadEquipesTable() {
+    try {
+        const equipes = await window.FirestoreIntegration.loadEquipes();
+        const tbody = document.getElementById('equipesTableBody');
+        
+        if (!tbody) return;
+        
+        tbody.innerHTML = equipes.map(equipe => `
+            <tr>
+                <td>${equipe.id}</td>
+                <td>${equipe.nome || ''}</td>
+                <td>${equipe.lider || ''}</td>
+                <td>${equipe.membros || ''}</td>
+                <td>${equipe.especialidade || ''}</td>
+                <td><span class="status-badge ${equipe.status?.toLowerCase()}">${equipe.status || ''}</span></td>
+                <td>${formatDate(equipe.createdAt)}</td>
+                <td>
+                    <button class="btn-edit" onclick="editEquipe('${equipe.id}')" title="Editar">✏️</button>
+                    <button class="btn-delete" onclick="deleteEquipe('${equipe.id}')" title="Excluir">🗑️</button>
+                </td>
+            </tr>
+        `).join('');
+        
+        console.log('✅ [DASHBOARD-HANDLERS] Tabela de equipes carregada');
+    } catch (error) {
+        console.error('❌ Erro ao carregar tabela de equipes:', error);
+    }
+}
+
+async function loadCidadesTable() {
+    try {
+        const cidades = await window.FirestoreIntegration.loadCidades();
+        const tbody = document.getElementById('cidadesTableBody');
+        
+        if (!tbody) return;
+        
+        tbody.innerHTML = cidades.map(cidade => `
+            <tr>
+                <td>${cidade.id}</td>
+                <td>${cidade.nome || ''}</td>
+                <td>${cidade.estado || ''}</td>
+                <td>${cidade.regiao || ''}</td>
+                <td><span class="status-badge ${cidade.status?.toLowerCase()}">${cidade.status || ''}</span></td>
+                <td>${formatDate(cidade.createdAt)}</td>
+                <td>
+                    <button class="btn-edit" onclick="editCidade('${cidade.id}')" title="Editar">✏️</button>
+                    <button class="btn-delete" onclick="deleteCidade('${cidade.id}')" title="Excluir">🗑️</button>
+                </td>
+            </tr>
+        `).join('');
+        
+        console.log('✅ [DASHBOARD-HANDLERS] Tabela de cidades carregada');
+    } catch (error) {
+        console.error('❌ Erro ao carregar tabela de cidades:', error);
+    }
+}
+
+// Função auxiliar para formatar datas
+function formatDate(timestamp) {
+    if (!timestamp) return '--';
+    
+    let date;
+    if (timestamp && timestamp.seconds) {
+        // Timestamp do Firestore
+        date = new Date(timestamp.seconds * 1000);
+    } else if (timestamp instanceof Date) {
+        date = timestamp;
+    } else {
+        return '--';
+    }
+    
+    return date.toLocaleDateString('pt-BR');
+}
+
 // Expor função globalmente para uso em outros módulos
 window.loadEnderecosTable = loadEnderecosTable;
+window.loadProjetosTable = loadProjetosTable;
+window.loadSubProjetosTable = loadSubProjetosTable;
+window.loadTiposAcaoTable = loadTiposAcaoTable;
+window.loadSupervisoresTable = loadSupervisoresTable;
+window.loadEquipesTable = loadEquipesTable;
+window.loadCidadesTable = loadCidadesTable;
 
 // ============= FUNÇÕES AUXILIARES GLOBAIS =============
 window.editEndereco = function(id) {

@@ -303,10 +303,7 @@ async function saveDataToFirestore(data) {
         throw new Error('Usuário precisa estar logado para usar o sistema. Por favor, faça login primeiro.');
     }
     
-    // Verificar se não é usuário anônimo
-    if (user.isAnonymous) {
-        throw new Error('Sistema requer usuário cadastrado. Login anônimo não é permitido.');
-    }
+    // Usuário válido encontrado
     
     console.log('👤 [DYNAMIC-EXCEL-UPLOAD] Usuário autenticado:', user.uid);
     
