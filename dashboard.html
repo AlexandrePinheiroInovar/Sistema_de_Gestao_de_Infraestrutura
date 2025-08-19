@@ -1530,6 +1530,101 @@
         // Não precisamos duplicar aqui
         console.log('📄 Dashboard HTML carregado');
         
+        // ============= FUNÇÕES GLOBAIS DE GERENCIAMENTO =============
+        function abrirNovoEndereco() {
+            document.getElementById('modalTitle').textContent = 'Novo Endereço';
+            document.getElementById('crudModal').style.display = 'block';
+        }
+        
+        function closeModal() {
+            document.getElementById('crudModal').style.display = 'none';
+        }
+        
+        function openGestaoModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+        
+        function closeGestaoModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        function showGestaoTab(tabName) {
+            // Esconder todas as abas
+            const tabs = document.querySelectorAll('.gestao-tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Remover classe active de todos os botões
+            const buttons = document.querySelectorAll('.gestao-tab-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Mostrar aba selecionada
+            document.getElementById(`gestao-${tabName}-tab`).classList.add('active');
+            
+            // Adicionar classe active no botão clicado
+            event.target.classList.add('active');
+        }
+        
+        function showSection(sectionName, event) {
+            // Esconder todas as seções
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => section.classList.remove('active'));
+            
+            // Remover classe active de todos os links
+            const links = document.querySelectorAll('.sidebar-menu a');
+            links.forEach(link => link.classList.remove('active'));
+            
+            // Mostrar seção selecionada
+            document.getElementById(sectionName).classList.add('active');
+            
+            // Adicionar classe active no link clicado
+            if (event) {
+                event.target.classList.add('active');
+            }
+            
+            // Atualizar título da seção
+            const titles = {
+                'inicio': 'Início',
+                'infraestrutura': 'Dashboard - Infraestrutura',
+                'enderecos': 'Cadastro de Endereços',
+                'gestao-projetos': 'Gestão de Projetos'
+            };
+            
+            document.getElementById('section-title').textContent = titles[sectionName] || sectionName;
+        }
+        
+        // Funções para modo colorblind e perfil de usuário (caso não existam)
+        function toggleColorblindMode() {
+            console.log('Toggle colorblind mode');
+            // TODO: Implementar modo daltônico
+        }
+        
+        function openUserProfile() {
+            document.getElementById('userProfileScreen').style.display = 'block';
+        }
+        
+        function closeUserProfileScreen() {
+            document.getElementById('userProfileScreen').style.display = 'none';
+        }
+        
+        function confirmLogout() {
+            if (confirm('Deseja realmente sair do sistema?')) {
+                // TODO: Implementar logout
+                console.log('Logout confirmado');
+            }
+        }
+        
+        function toggleNewDropdown() {
+            const dropdown = document.getElementById('newUserDropdown');
+            dropdown.classList.toggle('active');
+        }
+        
+        // Fechar dropdown quando clicar fora
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('newUserDropdown');
+            if (dropdown && !dropdown.contains(event.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
 
     </script>
 </body>

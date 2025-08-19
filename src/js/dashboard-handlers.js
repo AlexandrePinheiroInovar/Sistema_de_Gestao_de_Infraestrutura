@@ -140,6 +140,7 @@ async function handleProjetoSubmit(event) {
         
         closeGestaoModal('projetoModal');
         await loadProjetosTable();
+        await loadSelectOptions(); // Recarregar dropdowns
         
         currentEditingId = null;
         form.reset();
@@ -170,6 +171,7 @@ async function handleSubProjetoSubmit(event) {
         
         closeGestaoModal('subprojetoModal');
         await loadSubProjetosTable();
+        await loadSelectOptions(); // Recarregar dropdowns
         
         currentEditingId = null;
         form.reset();
@@ -200,6 +202,7 @@ async function handleTipoAcaoSubmit(event) {
         
         closeGestaoModal('tipoAcaoModal');
         await loadTiposAcaoTable();
+        await loadSelectOptions(); // Recarregar dropdowns
         
         currentEditingId = null;
         form.reset();
@@ -230,6 +233,7 @@ async function handleSupervisorSubmit(event) {
         
         closeGestaoModal('supervisorModal');
         await loadSupervisoresTable();
+        await loadSelectOptions(); // Recarregar dropdowns
         
         currentEditingId = null;
         form.reset();
@@ -260,6 +264,7 @@ async function handleEquipeSubmit(event) {
         
         closeGestaoModal('equipeModal');
         await loadEquipesTable();
+        await loadSelectOptions(); // Recarregar dropdowns
         
         currentEditingId = null;
         form.reset();
@@ -290,6 +295,7 @@ async function handleCidadeSubmit(event) {
         
         closeGestaoModal('cidadeModal');
         await loadCidadesTable();
+        await loadSelectOptions(); // Recarregar dropdowns
         
         currentEditingId = null;
         form.reset();
@@ -523,20 +529,42 @@ async function loadInitialData() {
         await loadEnderecosTable();
         console.log('✅ [DASHBOARD-HANDLERS] Tabela de endereços carregada');
         
+        // Carregar tabelas de gestão
+        await loadAllManagementTables();
+        
         console.log('✅ [DASHBOARD-HANDLERS] Dados iniciais carregados');
     } catch (error) {
         console.error('❌ Erro ao carregar dados iniciais:', error);
     }
 }
 
+async function loadAllManagementTables() {
+    try {
+        console.log('🔄 [DASHBOARD-HANDLERS] Carregando tabelas de gestão...');
+        
+        // Carregar todas as tabelas em paralelo para melhor performance
+        await Promise.all([
+            loadProjetosTable(),
+            loadSubProjetosTable(),
+            loadTiposAcaoTable(),
+            loadSupervisoresTable(),
+            loadEquipesTable(),
+            loadCidadesTable()
+        ]);
+        
+        console.log('✅ [DASHBOARD-HANDLERS] Todas as tabelas de gestão carregadas');
+    } catch (error) {
+        console.error('❌ [DASHBOARD-HANDLERS] Erro ao carregar tabelas de gestão:', error);
+    }
+}
+
 async function loadSelectOptions() {
     try {
-        // Carregar projetos para dropdown
-        const projetos = await window.FirestoreIntegration.loadProjetos(true);
-        populateSelect('projeto', projetos, 'nome');
+        console.log('🔄 [DASHBOARD-HANDLERS] Carregando opções dos dropdowns...');
         
-        // Carregar outras opções
-        const [subProjetos, tiposAcao, supervisores, equipes, cidades] = await Promise.all([
+        // Carregar todas as opções em paralelo
+        const [projetos, subProjetos, tiposAcao, supervisores, equipes, cidades] = await Promise.all([
+            window.FirestoreIntegration.loadProjetos(true),
             window.FirestoreIntegration.loadSubProjetos(true),
             window.FirestoreIntegration.loadTiposAcao(true),
             window.FirestoreIntegration.loadSupervisores(true),
@@ -544,11 +572,26 @@ async function loadSelectOptions() {
             window.FirestoreIntegration.loadCidades(true)
         ]);
         
+        // Atualizar dropdowns do formulário "Novo Endereço"
+        populateSelect('projeto', projetos, 'nome');
         populateSelect('subProjeto', subProjetos, 'nome');
         populateSelect('tipoAcao', tiposAcao, 'nome');
         populateSelect('supervisor', supervisores, 'nome');
         populateSelect('equipe', equipes, 'nome');
         populateSelect('cidade', cidades, 'nome');
+        
+        // Atualizar dropdowns dos formulários de gestão
+        populateSelect('subprojetoProjeto', projetos, 'nome');
+        populateSelect('equipeLider', supervisores, 'nome');
+        
+        // Notificar sistema de filtros para recarregar dados
+        if (window.loadFilterData && typeof window.loadFilterData === 'function') {
+            setTimeout(() => {
+                window.loadFilterData();
+            }, 1000);
+        }
+        
+        console.log('✅ [DASHBOARD-HANDLERS] Opções dos dropdowns carregadas');
         
     } catch (error) {
         console.error('❌ Erro ao carregar opções dos selects:', error);
@@ -845,7 +888,138 @@ window.loadSupervisoresTable = loadSupervisoresTable;
 window.loadEquipesTable = loadEquipesTable;
 window.loadCidadesTable = loadCidadesTable;
 
-// ============= FUNÇÕES AUXILIARES GLOBAIS =============
+// ============= FUNÇÕES AUXILIARES GLOBAIS - GESTÃO =============
+
+// ============= FUNÇÕES DE EDIÇÃO =============
+window.editProjeto = function(id) {
+    console.log('✏️ Editando projeto:', id);
+    currentEditingId = id;
+    // TODO: Carregar dados para edição
+    document.getElementById('projetoModal').style.display = 'block';
+};
+
+window.editSubProjeto = function(id) {
+    console.log('✏️ Editando sub-projeto:', id);
+    currentEditingId = id;
+    // TODO: Carregar dados para edição
+    document.getElementById('subprojetoModal').style.display = 'block';
+};
+
+window.editTipoAcao = function(id) {
+    console.log('✏️ Editando tipo de ação:', id);
+    currentEditingId = id;
+    // TODO: Carregar dados para edição
+    document.getElementById('tipoAcaoModal').style.display = 'block';
+};
+
+window.editSupervisor = function(id) {
+    console.log('✏️ Editando supervisor:', id);
+    currentEditingId = id;
+    // TODO: Carregar dados para edição
+    document.getElementById('supervisorModal').style.display = 'block';
+};
+
+window.editEquipe = function(id) {
+    console.log('✏️ Editando equipe:', id);
+    currentEditingId = id;
+    // TODO: Carregar dados para edição
+    document.getElementById('equipeModal').style.display = 'block';
+};
+
+window.editCidade = function(id) {
+    console.log('✏️ Editando cidade:', id);
+    currentEditingId = id;
+    // TODO: Carregar dados para edição
+    document.getElementById('cidadeModal').style.display = 'block';
+};
+
+// ============= FUNÇÕES DE EXCLUSÃO =============
+window.deleteProjeto = async function(id) {
+    if (confirm('Tem certeza que deseja excluir este projeto?')) {
+        try {
+            await window.FirestoreIntegration.deleteProjeto(id);
+            showMessage('✅ Projeto excluído com sucesso!', 'success');
+            await loadProjetosTable();
+            // Recarregar dropdowns
+            await loadSelectOptions();
+        } catch (error) {
+            console.error('❌ Erro ao excluir projeto:', error);
+            showMessage(`❌ Erro: ${error.message}`, 'error');
+        }
+    }
+};
+
+window.deleteSubProjeto = async function(id) {
+    if (confirm('Tem certeza que deseja excluir este sub-projeto?')) {
+        try {
+            await window.FirestoreIntegration.deleteSubProjeto(id);
+            showMessage('✅ Sub-projeto excluído com sucesso!', 'success');
+            await loadSubProjetosTable();
+            await loadSelectOptions();
+        } catch (error) {
+            console.error('❌ Erro ao excluir sub-projeto:', error);
+            showMessage(`❌ Erro: ${error.message}`, 'error');
+        }
+    }
+};
+
+window.deleteTipoAcao = async function(id) {
+    if (confirm('Tem certeza que deseja excluir este tipo de ação?')) {
+        try {
+            await window.FirestoreIntegration.deleteTipoAcao(id);
+            showMessage('✅ Tipo de ação excluído com sucesso!', 'success');
+            await loadTiposAcaoTable();
+            await loadSelectOptions();
+        } catch (error) {
+            console.error('❌ Erro ao excluir tipo de ação:', error);
+            showMessage(`❌ Erro: ${error.message}`, 'error');
+        }
+    }
+};
+
+window.deleteSupervisor = async function(id) {
+    if (confirm('Tem certeza que deseja excluir este supervisor?')) {
+        try {
+            await window.FirestoreIntegration.deleteSupervisor(id);
+            showMessage('✅ Supervisor excluído com sucesso!', 'success');
+            await loadSupervisoresTable();
+            await loadSelectOptions();
+        } catch (error) {
+            console.error('❌ Erro ao excluir supervisor:', error);
+            showMessage(`❌ Erro: ${error.message}`, 'error');
+        }
+    }
+};
+
+window.deleteEquipe = async function(id) {
+    if (confirm('Tem certeza que deseja excluir esta equipe?')) {
+        try {
+            await window.FirestoreIntegration.deleteEquipe(id);
+            showMessage('✅ Equipe excluída com sucesso!', 'success');
+            await loadEquipesTable();
+            await loadSelectOptions();
+        } catch (error) {
+            console.error('❌ Erro ao excluir equipe:', error);
+            showMessage(`❌ Erro: ${error.message}`, 'error');
+        }
+    }
+};
+
+window.deleteCidade = async function(id) {
+    if (confirm('Tem certeza que deseja excluir esta cidade?')) {
+        try {
+            await window.FirestoreIntegration.deleteCidade(id);
+            showMessage('✅ Cidade excluída com sucesso!', 'success');
+            await loadCidadesTable();
+            await loadSelectOptions();
+        } catch (error) {
+            console.error('❌ Erro ao excluir cidade:', error);
+            showMessage(`❌ Erro: ${error.message}`, 'error');
+        }
+    }
+};
+
+// ============= FUNÇÕES AUXILIARES GLOBAIS - ENDEREÇOS =============
 window.editEndereco = function(id) {
     console.log('✏️ Editando endereço:', id);
     currentEditingId = id;

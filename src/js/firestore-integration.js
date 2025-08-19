@@ -600,6 +600,58 @@ window.FirestoreIntegration = (function() {
         return await loadGenericDocuments('cidades', activeOnly);
     }
     
+    // ============= FUNÇÕES DE EXCLUSÃO =============
+    async function deleteProjeto(documentId) {
+        return await deleteGenericDocument('projetos', documentId);
+    }
+    
+    async function deleteSubProjeto(documentId) {
+        return await deleteGenericDocument('subprojetos', documentId);
+    }
+    
+    async function deleteTipoAcao(documentId) {
+        return await deleteGenericDocument('tiposacao', documentId);
+    }
+    
+    async function deleteSupervisor(documentId) {
+        return await deleteGenericDocument('supervisores', documentId);
+    }
+    
+    async function deleteEquipe(documentId) {
+        return await deleteGenericDocument('equipes', documentId);
+    }
+    
+    async function deleteCidade(documentId) {
+        return await deleteGenericDocument('cidades', documentId);
+    }
+    
+    // Função genérica para deletar documentos
+    async function deleteGenericDocument(collection, documentId) {
+        if (!init()) {
+            throw new Error('Sistema não inicializado');
+        }
+        
+        if (!documentId) {
+            throw new Error('ID do documento é obrigatório');
+        }
+        
+        const user = getCurrentUser();
+        if (!user) {
+            throw new Error('Usuário não autenticado');
+        }
+        
+        log(`🗑️ Excluindo documento ${documentId} da coleção ${collection}...`);
+        
+        try {
+            await firestore.collection(collection).doc(documentId).delete();
+            log(`✅ Documento ${documentId} excluído com sucesso da coleção ${collection}`);
+            return true;
+        } catch (error) {
+            log(`❌ Erro ao excluir documento ${documentId} da coleção ${collection}: ${error.message}`, 'error');
+            throw new Error(`Erro ao excluir documento: ${error.message}`);
+        }
+    }
+    
     // ============= ESTATÍSTICAS E DASHBOARDS =============
     async function getStatistics() {
         if (!init()) {
@@ -641,16 +693,22 @@ window.FirestoreIntegration = (function() {
         // Gestão de Projetos
         saveProjeto,
         loadProjetos,
+        deleteProjeto,
         saveSubProjeto,
         loadSubProjetos,
+        deleteSubProjeto,
         saveTipoAcao,
         loadTiposAcao,
+        deleteTipoAcao,
         saveSupervisor,
         loadSupervisores,
+        deleteSupervisor,
         saveEquipe,
         loadEquipes,
+        deleteEquipe,
         saveCidade,
         loadCidades,
+        deleteCidade,
         
         // Estatísticas
         getStatistics,

@@ -147,16 +147,71 @@ function readExcelFile(file) {
         reader.onload = function(e) {
             try {
                 const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
+                const workbook = XLSX.read(data, { type: 'array', cellDates: true });
                 
                 // Pegar a primeira planilha
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
                 
-                // Converter para JSON
-                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                // Obter o range da planilha para manter a ordem das colunas
+                const range = XLSX.utils.decode_range(worksheet['!ref']);
                 
-                console.log('📊 [DYNAMIC-EXCEL-UPLOAD] Planilha lida:', jsonData.length, 'linhas');
+                // Extrair cabeçalhos na ordem correta
+                const headers = [];
+                for (let col = range.s.c; col <= range.e.c; col++) {
+                    const cellAddress = XLSX.utils.encode_cell({ r: range.s.r, c: col });
+                    const cell = worksheet[cellAddress];
+                    if (cell && cell.v) {
+                        headers.push(String(cell.v).trim());
+                    }
+                }
+                
+                console.log('📋 [DYNAMIC-EXCEL-UPLOAD] Cabeçalhos na ordem original:', headers);
+                
+                // Converter para JSON mantendo a ordem dos cabeçalhos
+                const jsonData = [];
+                for (let row = range.s.r + 1; row <= range.e.r; row++) {
+                    const rowData = {};
+                    let hasData = false;
+                    
+                    for (let col = range.s.c; col <= range.e.c; col++) {
+                        const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+                        const cell = worksheet[cellAddress];
+                        const header = headers[col - range.s.c];
+                        
+                        if (header) {
+                            if (cell && cell.v !== undefined) {
+                                let cellValue = cell.v;
+                                
+                                // Converter datas seriais do Excel
+                                if (cell.t === 'n' && isExcelDate(cellValue)) {
+                                    cellValue = excelDateToJSDate(cellValue);
+                                    // Formatar como string de data brasileira
+                                    cellValue = cellValue.toLocaleDateString('pt-BR');
+                                } else if (cell.t === 'd' || cellValue instanceof Date) {
+                                    // Se já é uma data
+                                    cellValue = cellValue.toLocaleDateString('pt-BR');
+                                } else if (typeof cellValue === 'string') {
+                                    cellValue = cellValue.trim();
+                                }
+                                
+                                rowData[header] = cellValue;
+                                hasData = true;
+                            } else {
+                                rowData[header] = '';
+                            }
+                        }
+                    }
+                    
+                    if (hasData) {
+                        jsonData.push(rowData);
+                    }
+                }
+                
+                // Armazenar ordem original dos cabeçalhos
+                jsonData._originalHeaders = headers;
+                
+                console.log('📊 [DYNAMIC-EXCEL-UPLOAD] Planilha processada:', jsonData.length, 'linhas');
                 resolve(jsonData);
                 
             } catch (error) {
@@ -173,6 +228,36 @@ function readExcelFile(file) {
     });
 }
 
+// Função para verificar se um número é uma data serial do Excel
+function isExcelDate(value) {
+    // Datas do Excel são números entre 1 (1900-01-01) e ~50000 (2036)
+    return typeof value === 'number' && value > 0 && value < 100000;
+}
+
+// Função para converter data serial do Excel para Date JavaScript
+function excelDateToJSDate(serial) {
+    // Excel conta dias desde 1900-01-01, mas tem um bug que considera 1900 ano bissexto
+    // JavaScript Date conta desde 1970-01-01
+    const excelEpoch = new Date(1900, 0, 1); // 1900-01-01
+    const jsDate = new Date(excelEpoch.getTime() + (serial - 1) * 24 * 60 * 60 * 1000);
+    
+    // Corrigir o bug do Excel de 1900 (ano não era bissexto)
+    if (serial > 59) {
+        jsDate.setTime(jsDate.getTime() - 24 * 60 * 60 * 1000);
+    }
+    
+    return jsDate;
+}
+
+// Função para verificar se uma string é uma data no formato brasileiro
+function isDateString(value) {
+    if (typeof value !== 'string') return false;
+    
+    // Verificar formato brasileiro dd/mm/yyyy ou dd/mm/yy
+    const dateRegex = /^\d{1,2}\/\d{1,2}\/\d{2,4}$/;
+    return dateRegex.test(value.trim());
+}
+
 // ============= ADAPTAÇÃO DINÂMICA DA TABELA =============
 async function adaptTableToExcelColumns(data) {
     console.log('🔄 [DYNAMIC-EXCEL-UPLOAD] Adaptando tabela às colunas do Excel...');
@@ -182,9 +267,9 @@ async function adaptTableToExcelColumns(data) {
         return;
     }
     
-    // Extrair colunas do Excel
-    const excelColumns = Object.keys(data[0]);
-    console.log('📊 [DYNAMIC-EXCEL-UPLOAD] Colunas encontradas:', excelColumns);
+    // Usar ordem original dos cabeçalhos se disponível, senão usar Object.keys
+    const excelColumns = data._originalHeaders || Object.keys(data[0]);
+    console.log('📊 [DYNAMIC-EXCEL-UPLOAD] Colunas na ordem original:', excelColumns);
     
     // Atualizar cabeçalho da tabela
     updateTableHeader(excelColumns);
@@ -590,7 +675,15 @@ function updateTableWithFirestoreData(enderecos) {
                     // Campo de timestamp do Firestore
                     const date = new Date(value.seconds * 1000);
                     td.textContent = date.toLocaleDateString('pt-BR');
+                } else if (typeof value === 'number' && isExcelDate(value)) {
+                    // Número serial do Excel que é uma data
+                    const jsDate = excelDateToJSDate(value);
+                    td.textContent = jsDate.toLocaleDateString('pt-BR');
+                } else if (typeof value === 'string' && isDateString(value)) {
+                    // String que já é uma data formatada
+                    td.textContent = value;
                 } else if (typeof value === 'number') {
+                    // Número comum
                     td.textContent = value.toString();
                 } else {
                     td.textContent = value.toString();
