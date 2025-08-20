@@ -10,7 +10,9 @@ let isCompleteSystem = false;
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         setupCompleteExcelReader();
-    }, 2000);
+        // Tentar carregar dados existentes do Firebase
+        loadExistingDataOnStartup();
+    }, 3000);
 });
 
 function setupCompleteExcelReader() {
@@ -1105,6 +1107,99 @@ window.reloadCompleteInterface = async function() {
         showNotification('❌ Erro', `Erro ao recarregar: ${error.message}`, 'error');
     }
 };
+
+// ============= CARREGAMENTO INICIAL DE DADOS =============
+async function loadExistingDataOnStartup() {
+    console.log('🔄 [EXCEL-READER-COMPLETE] Tentando carregar dados existentes...');
+    
+    try {
+        // Verificar se Firebase está disponível
+        if (window.firebase && window.firebase.firestore) {
+            const snapshot = await window.firebase.firestore()
+                .collection('enderecos')
+                .limit(50)
+                .get();
+            
+            if (!snapshot.empty) {
+                const data = snapshot.docs.map(doc => doc.data());
+                
+                // Usar ordem padrão das colunas
+                const orderedHeaders = window.ORDEM_COLUNAS_FIXA || [
+                    'Projeto', 'Sub Projeto', 'Tipo de Ação', 'CONTRATO', 'Condominio',
+                    'ENDEREÇO', 'Cidade', 'PEP', 'COD IMOVEL GED', 'NODE GERENCIAL',
+                    'Área Técnica', 'HP', 'ANDAR', 'DATA RECEBIMENTO', 'DATA INICIO',
+                    'DATA FINAL', 'EQUIPE', 'Supervisor', 'Status', 'RDO', 'BOOK',
+                    'PROJETO', 'JUSTIFICATIVA', 'Observação', 'Observação'
+                ];
+                
+                // Reordenar dados se necessário
+                let processedData = data;
+                if (window.reorderExcelData) {
+                    const currentHeaders = Object.keys(data[0] || {});
+                    const reordered = window.reorderExcelData(data, currentHeaders);
+                    processedData = reordered.data;
+                }
+                
+                // Armazenar dados globalmente
+                completeExcelData = processedData;
+                exactColumnOrder = orderedHeaders;
+                
+                const result = {
+                    data: processedData,
+                    headers: orderedHeaders,
+                    totalRows: processedData.length,
+                    totalColumns: orderedHeaders.length
+                };
+                
+                // Criar tabela
+                await recreateMainTable(result);
+                
+                console.log(`✅ [EXCEL-READER-COMPLETE] ${processedData.length} registros carregados na inicialização`);
+            } else {
+                console.log('ℹ️ [EXCEL-READER-COMPLETE] Nenhum dado encontrado no Firebase');
+                showEmptyTable();
+            }
+        } else {
+            console.warn('⚠️ [EXCEL-READER-COMPLETE] Firebase não disponível na inicialização');
+            showEmptyTable();
+        }
+    } catch (error) {
+        console.error('❌ [EXCEL-READER-COMPLETE] Erro ao carregar dados iniciais:', error);
+        showEmptyTable();
+    }
+}
+
+function showEmptyTable() {
+    console.log('📋 [EXCEL-READER-COMPLETE] Exibindo tabela vazia');
+    
+    const tableWrapper = document.querySelector('.firebase-table-container .table-wrapper');
+    if (tableWrapper) {
+        tableWrapper.innerHTML = `
+            <table class="firebase-table" id="enderecosTable">
+                <thead id="enderecosTableHead">
+                    <tr>
+                        <th colspan="26" style="text-align: center; padding: 20px; background: #f8f9fa;">
+                            📋 Tabela de Endereços<br>
+                            <small>Faça upload de um arquivo Excel para visualizar os dados</small>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="enderecosTableBody">
+                    <tr>
+                        <td colspan="26" style="text-align: center; padding: 40px;">
+                            <div class="no-data-display">
+                                <div style="font-size: 48px; margin-bottom: 20px;">📊</div>
+                                <h3>Nenhum dado encontrado</h3>
+                                <p>Use o botão "Importar Excel" acima para carregar seus dados<br>
+                                   Ou baixe o "Template Padrão" com as colunas organizadas</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        `;
+    }
+}
 
 // ============= EXPOSIÇÃO GLOBAL =============
 window.completeExcelData = completeExcelData;
