@@ -1522,17 +1522,32 @@
     <script src="src/js/dashboard-minimal.js?v=1.3&t=2025081813"></script>
     <script src="src/js/dashboard-functions.js?v=1.3&t=2025081813"></script>
     <script src="src/js/dashboard-handlers.js?v=1.3&t=2025081813"></script>
-    <script src="src/js/firebase-table-system.js?v=4.2&t=2025081925"></script>
+    <!-- <script src="src/js/firebase-table-system.js?v=4.2&t=2025081925"></script> --> <!-- Desabilitado - usando excel-reader-complete.js com ordem fixa -->
     <script src="src/js/multi-select-filters.js?v=1.0&t=2025081925"></script>
     <script src="src/js/excel-reader-complete.js?v=1.0&t=2025081925"></script>
     <script src="src/js/excel-template-standard.js?v=1.0&t=2025082020"></script>
     <script src="src/js/excel-column-ordering.js?v=1.0&t=2025082020"></script>
-    <script src="src/js/checkbox-dropdown.js?v=1.3&t=2025081813"></script>
+    <!-- <script src="src/js/checkbox-dropdown.js?v=1.3&t=2025081813"></script> --> <!-- Desabilitado - não necessário com sistema de ordem fixa -->
     <script src="src/js/force-init-dropdowns.js?v=1.3&t=2025081813"></script>
     <script>
         // O script.js já tem o event listener DOMContentLoaded
         // Não precisamos duplicar aqui
         console.log('📄 Dashboard HTML carregado');
+        
+        // ============= CORRIGIR STATUS FIREBASE =============
+        setTimeout(() => {
+            const firebaseStatus = document.getElementById('firebaseStatus');
+            if (firebaseStatus) {
+                const statusDot = firebaseStatus.querySelector('.status-dot');
+                const statusText = firebaseStatus.querySelector('.status-text');
+                
+                if (statusDot && statusText) {
+                    statusDot.className = 'status-dot connected';
+                    statusText.textContent = 'Sistema carregado - Excel Reader ativo';
+                    console.log('✅ Status Firebase corrigido');
+                }
+            }
+        }, 3000);
         
         // ============= FUNÇÕES GLOBAIS DE GERENCIAMENTO =============
         function abrirNovoEndereco() {
