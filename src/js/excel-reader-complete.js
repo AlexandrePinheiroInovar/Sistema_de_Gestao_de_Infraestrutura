@@ -525,14 +525,14 @@ function extractUniqueProjectData(result) {
         cidades: new Set()
     };
     
-    // Mapear possíveis nomes de colunas para cada categoria
+    // Mapear colunas EXATAS conforme padrão definido pelo usuário
     const columnMappings = {
-        projetos: ['projeto', 'projetos', 'project', 'projeto principal'],
-        subProjetos: ['subprojeto', 'sub projeto', 'subproject', 'sub-projeto'],
-        tiposAcao: ['tipo acao', 'tipo ação', 'acao', 'ação', 'tipo', 'action'],
-        supervisores: ['supervisor', 'supervisores', 'responsavel', 'responsável'],
-        equipes: ['equipe', 'equipes', 'team', 'grupo'],
-        cidades: ['cidade', 'cidades', 'city', 'municipio', 'município']
+        projetos: ['Projeto', 'PROJETO'],
+        subProjetos: ['Sub Projeto'],
+        tiposAcao: ['Tipo de Ação'],
+        supervisores: ['Supervisor'],
+        equipes: ['EQUIPE'],
+        cidades: ['Cidade']
     };
     
     // Encontrar as colunas correspondentes
