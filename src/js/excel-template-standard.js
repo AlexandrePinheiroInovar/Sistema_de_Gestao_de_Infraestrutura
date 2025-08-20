@@ -511,39 +511,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ============= INTEGRAÇÃO COM SISTEMA EXISTENTE =============
-// Substituir função de validação no sistema principal
-if (window.handleCompleteExcelUpload) {
-    const originalHandler = window.handleCompleteExcelUpload;
-    
-    window.handleCompleteExcelUpload = async function(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        
-        try {
-            // Ler arquivo primeiro para validação
-            const result = await readCompleteExcelFile(file);
-            
-            // Validar contra padrão
-            const validation = validateUploadAgainstStandard(result.data, result.headers);
-            
-            // Mostrar resultados da validação
-            const proceed = showValidationResults(validation);
-            
-            if (proceed) {
-                // Chamar handler original se validação passou ou usuário aceitou
-                return originalHandler.call(this, event);
-            } else {
-                event.target.value = '';
-                return;
-            }
-            
-        } catch (error) {
-            console.error('❌ [EXCEL-TEMPLATE] Erro na validação:', error);
-            showTemplateNotification('❌ Erro', `Erro na validação: ${error.message}`, 'error');
-            event.target.value = '';
-        }
-    };
-}
+// Sistema de template padrão não interfere com o upload - apenas oferece template para download
 
 // ============= EXPORTAÇÃO =============
 window.STANDARD_COLUMNS = STANDARD_COLUMNS;
