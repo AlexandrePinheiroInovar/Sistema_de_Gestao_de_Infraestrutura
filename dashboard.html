@@ -623,10 +623,10 @@
                     <!-- Filtros de Busca -->
                     <div class="search-filters">
                         <div class="search-bar">
-                            <input type="text" id="dynamicSearchInput" placeholder="🔍 Buscar..." onkeyup="filterDynamicTable()">
+                            <input type="text" id="dynamicSearchInput" placeholder="🔍 Buscar nas 25 colunas..." onkeyup="filterDynamicTable()">
                         </div>
                         <div class="filter-actions">
-                            <button onclick="refreshTableData()" class="btn-refresh" title="Recarregar dados">
+                            <button onclick="reloadCompleteInterface()" class="btn-refresh" title="Recarregar dados">
                                 <span class="btn-icon">🔄</span>
                                 Atualizar
                             </button>
@@ -636,7 +636,7 @@
                     <!-- Nova Tabela Firebase Dinâmica -->
                     <div class="firebase-table-container">
                         <div class="table-header">
-                            <h4>📊 Dados da Planilha</h4>
+                            <h4>📊 Sistema de 25 Colunas Excel</h4>
                             <div class="table-stats">
                                 <span id="tableRecordCount">0 registros</span>
                                 <span id="tableLastUpdate">Última atualização: --</span>
@@ -644,18 +644,23 @@
                         </div>
                         
                         <div class="table-wrapper">
-                            <table class="firebase-table" id="firebaseTable">
-                                <thead id="firebaseTableHead">
+                            <table class="firebase-table" id="enderecosTable">
+                                <thead id="enderecosTableHead">
                                     <tr>
-                                        <th>Carregando...</th>
+                                        <th colspan="26" style="text-align: center; padding: 20px; background: #f8f9fa;">
+                                            📋 Sistema de 25 Colunas Pré-definidas<br>
+                                            <small>Faça upload de um arquivo Excel para visualizar os dados</small>
+                                        </th>
                                     </tr>
                                 </thead>
-                                <tbody id="firebaseTableBody">
+                                <tbody id="enderecosTableBody">
                                     <tr>
-                                        <td style="text-align: center; padding: 40px;">
-                                            <div class="loading-spinner">
-                                                <div class="spinner"></div>
-                                                <p>Carregando dados do Firebase...</p>
+                                        <td colspan="26" style="text-align: center; padding: 40px;">
+                                            <div class="no-data-display">
+                                                <div style="font-size: 48px; margin-bottom: 20px;">📊</div>
+                                                <h3>Aguardando Upload de Excel</h3>
+                                                <p>Use o botão "Importar Excel" acima para carregar seus dados<br>
+                                                   Ou baixe o "Template Padrão" com as 25 colunas organizadas</p>
                                             </div>
                                         </td>
                                     </tr>

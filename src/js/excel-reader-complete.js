@@ -1026,9 +1026,89 @@ window.clearMainTableOnly = async function() {
     }
 };
 
+// ============= FUNÇÕES PARA COMPATIBILIDADE COM DASHBOARD =============
+window.filterDynamicTable = function() {
+    const searchInput = document.getElementById('dynamicSearchInput');
+    if (!searchInput) return;
+    
+    const searchTerm = searchInput.value.toLowerCase();
+    const table = document.getElementById('enderecosTable');
+    if (!table) return;
+    
+    const tbody = table.querySelector('tbody');
+    if (!tbody) return;
+    
+    const rows = tbody.querySelectorAll('tr');
+    
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        let found = false;
+        
+        cells.forEach(cell => {
+            if (cell.textContent.toLowerCase().includes(searchTerm)) {
+                found = true;
+            }
+        });
+        
+        row.style.display = found ? '' : 'none';
+    });
+    
+    console.log(`🔍 [EXCEL-READER-COMPLETE] Filtro aplicado: "${searchTerm}"`);
+};
+
+window.reloadCompleteInterface = async function() {
+    console.log('🔄 [EXCEL-READER-COMPLETE] Recarregando interface...');
+    
+    try {
+        // Se há dados carregados, recriar a tabela
+        if (completeExcelData.length > 0) {
+            const result = {
+                data: completeExcelData,
+                headers: exactColumnOrder,
+                totalRows: completeExcelData.length,
+                totalColumns: exactColumnOrder.length
+            };
+            
+            await recreateMainTable(result);
+            showNotification('✅ Sucesso', 'Interface recarregada com sucesso!', 'success');
+        } else {
+            // Tentar recarregar dados do Firestore
+            if (window.firebase && window.firebase.firestore) {
+                const snapshot = await window.firebase.firestore()
+                    .collection('enderecos')
+                    .limit(100)
+                    .get();
+                
+                if (!snapshot.empty) {
+                    const data = snapshot.docs.map(doc => doc.data());
+                    completeExcelData = data;
+                    
+                    // Usar ordem padrão se disponível
+                    exactColumnOrder = window.ORDEM_COLUNAS_FIXA || Object.keys(data[0] || {});
+                    
+                    const result = {
+                        data: data,
+                        headers: exactColumnOrder,
+                        totalRows: data.length,
+                        totalColumns: exactColumnOrder.length
+                    };
+                    
+                    await recreateMainTable(result);
+                    showNotification('✅ Carregado', `${data.length} registros carregados do Firebase`, 'success');
+                } else {
+                    showNotification('ℹ️ Info', 'Nenhum dado encontrado no Firebase', 'info');
+                }
+            }
+        }
+    } catch (error) {
+        console.error('❌ Erro ao recarregar:', error);
+        showNotification('❌ Erro', `Erro ao recarregar: ${error.message}`, 'error');
+    }
+};
+
 // ============= EXPOSIÇÃO GLOBAL =============
 window.completeExcelData = completeExcelData;
 window.exactColumnOrder = exactColumnOrder;
 window.recreateMainTable = recreateMainTable;
 
-console.log('✅ [EXCEL-READER-COMPLETE] Sistema completo carregado com funções de limpeza');
+console.log('✅ [EXCEL-READER-COMPLETE] Sistema completo carregado com funções de limpeza e compatibilidade');
