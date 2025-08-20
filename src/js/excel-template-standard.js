@@ -1,11 +1,11 @@
 // ============= SISTEMA PADRÃO DE TEMPLATE EXCEL =============
 console.log('📋 [EXCEL-TEMPLATE] Inicializando sistema de template padrão...');
 
-// ============= COLUNAS PADRÃO EXATAS =============
+// ============= COLUNAS PADRÃO EXATAS - ORDEM FIXA =============
 const STANDARD_COLUMNS = [
     'Projeto',
-    'Sub Projeto', 
-    'Tipo de Ação',
+    'Sub Projeto',
+    'Tipo de Ação', 
     'CONTRATO',
     'Condominio',
     'ENDEREÇO',
@@ -27,7 +27,7 @@ const STANDARD_COLUMNS = [
     'PROJETO',
     'JUSTIFICATIVA',
     'Observação',
-    'Observação'  // Duplicada conforme especificado
+    'Observação'
 ];
 
 // ============= MAPEAMENTO DE VALIDAÇÃO =============
@@ -63,37 +63,95 @@ function generateStandardTemplate() {
     console.log('📄 [EXCEL-TEMPLATE] Gerando template padrão...');
     
     try {
-        // Criar dados de exemplo
-        const templateData = [
-            // Linha de exemplo com dados válidos
-            {
-                'Projeto': 'CLARO FIBRA',
-                'Sub Projeto': 'Expansão Residencial',
-                'Tipo de Ação': 'Vistoria',
-                'CONTRATO': 'CT-2024-001',
-                'Condominio': 'Edifício Sol Nascente',
-                'ENDEREÇO': 'Rua das Flores, 123 - Centro',
-                'Cidade': 'São Paulo',
-                'PEP': 'PEP001',
-                'COD IMOVEL GED': 'GED123456',
-                'NODE GERENCIAL': 'NODE-SP-01',
-                'Área Técnica': 'Infraestrutura',
-                'HP': '50',
-                'ANDAR': '5º',
-                'DATA RECEBIMENTO': '01/08/2024',
-                'DATA INICIO': '05/08/2024',
-                'DATA FINAL': '10/08/2024',
-                'EQUIPE': 'Alpha Team',
-                'Supervisor': 'João Silva',
-                'Status': 'Em Andamento',
-                'RDO': 'RDO001',
-                'BOOK': 'BOOK001',
-                'PROJETO': 'CLARO FIBRA',
-                'JUSTIFICATIVA': 'Vistoria para instalação de nova infraestrutura',
-                'Observação': 'Primeiro acesso realizado',
-                'Observação_2': 'Cliente disponível manhãs'
+        // Criar dados de exemplo preservando ordem exata
+        const templateData = [];
+        
+        // Linha de exemplo com todas as colunas na ordem correta
+        const exemploLinha = {};
+        STANDARD_COLUMNS.forEach((coluna, index) => {
+            switch(coluna) {
+                case 'Projeto': 
+                    exemploLinha[coluna] = 'CLARO FIBRA';
+                    break;
+                case 'Sub Projeto': 
+                    exemploLinha[coluna] = 'Expansão Residencial';
+                    break;
+                case 'Tipo de Ação': 
+                    exemploLinha[coluna] = 'Vistoria';
+                    break;
+                case 'CONTRATO': 
+                    exemploLinha[coluna] = 'CT-2024-001';
+                    break;
+                case 'Condominio': 
+                    exemploLinha[coluna] = 'Edifício Sol Nascente';
+                    break;
+                case 'ENDEREÇO': 
+                    exemploLinha[coluna] = 'Rua das Flores, 123 - Centro';
+                    break;
+                case 'Cidade': 
+                    exemploLinha[coluna] = 'São Paulo';
+                    break;
+                case 'PEP': 
+                    exemploLinha[coluna] = 'PEP001';
+                    break;
+                case 'COD IMOVEL GED': 
+                    exemploLinha[coluna] = 'GED123456';
+                    break;
+                case 'NODE GERENCIAL': 
+                    exemploLinha[coluna] = 'NODE-SP-01';
+                    break;
+                case 'Área Técnica': 
+                    exemploLinha[coluna] = 'Infraestrutura';
+                    break;
+                case 'HP': 
+                    exemploLinha[coluna] = '50';
+                    break;
+                case 'ANDAR': 
+                    exemploLinha[coluna] = '5º';
+                    break;
+                case 'DATA RECEBIMENTO': 
+                    exemploLinha[coluna] = '01/08/2024';
+                    break;
+                case 'DATA INICIO': 
+                    exemploLinha[coluna] = '05/08/2024';
+                    break;
+                case 'DATA FINAL': 
+                    exemploLinha[coluna] = '10/08/2024';
+                    break;
+                case 'EQUIPE': 
+                    exemploLinha[coluna] = 'Alpha Team';
+                    break;
+                case 'Supervisor': 
+                    exemploLinha[coluna] = 'João Silva';
+                    break;
+                case 'Status': 
+                    exemploLinha[coluna] = 'Em Andamento';
+                    break;
+                case 'RDO': 
+                    exemploLinha[coluna] = 'RDO001';
+                    break;
+                case 'BOOK': 
+                    exemploLinha[coluna] = 'BOOK001';
+                    break;
+                case 'PROJETO': 
+                    exemploLinha[coluna] = 'PROJETO PRINCIPAL';
+                    break;
+                case 'JUSTIFICATIVA': 
+                    exemploLinha[coluna] = 'Vistoria para instalação de nova infraestrutura';
+                    break;
+                case 'Observação': 
+                    if (index === STANDARD_COLUMNS.lastIndexOf('Observação')) {
+                        exemploLinha[coluna + '_2'] = 'Cliente disponível manhãs';
+                    } else {
+                        exemploLinha[coluna] = 'Primeiro acesso realizado';
+                    }
+                    break;
+                default:
+                    exemploLinha[coluna] = '';
             }
-        ];
+        });
+        
+        templateData.push(exemploLinha);
 
         // Criar workbook
         const workbook = XLSX.utils.book_new();

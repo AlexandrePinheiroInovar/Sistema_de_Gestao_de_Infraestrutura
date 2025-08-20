@@ -72,8 +72,19 @@ async function handleCompleteExcelUpload(event) {
             return;
         }
         
+        // Reordenar dados conforme padrão antes do processamento
+        let finalResult = result;
+        if (window.reorderExcelData) {
+            console.log('📋 [EXCEL-READER-COMPLETE] Aplicando ordenação padrão...');
+            finalResult = window.reorderExcelData(result.data, result.headers);
+            finalResult.totalRows = result.totalRows;
+            finalResult.originalRange = result.originalRange;
+            
+            showNotification('🔄 Reordenação', `Dados reordenados conforme padrão. ${finalResult.totalColumns} colunas organizadas.`, 'info');
+        }
+        
         // Processar upload completo
-        await processCompleteUpload(result);
+        await processCompleteUpload(finalResult);
         
     } catch (error) {
         console.error('❌ [EXCEL-READER-COMPLETE] Erro:', error);
@@ -379,8 +390,24 @@ async function recreateMainTable(result) {
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
     
+    // Usar ordem fixa das colunas se disponível
+    const headersToUse = window.ORDEM_COLUNAS_FIXA || result.headers;
+    const finalHeaders = [...headersToUse];
+    
+    // Tratar duplicata de Observação
+    const observationIndices = [];
+    finalHeaders.forEach((header, index) => {
+        if (header === 'Observação') {
+            observationIndices.push(index);
+        }
+    });
+    
+    if (observationIndices.length > 1) {
+        finalHeaders[observationIndices[observationIndices.length - 1]] = 'Observação_2';
+    }
+    
     // Adicionar TODAS as colunas na ordem exata
-    result.headers.forEach((header, index) => {
+    finalHeaders.forEach((header, index) => {
         const th = document.createElement('th');
         th.textContent = header;
         th.style.cssText = `
@@ -424,7 +451,7 @@ async function recreateMainTable(result) {
         tr.style.borderBottom = '1px solid #e0e0e0';
         
         // Adicionar TODAS as colunas na ordem exata
-        result.headers.forEach((header, colIndex) => {
+        finalHeaders.forEach((header, colIndex) => {
             const td = document.createElement('td');
             const value = row[header];
             
