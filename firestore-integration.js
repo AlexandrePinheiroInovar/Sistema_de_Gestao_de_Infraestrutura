@@ -367,8 +367,10 @@ window.FirestoreIntegration = (function() {
         let query = firestore.collection('enderecos');
         
         // Aplicar filtros
+        let hasFilters = false;
         Object.keys(filters).forEach(field => {
             if (filters[field] && filters[field] !== '') {
+                hasFilters = true;
                 if (Array.isArray(filters[field])) {
                     if (filters[field].length > 0) {
                         query = query.where(field, 'in', filters[field]);
@@ -379,8 +381,10 @@ window.FirestoreIntegration = (function() {
             }
         });
         
-        // Ordenar por data de criação
-        query = query.orderBy('createdAt', 'desc');
+        // Ordenar por data de criação apenas se não houver filtros (evita índice composto)
+        if (!hasFilters) {
+            query = query.orderBy('createdAt', 'desc');
+        }
         
         const snapshot = await query.get();
         const enderecos = [];

@@ -21,11 +21,12 @@ function setupCompleteExcelReader() {
     const fileInput = document.getElementById('excelUpload');
     
     if (fileInput) {
-        // Remover listeners anteriores
-        fileInput.removeEventListener('change', handleExcelFileSelection);
+        // Limpar todos os listeners anteriores
+        const newInput = fileInput.cloneNode(true);
+        fileInput.parentNode.replaceChild(newInput, fileInput);
         
         // Adicionar novo listener
-        fileInput.addEventListener('change', handleCompleteExcelUpload);
+        newInput.addEventListener('change', handleCompleteExcelUpload);
         console.log('✅ [EXCEL-READER-COMPLETE] Sistema completo configurado');
     }
 }
@@ -1205,5 +1206,12 @@ function showEmptyTable() {
 window.completeExcelData = completeExcelData;
 window.exactColumnOrder = exactColumnOrder;
 window.recreateMainTable = recreateMainTable;
+
+// ============= FUNÇÃO DE COMPATIBILIDADE PARA EVITAR ERROS =============
+// Algumas partes do código podem tentar chamar esta função
+window.handleExcelFileSelection = function(event) {
+    console.log('⚠️ [EXCEL-READER-COMPLETE] handleExcelFileSelection chamada - redirecionando para handleCompleteExcelUpload');
+    handleCompleteExcelUpload(event);
+};
 
 console.log('✅ [EXCEL-READER-COMPLETE] Sistema completo carregado com funções de limpeza e compatibilidade');

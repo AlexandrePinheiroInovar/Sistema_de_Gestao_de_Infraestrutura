@@ -615,8 +615,8 @@
                     <!-- Status da Conexão Firebase -->
                     <div id="firebaseStatus" class="firebase-status">
                         <div class="status-indicator">
-                            <span class="status-dot connecting"></span>
-                            <span class="status-text">Conectando ao Firebase...</span>
+                            <span class="status-dot connected"></span>
+                            <span class="status-text">Conectado ao Firebase</span>
                         </div>
                     </div>
 
@@ -645,12 +645,34 @@
                         
                         <div class="table-wrapper">
                             <table class="firebase-table" id="enderecosTable">
-                                <thead id="enderecosTableHead">
+                                <thead id="enderecosTableHead" style="position: sticky; top: 0; z-index: 10; background: white;">
                                     <tr>
-                                        <th colspan="26" style="text-align: center; padding: 20px; background: #f8f9fa;">
-                                            📋 Tabela de Endereços<br>
-                                            <small>Faça upload de um arquivo Excel para visualizar os dados</small>
-                                        </th>
+                                        <th style="min-width: 120px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">Projeto</th>
+                                        <th style="min-width: 120px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">Sub Projeto</th>
+                                        <th style="min-width: 120px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">Tipo de Ação</th>
+                                        <th style="min-width: 120px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">CONTRATO</th>
+                                        <th style="min-width: 150px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">Condominio</th>
+                                        <th style="min-width: 200px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">ENDEREÇO</th>
+                                        <th style="min-width: 120px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">Cidade</th>
+                                        <th style="min-width: 100px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">PEP</th>
+                                        <th style="min-width: 150px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">COD IMOVEL GED</th>
+                                        <th style="min-width: 150px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">NODE GERENCIAL</th>
+                                        <th style="min-width: 120px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">Área Técnica</th>
+                                        <th style="min-width: 80px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">HP</th>
+                                        <th style="min-width: 100px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">ANDAR</th>
+                                        <th style="min-width: 150px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">DATA RECEBIMENTO</th>
+                                        <th style="min-width: 120px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">DATA INICIO</th>
+                                        <th style="min-width: 120px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">DATA FINAL</th>
+                                        <th style="min-width: 120px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">EQUIPE</th>
+                                        <th style="min-width: 120px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">Supervisor</th>
+                                        <th style="min-width: 100px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">Status</th>
+                                        <th style="min-width: 80px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">RDO</th>
+                                        <th style="min-width: 100px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">BOOK</th>
+                                        <th style="min-width: 120px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">PROJETO</th>
+                                        <th style="min-width: 150px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">JUSTIFICATIVA</th>
+                                        <th style="min-width: 150px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">Observação</th>
+                                        <th style="min-width: 150px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">Observação (2)</th>
+                                        <th style="min-width: 120px; padding: 12px 8px; background: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold;">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="enderecosTableBody">
