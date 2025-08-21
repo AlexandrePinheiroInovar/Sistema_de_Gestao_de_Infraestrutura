@@ -23,6 +23,12 @@ async function inicializarDashboard() {
         // Carregar dados da coleção enderecos_mdu
         await carregarDadosEnderecos();
         
+        // Configurar filtros (precisa ser ANTES dos gráficos)
+        configurarFiltros();
+        
+        // Aguardar dropdowns serem criados
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         // Atualizar cards estatísticos
         atualizarCardsEstatisticos();
         
@@ -31,9 +37,6 @@ async function inicializarDashboard() {
         
         // Gerar tabelas de ranking
         gerarTabelasRanking();
-        
-        // Configurar filtros
-        configurarFiltros();
         
         console.log('✅ [DASHBOARD-INTEGRATION] Dashboard inicializado com sucesso');
         

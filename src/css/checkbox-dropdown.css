@@ -75,8 +75,8 @@
     background: white !important;
     border: 2px solid #3b82f6;
     border-radius: 8px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    z-index: 10000 !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    z-index: 99999 !important;
     max-height: 320px;
     overflow-y: auto;
     display: none;
