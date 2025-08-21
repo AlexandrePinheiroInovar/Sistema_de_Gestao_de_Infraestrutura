@@ -3,48 +3,51 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
+    // ============= REGRAS SIMPLIFICADAS PARA DESENVOLVIMENTO =============
+    // PERMITE ACESSO TOTAL PARA USUARIOS AUTENTICADOS
+    
     // ============= USUÁRIOS =============
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth != null;
     }
     
-    // ============= ENDEREÇOS =============
+    // ============= ENDEREÇOS - COLLECTION PRINCIPAL =============
     match /enderecos/{enderecoId} {
-      // Verificar se usuário está autenticado
-      allow read: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid));
-      
-      // ADMIN: pode fazer tudo
-      allow write, delete: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
-      
-      // SUPERVISOR: pode escrever mas não deletar
-      allow write: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'SUPERVISOR' ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'MANAGER');
+      allow read, write: if request.auth != null;
     }
     
-    // ============= PROJETOS =============
+    // ============= COLLECTIONS OPCIONAIS (se existirem) =============
     match /projetos/{projetoId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN' ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'SUPERVISOR' ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'MANAGER');
+      allow read, write: if request.auth != null;
     }
     
-    // ============= ANÁLISES E LOGS =============
+    match /subprojetos/{subprojetoId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /supervisores/{supervisorId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /equipes/{equipeId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /cidades/{cidadeId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /tipos_acao/{tipoId} {
+      allow read, write: if request.auth != null;
+    }
+    
     match /analises/{analiseId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read, write: if request.auth != null;
     }
     
-    // Negar tudo que não foi explicitamente permitido
-    match /{document=**} {
-      allow read, write: if false;
+    // Qualquer outra collection que possa ser criada
+    match /{collection}/{document} {
+      allow read, write: if request.auth != null;
     }
   }
 }
