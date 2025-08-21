@@ -1492,6 +1492,8 @@ body.loading * {
     border-radius: 16px;
     padding: 24px;
     margin: 24px 0;
+    position: relative;
+    z-index: 100;
     box-shadow: 
         0 4px 16px rgba(0, 0, 0, 0.06),
         0 2px 8px rgba(0, 0, 0, 0.04);
@@ -1545,11 +1547,15 @@ body.loading * {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 16px;
     margin-bottom: 20px;
+    position: relative;
+    z-index: 101;
 }
 
 .filter-group {
     display: flex;
     flex-direction: column;
+    position: relative;
+    z-index: 102;
 }
 
 .filter-group label {
@@ -13645,10 +13651,39 @@ body.colorblind-mode .user-role-simple {
     border-left: 4px solid #dc2626;
 }
 
+/* Novo botão de upload */
+.btn-novo-upload {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-novo-upload:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.btn-novo-upload:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
     .btn-outline-primary,
-    .btn-danger-admin {
+    .btn-danger-admin,
+    .btn-novo-upload {
         width: 100%;
         justify-content: center;
         margin-bottom: 10px;

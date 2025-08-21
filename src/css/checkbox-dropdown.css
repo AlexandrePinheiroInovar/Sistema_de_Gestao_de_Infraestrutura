@@ -1,29 +1,30 @@
-/* Dropdown com Checkboxes - Estilo Moderno */
+/* ============= DROPDOWN AVANÇADO COM SELEÇÃO MÚLTIPLA ============= */
+/* Estilo moderno e funcional para dropdowns com checkboxes */
 
-/* Garantir que containers pais não atrapalhem o z-index */
+/* Garantir hierarquia de z-index correta */
 .infra-filters-container {
     position: relative !important;
-    z-index: 999990 !important;
+    z-index: 100 !important;
 }
 
 .filters-grid {
     position: relative !important;
-    z-index: 999991 !important;
+    z-index: 101 !important;
 }
 
 .filter-group {
     position: relative !important;
-    z-index: 999992 !important;
+    z-index: 102 !important;
 }
 
 .checkbox-dropdown {
     position: relative;
     width: 100%;
-    z-index: 1 !important;
+    z-index: 103 !important;
 }
 
 .checkbox-dropdown.open {
-    z-index: 999998 !important;
+    z-index: 9999 !important;
 }
 
 .checkbox-dropdown-button {
@@ -74,12 +75,13 @@
     background: white !important;
     border: 2px solid #3b82f6;
     border-radius: 8px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-    z-index: 9999999 !important;
-    max-height: 300px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    z-index: 10000 !important;
+    max-height: 320px;
     overflow-y: auto;
     display: none;
     margin-top: 2px;
+    min-width: 250px;
 }
 
 .checkbox-dropdown.open .checkbox-dropdown-content {
@@ -106,8 +108,11 @@
 .analysis-section,
 .chart-container,
 .periodo-filter,
-.periodo-inputs {
+.periodo-inputs,
+.infra-stats-cards,
+.endereco-stats-cards {
     z-index: 1 !important;
+    position: relative;
 }
 
 @keyframes fadeInDown {
