@@ -365,29 +365,21 @@ async function replaceExistingTable(result) {
 async function recreateMainTable(result) {
     console.log('🏗️ [EXCEL-READER-COMPLETE] Recriando tabela principal...');
     
-    // Encontrar container da tabela
-    let tableContainer = document.querySelector('.firebase-table-container .table-wrapper');
+    // Usar a nova estrutura de tabela de endereços
+    let tableContainer = document.querySelector('#enderecoTableWrapper');
     
     if (!tableContainer) {
-        // Se não existir, criar container
-        const mainContainer = document.querySelector('.firebase-table-container');
-        if (mainContainer) {
-            tableContainer = document.createElement('div');
-            tableContainer.className = 'table-wrapper';
-            mainContainer.appendChild(tableContainer);
-        } else {
-            console.error('❌ Container da tabela não encontrado!');
-            return;
-        }
+        console.error('❌ Container da nova tabela não encontrado! ID: enderecoTableWrapper');
+        return;
     }
     
     // Limpar container
     tableContainer.innerHTML = '';
     
-    // Criar nova tabela
+    // Criar nova tabela usando a estrutura da tabela de endereços
     const table = document.createElement('table');
-    table.className = 'firebase-table';
-    table.id = 'enderecosTable';
+    table.className = 'endereco-table';
+    table.id = 'enderecoMainTable';
     
     // Criar cabeçalho
     const thead = document.createElement('thead');
@@ -444,7 +436,7 @@ async function recreateMainTable(result) {
     
     // Criar corpo da tabela
     const tbody = document.createElement('tbody');
-    tbody.id = 'enderecosTableBody';
+    tbody.id = 'enderecoTableBody';
     
     // Adicionar dados (limitados para performance)
     const displayData = result.data.slice(0, 50); // Mostrar apenas 50 primeiros
@@ -971,9 +963,9 @@ window.clearAllFirebaseData = async function() {
         }
         
         // Limpar tabela da interface
-        const tableBody = document.getElementById('enderecosTableBody');
+        const tableBody = document.getElementById('enderecoTableBody');
         if (tableBody) {
-            tableBody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 40px; color: #999;">Nenhum dado - Tabela limpa</td></tr>';
+            tableBody.innerHTML = '<tr class="empty-state"><td colspan="26"><div class="empty-state-content"><div class="empty-icon">📊</div><h3>Tabela Limpa</h3><p>Todos os dados foram removidos</p></div></td></tr>';
         }
         
         // Limpar dados em memória
@@ -1013,9 +1005,9 @@ window.clearMainTableOnly = async function() {
             await batch.commit();
             
             // Limpar interface
-            const tableBody = document.getElementById('enderecosTableBody');
+            const tableBody = document.getElementById('enderecoTableBody');
             if (tableBody) {
-                tableBody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 40px; color: #999;">Tabela limpa - Faça um novo upload</td></tr>';
+                tableBody.innerHTML = '<tr class="empty-state"><td colspan="26"><div class="empty-state-content"><div class="empty-icon">📊</div><h3>Tabela Limpa</h3><p>Faça um novo upload</p></div></td></tr>';
             }
             
             showNotification('✅ Sucesso!', `${snapshot.docs.length} registros da tabela principal removidos`, 'success');
@@ -1035,7 +1027,7 @@ window.filterDynamicTable = function() {
     if (!searchInput) return;
     
     const searchTerm = searchInput.value.toLowerCase();
-    const table = document.getElementById('enderecosTable');
+    const table = document.getElementById('enderecoMainTable');
     if (!table) return;
     
     const tbody = table.querySelector('tbody');
@@ -1044,6 +1036,9 @@ window.filterDynamicTable = function() {
     const rows = tbody.querySelectorAll('tr');
     
     rows.forEach(row => {
+        // Pular linha de estado vazio
+        if (row.classList.contains('empty-state')) return;
+        
         const cells = row.querySelectorAll('td');
         let found = false;
         
@@ -1173,31 +1168,19 @@ async function loadExistingDataOnStartup() {
 function showEmptyTable() {
     console.log('📋 [EXCEL-READER-COMPLETE] Exibindo tabela vazia');
     
-    const tableWrapper = document.querySelector('.firebase-table-container .table-wrapper');
-    if (tableWrapper) {
-        tableWrapper.innerHTML = `
-            <table class="firebase-table" id="enderecosTable">
-                <thead id="enderecosTableHead">
-                    <tr>
-                        <th colspan="26" style="text-align: center; padding: 20px; background: #f8f9fa;">
-                            📋 Tabela de Endereços<br>
-                            <small>Faça upload de um arquivo Excel para visualizar os dados</small>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody id="enderecosTableBody">
-                    <tr>
-                        <td colspan="26" style="text-align: center; padding: 40px;">
-                            <div class="no-data-display">
-                                <div style="font-size: 48px; margin-bottom: 20px;">📊</div>
-                                <h3>Nenhum dado encontrado</h3>
-                                <p>Use o botão "Importar Excel" acima para carregar seus dados<br>
-                                   Ou baixe o "Template Padrão" com as colunas organizadas</p>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+    const tableBody = document.getElementById('enderecoTableBody');
+    if (tableBody) {
+        tableBody.innerHTML = `
+            <tr class="empty-state">
+                <td colspan="26">
+                    <div class="empty-state-content">
+                        <div class="empty-icon">📊</div>
+                        <h3>Tabela Vazia</h3>
+                        <p>Faça upload de uma planilha Excel para preencher a tabela</p>
+                        <p><small>As colunas devem estar na ordem exata especificada</small></p>
+                    </div>
+                </td>
+            </tr>
         `;
     }
 }

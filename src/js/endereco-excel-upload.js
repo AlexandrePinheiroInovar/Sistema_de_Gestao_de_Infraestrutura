@@ -369,7 +369,7 @@ function limparTabela() {
 }
 
 function atualizarEstatisticas() {
-    // Atualizar contadores
+    // Atualizar contadores da nova tabela
     const recordCount = document.getElementById('enderecoRecordCount');
     const lastUpdate = document.getElementById('enderecoLastUpdate');
     
@@ -382,10 +382,35 @@ function atualizarEstatisticas() {
         lastUpdate.textContent = `Atualizado em: ${agora}`;
     }
     
-    // Atualizar cards de estatísticas (se existirem)
+    // Atualizar cards de estatísticas da seção de endereços
     const statTotalRegistros = document.getElementById('statTotalRegistros');
     if (statTotalRegistros) {
         statTotalRegistros.textContent = totalRegistros;
+    }
+    
+    // Calcular estatísticas adicionais
+    if (dadosEndereco.length > 0) {
+        // Endereços únicos
+        const enderecosUnicos = new Set(dadosEndereco.map(item => item['ENDEREÇO'] || '').filter(e => e.trim() !== ''));
+        const statEnderecosDistintos = document.getElementById('statEnderecosDistintos');
+        if (statEnderecosDistintos) {
+            statEnderecosDistintos.textContent = enderecosUnicos.size;
+        }
+        
+        // Equipes únicas
+        const equipesUnicas = new Set(dadosEndereco.map(item => item['EQUIPE'] || '').filter(e => e.trim() !== ''));
+        const statEquipesDistintas = document.getElementById('statEquipesDistintas');
+        if (statEquipesDistintas) {
+            statEquipesDistintas.textContent = equipesUnicas.size;
+        }
+        
+        // Produtividade
+        const produtivos = dadosEndereco.filter(item => (item['Status'] || '').toUpperCase() === 'PRODUTIVA').length;
+        const produtividade = totalRegistros > 0 ? Math.round((produtivos / totalRegistros) * 100) : 0;
+        const statProdutividade = document.getElementById('statProdutividade');
+        if (statProdutividade) {
+            statProdutividade.textContent = `${produtividade}%`;
+        }
     }
 }
 
