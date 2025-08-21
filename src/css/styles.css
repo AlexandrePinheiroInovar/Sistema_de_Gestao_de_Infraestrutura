@@ -13568,3 +13568,93 @@ body.colorblind-mode .user-role-simple {
 .endereco-table .btn-delete:hover {
     background: #dc2626;
 }
+
+/* ========== ESTILOS DOS BOTÕES DE ADMINISTRAÇÃO E TEMPLATE ========== */
+
+/* Botão Template Padrão - Estilo outline */
+.btn-outline-primary {
+    background: transparent;
+    color: #3b82f6;
+    border: 2px solid #3b82f6;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.btn-outline-primary:hover {
+    background: #3b82f6;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-outline-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+}
+
+/* Botão Admin - Limpar Dados */
+.btn-danger-admin {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+
+.btn-danger-admin:hover {
+    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+.btn-danger-admin:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3);
+}
+
+/* Ícones dos botões */
+.btn-outline-primary .btn-icon,
+.btn-danger-admin .btn-icon {
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Container dos controles de admin */
+.admin-controls {
+    margin-top: 10px;
+    padding: 10px;
+    background: rgba(220, 38, 38, 0.05);
+    border-radius: 8px;
+    border-left: 4px solid #dc2626;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .btn-outline-primary,
+    .btn-danger-admin {
+        width: 100%;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+    
+    .admin-controls {
+        margin-top: 15px;
+    }
+}

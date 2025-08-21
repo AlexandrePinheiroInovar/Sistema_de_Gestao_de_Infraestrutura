@@ -38,7 +38,7 @@ let totalRegistros = 0;
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🔧 [ENDERECO-EXCEL] DOM carregado, configurando listeners...');
     configurarUploadExcel();
-    verificarEstadoTabela();
+    carregarDadosExistentes();
 });
 
 function configurarUploadExcel() {
@@ -458,6 +458,89 @@ async function salvarNoFirebase(dados) {
     }
 }
 
+// ============= CARREGAMENTO DE DADOS EXISTENTES =============
+async function carregarDadosExistentes() {
+    console.log('📥 [ENDERECO-EXCEL] Carregando dados existentes do Firestore...');
+    
+    try {
+        if (window.firebase && window.firebase.firestore) {
+            const snapshot = await firebase.firestore().collection('enderecos')
+                .orderBy('createdAt', 'desc')
+                .limit(100)
+                .get();
+            
+            if (!snapshot.empty) {
+                const dadosCarregados = [];
+                
+                snapshot.forEach(doc => {
+                    const dados = doc.data();
+                    dados._id = doc.id; // Adicionar ID do documento
+                    dadosCarregados.push(dados);
+                });
+                
+                console.log('✅ [ENDERECO-EXCEL] Dados carregados:', dadosCarregados.length);
+                
+                // Armazenar dados globalmente
+                dadosEndereco = dadosCarregados;
+                totalRegistros = dadosCarregados.length;
+                
+                // Atualizar tabela
+                await exibirDadosNaTabela(dadosCarregados);
+                
+                // Atualizar estatísticas
+                atualizarEstatisticas();
+            } else {
+                console.log('ℹ️ [ENDERECO-EXCEL] Nenhum dado encontrado no Firestore');
+                verificarEstadoTabela();
+            }
+        } else {
+            console.warn('⚠️ [ENDERECO-EXCEL] Firebase não disponível, aguardando...');
+            // Tentar novamente em 2 segundos
+            setTimeout(carregarDadosExistentes, 2000);
+        }
+    } catch (error) {
+        console.error('❌ [ENDERECO-EXCEL] Erro ao carregar dados:', error);
+        verificarEstadoTabela();
+    }
+}
+
+async function exibirDadosNaTabela(dados) {
+    console.log('📊 [ENDERECO-EXCEL] Exibindo dados na tabela...');
+    
+    // Limpar tabela atual
+    limparTabela();
+    
+    // Criar linhas na tabela
+    const tbody = document.getElementById('enderecoTableBody');
+    if (!tbody) {
+        throw new Error('Corpo da tabela não encontrado');
+    }
+    
+    // Adicionar cada linha (limitado para performance)
+    const dadosParaExibir = dados.slice(0, 100); // Primeiros 100 registros
+    
+    dadosParaExibir.forEach((linha, index) => {
+        const tr = criarLinhaTabela(linha, index);
+        tbody.appendChild(tr);
+    });
+    
+    console.log('✅ [ENDERECO-EXCEL] Dados exibidos na tabela');
+}
+
+// ============= FUNÇÃO DE RECARREGAMENTO =============
+async function recarregarTabela() {
+    console.log('🔄 [ENDERECO-EXCEL] Recarregando tabela...');
+    
+    try {
+        mostrarNotificacao('🔄 Atualizando...', 'Carregando dados mais recentes...', 'info');
+        await carregarDadosExistentes();
+        mostrarNotificacao('✅ Atualizado!', 'Tabela atualizada com sucesso', 'success');
+    } catch (error) {
+        console.error('❌ [ENDERECO-EXCEL] Erro ao recarregar:', error);
+        mostrarNotificacao('❌ Erro', `Erro ao atualizar: ${error.message}`, 'error');
+    }
+}
+
 function verificarEstadoTabela() {
     const tbody = document.getElementById('enderecoTableBody');
     if (tbody && tbody.children.length === 0) {
@@ -511,6 +594,14 @@ function mostrarNotificacao(titulo, mensagem, tipo) {
 window.COLUNAS_ENDERECO_EXATAS = COLUNAS_ENDERECO_EXATAS;
 window.dadosEndereco = dadosEndereco;
 window.processarUploadExcel = processarUploadExcel;
+window.recarregarTabela = recarregarTabela;
+window.carregarDadosExistentes = carregarDadosExistentes;
+
+// ============= FUNÇÃO GLOBAL DE RECARREGAMENTO =============
+window.reloadCompleteInterface = function() {
+    console.log('🔄 [ENDERECO-EXCEL] Recarregando interface completa...');
+    recarregarTabela();
+};
 
 console.log('✅ [ENDERECO-EXCEL] Sistema de upload Excel para endereços carregado');
 console.log(`📋 [ENDERECO-EXCEL] Configurado para ${COLUNAS_ENDERECO_EXATAS.length} colunas exatas`);
