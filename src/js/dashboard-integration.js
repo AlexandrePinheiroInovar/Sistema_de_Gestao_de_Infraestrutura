@@ -23,11 +23,14 @@ async function inicializarDashboard() {
         // Carregar dados da coleção enderecos_mdu
         await carregarDadosEnderecos();
         
-        // Configurar filtros (precisa ser ANTES dos gráficos)
+        // Aguardar um pouco para garantir que os dados estejam disponíveis
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Configurar filtros (precisa ser DEPOIS dos dados carregarem)
         configurarFiltros();
         
-        // Aguardar dropdowns serem criados
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Aguardar dropdowns serem criados e inicializados
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
         // Atualizar cards estatísticos
         atualizarCardsEstatisticos();
@@ -275,8 +278,23 @@ function gerarGraficoCidades() {
         contadorCidades[cidade] = (contadorCidades[cidade] || 0) + 1;
     });
     
-    const labels = Object.keys(contadorCidades);
-    const data = Object.values(contadorCidades);
+    // Ordenar por quantidade e limitar a 15 principais
+    const sortedCidades = Object.entries(contadorCidades)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 15);
+    
+    // Agrupar o resto em "Outras"
+    const remainingCidades = Object.entries(contadorCidades)
+        .sort(([,a], [,b]) => b - a)
+        .slice(15);
+    
+    if (remainingCidades.length > 0) {
+        const outrasQuantidade = remainingCidades.reduce((sum, [,qty]) => sum + qty, 0);
+        sortedCidades.push([`Outras (${remainingCidades.length})`, outrasQuantidade]);
+    }
+    
+    const labels = sortedCidades.map(([nome]) => nome);
+    const data = sortedCidades.map(([,qty]) => qty);
     const colors = gerarCores(labels.length);
     
     // Destruir gráfico anterior se existir
@@ -306,7 +324,12 @@ function gerarGraficoCidades() {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        stepSize: 1
+                        maxTicksLimit: 10,
+                        callback: function(value) {
+                            if (Math.floor(value) === value) {
+                                return value;
+                            }
+                        }
                     }
                 }
             }
@@ -426,7 +449,12 @@ function gerarGraficoRecebimentos() {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        stepSize: 1
+                        maxTicksLimit: 10,
+                        callback: function(value) {
+                            if (Math.floor(value) === value) {
+                                return value;
+                            }
+                        }
                     }
                 }
             }
@@ -532,8 +560,17 @@ function gerarRankingTipoAcao() {
         total: stats.ATIVAÇÃO + stats.CONSTRUÇÃO + stats.VISTORIA
     })).sort((a, b) => b.total - a.total);
     
+    // Limitar a 50 equipes principais para evitar sobrecarga
+    const topRankings = rankings.slice(0, 50);
+    
+    // Adicionar nota se há mais dados
+    const moreDataNote = rankings.length > 50 ? 
+        `<tr class="info-row"><td colspan="6" style="text-align: center; font-style: italic; color: #666; padding: 10px;">
+            📊 Mostrando top 50 de ${rankings.length} equipes
+        </td></tr>` : '';
+    
     // Gerar HTML
-    tbody.innerHTML = rankings.map((item, index) => `
+    tbody.innerHTML = topRankings.map((item, index) => `
         <tr>
             <td>${index + 1}</td>
             <td>${item.equipe}</td>
@@ -542,7 +579,7 @@ function gerarRankingTipoAcao() {
             <td>${item.vistoria}</td>
             <td><strong>${item.total}</strong></td>
         </tr>
-    `).join('');
+    `).join('') + moreDataNote;
     
     // Atualizar totais
     const totalAtivacao = rankings.reduce((sum, item) => sum + item.ativacao, 0);
@@ -592,8 +629,17 @@ function gerarRankingStatus() {
         };
     }).sort((a, b) => b.produtividade - a.produtividade);
     
+    // Limitar a 50 equipes principais para evitar sobrecarga
+    const topRankings = rankings.slice(0, 50);
+    
+    // Adicionar nota se há mais dados
+    const moreDataNote = rankings.length > 50 ? 
+        `<tr class="info-row"><td colspan="6" style="text-align: center; font-style: italic; color: #666; padding: 10px;">
+            📊 Mostrando top 50 de ${rankings.length} equipes
+        </td></tr>` : '';
+    
     // Gerar HTML
-    tbody.innerHTML = rankings.map((item, index) => `
+    tbody.innerHTML = topRankings.map((item, index) => `
         <tr>
             <td>${index + 1}</td>
             <td>${item.equipe}</td>
@@ -602,7 +648,7 @@ function gerarRankingStatus() {
             <td><strong>${item.total}</strong></td>
             <td><strong>${item.produtividade}%</strong></td>
         </tr>
-    `).join('');
+    `).join('') + moreDataNote;
     
     // Atualizar totais
     const totalProdutiva = rankings.reduce((sum, item) => sum + item.produtiva, 0);
@@ -620,49 +666,77 @@ function gerarRankingStatus() {
 function configurarFiltros() {
     console.log('🔍 [DASHBOARD-INTEGRATION] Configurando filtros...');
     
+    // Verificar se temos dados carregados
+    if (!dashboardData || dashboardData.length === 0) {
+        console.warn('⚠️ [DASHBOARD-INTEGRATION] Nenhum dado carregado para os filtros');
+        return;
+    }
+    
     // Preencher options dos filtros
     preencherFiltros();
 }
 
+// Função global para recarregar filtros manualmente
+window.recarregarFiltrosDashboard = function() {
+    console.log('🔄 [DASHBOARD-INTEGRATION] Recarregando filtros manualmente...');
+    configurarFiltros();
+};
+
 function preencherFiltros() {
     const dados = dashboardData;
     
+    console.log('📝 [DASHBOARD-INTEGRATION] Preenchendo filtros com', dados.length, 'registros');
+    console.log('📝 [DASHBOARD-INTEGRATION] Exemplo de dados:', dados[0]);
+    
     // Projetos
     const projetos = [...new Set(dados.map(item => item['Projeto']).filter(p => p && p.trim()))].sort();
+    console.log('🏗️ [PROJETOS]', projetos.length, 'encontrados:', projetos.slice(0, 3));
     preencherSelect('infraFilterProjeto', projetos);
     
     // Sub Projetos
     const subProjetos = [...new Set(dados.map(item => item['Sub Projeto']).filter(p => p && p.trim()))].sort();
+    console.log('🔧 [SUB-PROJETOS]', subProjetos.length, 'encontrados:', subProjetos.slice(0, 3));
     preencherSelect('infraFilterSubProjeto', subProjetos);
     
     // Equipes
     const equipes = [...new Set(dados.map(item => item['EQUIPE']).filter(e => e && e.trim()))].sort();
+    console.log('👥 [EQUIPES]', equipes.length, 'encontradas:', equipes.slice(0, 3));
     preencherSelect('infraFilterEquipe', equipes);
     
     // Status
     const status = [...new Set(dados.map(item => item['Status']).filter(s => s && s.trim()))].sort();
+    console.log('✅ [STATUS]', status.length, 'encontrados:', status);
     preencherSelect('infraFilterStatus', status);
     
     // Cidades
     const cidades = [...new Set(dados.map(item => item['Cidade']).filter(c => c && c.trim()))].sort();
+    console.log('🏙️ [CIDADES]', cidades.length, 'encontradas:', cidades.slice(0, 3));
     preencherSelect('infraFilterCidade', cidades);
     
     // Supervisores
     const supervisores = [...new Set(dados.map(item => item['Supervisor']).filter(s => s && s.trim()))].sort();
+    console.log('👨‍💼 [SUPERVISORES]', supervisores.length, 'encontrados:', supervisores.slice(0, 3));
     preencherSelect('infraFilterSupervisor', supervisores);
     
     // Tipos de Ação
     const tiposAcao = [...new Set(dados.map(item => item['Tipo de Ação']).filter(t => t && t.trim()))].sort();
+    console.log('⚙️ [TIPOS DE AÇÃO]', tiposAcao.length, 'encontrados:', tiposAcao);
     preencherSelect('infraFilterTipoAcao', tiposAcao);
     
     // Condomínios
     const condominios = [...new Set(dados.map(item => item['Condominio']).filter(c => c && c.trim()))].sort();
+    console.log('🏢 [CONDOMÍNIOS]', condominios.length, 'encontrados:', condominios.slice(0, 3));
     preencherSelect('infraFilterCondominio', condominios);
 }
 
 function preencherSelect(selectId, options) {
     const select = document.getElementById(selectId);
-    if (!select) return;
+    if (!select) {
+        console.warn(`⚠️ [DASHBOARD-INTEGRATION] Select não encontrado: ${selectId}`);
+        return;
+    }
+    
+    console.log(`📝 [DASHBOARD-INTEGRATION] Preenchendo ${selectId} com ${options.length} opções`);
     
     // Limpar opções existentes (preservar estrutura multiple se existir)
     const wasMultiple = select.hasAttribute('multiple');
@@ -681,9 +755,17 @@ function preencherSelect(selectId, options) {
         select.appendChild(optionElement);
     });
     
-    // Inicializar dropdown customizado se ainda não foi inicializado
+    // Atualizar ou criar instância do dropdown customizado
     setTimeout(() => {
-        if (window.initializeMultiSelect && !window.multiSelectInstances[selectId]) {
+        // Se já existe uma instância, destruir e recriar
+        if (window.multiSelectInstances && window.multiSelectInstances[selectId]) {
+            console.log(`🔄 [DASHBOARD-INTEGRATION] Atualizando instância existente: ${selectId}`);
+            window.multiSelectInstances[selectId].destroy();
+            delete window.multiSelectInstances[selectId];
+        }
+        
+        // Criar nova instância
+        if (window.initializeMultiSelect) {
             window.initializeMultiSelect(select, {
                 placeholder: `Selecionar ${getFilterLabel(selectId)}...`,
                 searchable: true,
@@ -691,8 +773,9 @@ function preencherSelect(selectId, options) {
                 closeOnSelect: false,
                 showCounter: true
             });
+            console.log(`✅ [DASHBOARD-INTEGRATION] Instância criada/atualizada: ${selectId}`);
         }
-    }, 100);
+    }, 150);
 }
 
 function getFilterLabel(selectId) {
