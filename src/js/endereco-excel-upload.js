@@ -37,8 +37,21 @@ let totalRegistros = 0;
 // ============= INICIALIZAÇÃO =============
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🔧 [ENDERECO-EXCEL] DOM carregado, configurando listeners...');
-    configurarUploadExcel();
-    carregarDadosExistentes();
+    
+    // Aguardar XLSX carregar se necessário
+    function inicializar() {
+        if (typeof XLSX === 'undefined') {
+            console.warn('⚠️ [ENDERECO-EXCEL] Aguardando biblioteca XLSX carregar...');
+            setTimeout(inicializar, 500);
+            return;
+        }
+        
+        console.log('✅ [ENDERECO-EXCEL] XLSX carregado, iniciando sistema...');
+        configurarUploadExcel();
+        carregarDadosExistentes();
+    }
+    
+    inicializar();
 });
 
 function configurarUploadExcel() {
@@ -132,6 +145,11 @@ function lerArquivoExcel(arquivo) {
         
         reader.onload = function(e) {
             try {
+                // Verificar se XLSX está disponível
+                if (typeof XLSX === 'undefined') {
+                    throw new Error('Biblioteca XLSX não carregada. Aguarde alguns segundos e tente novamente.');
+                }
+                
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { 
                     type: 'array',
@@ -161,13 +179,17 @@ function lerArquivoExcel(arquivo) {
                 
                 // Separar headers e dados
                 const headers = jsonData[0];
-                const data = jsonData.slice(1).map(row => {
-                    const rowObj = {};
-                    headers.forEach((header, index) => {
-                        rowObj[header] = row[index] || '';
+                const data = jsonData.slice(1)
+                    .filter(row => row && Array.isArray(row) && row.length > 0) // Filtrar linhas válidas
+                    .map(row => {
+                        const rowObj = {};
+                        headers.forEach((header, index) => {
+                            // Garantir que row[index] existe e tratar valores undefined/null
+                            const value = row && row[index] !== undefined && row[index] !== null ? row[index] : '';
+                            rowObj[header] = String(value).trim();
+                        });
+                        return rowObj;
                     });
-                    return rowObj;
-                });
                 
                 resolve({
                     headers: headers,
