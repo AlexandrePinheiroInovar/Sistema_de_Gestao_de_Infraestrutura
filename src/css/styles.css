@@ -13409,3 +13409,162 @@ body.colorblind-mode .user-role-simple {
         min-width: 80px;
     }
 }
+
+/* ========== NOVA TABELA DE ENDEREÇOS - 25 COLUNAS EXATAS ========== */
+
+.endereco-table-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    overflow: hidden;
+    margin: 20px 0;
+}
+
+.endereco-table-container .table-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.endereco-table-container .table-header h4 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.endereco-table-container .table-stats {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+}
+
+.endereco-table-container .table-stats span {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 5px 12px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+}
+
+#enderecoTableWrapper {
+    max-height: 600px;
+    overflow: auto;
+    border: none;
+}
+
+.endereco-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    font-size: 13px;
+}
+
+.endereco-table th {
+    background: #f8fafc;
+    color: #374151;
+    font-weight: 600;
+    padding: 12px 8px;
+    text-align: left;
+    border: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    white-space: nowrap;
+    min-width: 120px;
+}
+
+.endereco-table th[data-column="6"] { /* ENDEREÇO */
+    min-width: 250px;
+}
+
+.endereco-table th[data-column="9"], /* COD IMOVEL GED */
+.endereco-table th[data-column="10"] { /* NODE GERENCIAL */
+    min-width: 160px;
+}
+
+.endereco-table th[data-column="12"] { /* HP */
+    min-width: 80px;
+}
+
+.endereco-table th[data-column="23"] { /* JUSTIFICATIVA */
+    min-width: 180px;
+}
+
+.endereco-table th[data-column="actions"] {
+    min-width: 100px;
+    text-align: center;
+}
+
+.endereco-table td {
+    padding: 10px 8px;
+    border: 1px solid #f1f5f9;
+    vertical-align: top;
+    word-wrap: break-word;
+}
+
+.endereco-table tr:nth-child(even) {
+    background-color: #f9fafb;
+}
+
+.endereco-table tr:hover {
+    background-color: #f3f4f6;
+}
+
+.endereco-table .empty-state td {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-state-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.empty-icon {
+    font-size: 48px;
+    opacity: 0.5;
+}
+
+.empty-state-content h3 {
+    color: #374151;
+    margin: 0;
+    font-size: 18px;
+}
+
+.empty-state-content p {
+    color: #6b7280;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.endereco-table .action-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    margin: 0 2px;
+    transition: all 0.2s ease;
+}
+
+.endereco-table .btn-edit {
+    background: #3b82f6;
+    color: white;
+}
+
+.endereco-table .btn-edit:hover {
+    background: #2563eb;
+}
+
+.endereco-table .btn-delete {
+    background: #ef4444;
+    color: white;
+}
+
+.endereco-table .btn-delete:hover {
+    background: #dc2626;
+}
