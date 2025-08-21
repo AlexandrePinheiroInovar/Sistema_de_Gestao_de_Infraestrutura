@@ -420,13 +420,14 @@ async function salvarNoFirebase(dados) {
             console.log('💾 [ENDERECO-EXCEL] Salvando no Firebase...');
             
             const timestamp = firebase.firestore.FieldValue.serverTimestamp();
-            const batch = firebase.firestore().batch();
             
             // Salvar em lotes
             const BATCH_SIZE = 25;
             let salvosCount = 0;
             
             for (let i = 0; i < dados.length; i += BATCH_SIZE) {
+                // Criar novo batch para cada lote
+                const batch = firebase.firestore().batch();
                 const lote = dados.slice(i, i + BATCH_SIZE);
                 
                 lote.forEach(registro => {
@@ -442,10 +443,11 @@ async function salvarNoFirebase(dados) {
                     salvosCount++;
                 });
                 
+                // Commit do batch atual
                 await batch.commit();
-                console.log(`✅ [ENDERECO-EXCEL] Lote ${Math.floor(i/BATCH_SIZE) + 1} salvo no Firebase`);
+                console.log(`✅ [ENDERECO-EXCEL] Lote ${Math.floor(i/BATCH_SIZE) + 1} salvo no Firebase (${lote.length} registros)`);
                 
-                // Pausa entre lotes
+                // Pausa entre lotes para evitar throttling
                 if (i + BATCH_SIZE < dados.length) {
                     await new Promise(resolve => setTimeout(resolve, 200));
                 }
@@ -455,6 +457,7 @@ async function salvarNoFirebase(dados) {
         }
     } catch (error) {
         console.error('❌ [ENDERECO-EXCEL] Erro ao salvar no Firebase:', error);
+        throw error; // Re-throw para que o caller possa tratar
     }
 }
 
