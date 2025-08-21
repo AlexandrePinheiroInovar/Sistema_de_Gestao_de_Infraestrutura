@@ -124,8 +124,12 @@ async function processarUploadExcel(event) {
             return;
         }
         
-        // Processar e salvar dados
+        // Processar e salvar dados  
         await salvarDadosNaTabela(dadosMapeados);
+        
+        // Garantir que dados aparecem na tabela
+        console.log('🔍 [ENDERECO-EXCEL] Forçando atualização da tabela...');
+        await exibirDadosNaTabela(dadosMapeados);
         
         mostrarNotificacao('🎉 Sucesso!', `${dadosMapeados.length} registros importados com sucesso!`, 'success');
         
@@ -530,7 +534,7 @@ async function carregarDadosExistentes() {
 }
 
 async function exibirDadosNaTabela(dados) {
-    console.log('📊 [ENDERECO-EXCEL] Exibindo dados na tabela...');
+    console.log('📊 [ENDERECO-EXCEL] Exibindo dados na tabela...', dados.length, 'registros');
     
     // Limpar tabela atual
     limparTabela();
@@ -538,18 +542,29 @@ async function exibirDadosNaTabela(dados) {
     // Criar linhas na tabela
     const tbody = document.getElementById('enderecoTableBody');
     if (!tbody) {
+        console.error('❌ [ENDERECO-EXCEL] Corpo da tabela não encontrado!');
         throw new Error('Corpo da tabela não encontrado');
+    }
+    
+    if (!dados || dados.length === 0) {
+        console.warn('⚠️ [ENDERECO-EXCEL] Nenhum dado para exibir');
+        verificarEstadoTabela();
+        return;
     }
     
     // Adicionar cada linha (limitado para performance)
     const dadosParaExibir = dados.slice(0, 100); // Primeiros 100 registros
     
     dadosParaExibir.forEach((linha, index) => {
-        const tr = criarLinhaTabela(linha, index);
-        tbody.appendChild(tr);
+        try {
+            const tr = criarLinhaTabela(linha, index);
+            tbody.appendChild(tr);
+        } catch (error) {
+            console.error('❌ [ENDERECO-EXCEL] Erro ao criar linha:', error, linha);
+        }
     });
     
-    console.log('✅ [ENDERECO-EXCEL] Dados exibidos na tabela');
+    console.log('✅ [ENDERECO-EXCEL] Dados exibidos na tabela:', dadosParaExibir.length, 'linhas adicionadas');
 }
 
 // ============= FUNÇÃO DE RECARREGAMENTO =============
@@ -626,6 +641,17 @@ window.carregarDadosExistentes = carregarDadosExistentes;
 window.reloadCompleteInterface = function() {
     console.log('🔄 [ENDERECO-EXCEL] Recarregando interface completa...');
     recarregarTabela();
+};
+
+// ============= DEBUGGING =============
+window.debugEnderecoSystem = function() {
+    console.log('🔍 [DEBUG] Estado do sistema:');
+    console.log('- XLSX disponível:', typeof XLSX !== 'undefined');
+    console.log('- Firebase disponível:', typeof firebase !== 'undefined');
+    console.log('- Tabela existe:', !!document.getElementById('enderecoTableBody'));
+    console.log('- Dados carregados:', dadosEndereco.length);
+    console.log('- Total registros:', totalRegistros);
+    console.log('- Input file existe:', !!document.getElementById('excelUpload'));
 };
 
 console.log('✅ [ENDERECO-EXCEL] Sistema de upload Excel para endereços carregado');

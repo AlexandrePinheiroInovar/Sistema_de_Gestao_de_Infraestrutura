@@ -3,11 +3,48 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // ============= REGRAS DE DESENVOLVIMENTO - MUITO PERMISSIVAS =============
-    // APENAS PARA TESTE - REMOVER EM PRODUÇÃO
+    // ============= USUÁRIOS =============
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
     
+    // ============= ENDEREÇOS =============
+    match /enderecos/{enderecoId} {
+      // Verificar se usuário está autenticado
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid));
+      
+      // ADMIN: pode fazer tudo
+      allow write, delete: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+      
+      // SUPERVISOR: pode escrever mas não deletar
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'SUPERVISOR' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'MANAGER');
+    }
+    
+    // ============= PROJETOS =============
+    match /projetos/{projetoId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'SUPERVISOR' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'MANAGER');
+    }
+    
+    // ============= ANÁLISES E LOGS =============
+    match /analises/{analiseId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // Negar tudo que não foi explicitamente permitido
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }
