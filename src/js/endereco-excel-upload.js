@@ -179,7 +179,7 @@ function lerArquivoExcel(arquivo) {
                 
                 // Separar headers e dados
                 const headers = jsonData[0];
-                const data = jsonData.slice(1)
+                const processedData = jsonData.slice(1)
                     .filter(row => row && Array.isArray(row) && row.length > 0) // Filtrar linhas válidas
                     .map(row => {
                         const rowObj = {};
@@ -193,8 +193,8 @@ function lerArquivoExcel(arquivo) {
                 
                 resolve({
                     headers: headers,
-                    data: data,
-                    totalRows: data.length,
+                    data: processedData,
+                    totalRows: processedData.length,
                     totalColumns: headers.length
                 });
                 
