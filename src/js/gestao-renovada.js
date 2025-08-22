@@ -44,16 +44,24 @@ let editingItem = null;
 // ============= INICIALIZAÇÃO =============
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🔧 [GESTAO-RENOVADA] Configurando sistema...');
-    setTimeout(initGestaoRenovada, 1000);
+    // Aguardar Firebase carregar completamente
+    setTimeout(initGestaoRenovada, 3000);
 });
 
 function initGestaoRenovada() {
     console.log('🚀 [GESTAO-RENOVADA] Iniciando...');
     
+    // Aguardar Firebase estar disponível
+    if (!window.firebase || !firebase.firestore) {
+        console.warn('⚠️ [GESTAO-RENOVADA] Firebase não disponível, tentando novamente...');
+        setTimeout(initGestaoRenovada, 2000);
+        return;
+    }
+    
     // Extrair dados da tabela de endereços
     extrairDadosEnderecos();
     
-    // Carregar primeira aba (projetos)
+    // Carregar primeira aba (projetos) automaticamente
     carregarAbaGestao('projetos');
 }
 
@@ -163,24 +171,56 @@ async function carregarDadosFirestore(tabId) {
         const config = GESTAO_CONFIG.tables[tabId];
         const snapshot = await firebase.firestore()
             .collection(config.collection)
-            .orderBy('createdAt', 'desc')
-            .get();
+            .get(); // Remover orderBy se der erro
         
         const dados = [];
         snapshot.forEach(doc => {
+            const data = doc.data();
             dados.push({ 
                 id: doc.id, 
-                ...doc.data(),
+                nome: data.nome || '',
+                descricao: data.descricao || '',
+                status: data.status || 'ATIVO',
+                createdAt: data.createdAt,
+                updatedAt: data.updatedAt,
                 source: 'firestore'
             });
         });
         
-        console.log(`✅ [GESTAO-RENOVADA] ${dados.length} registros carregados do Firestore`);
+        // Ordenar por nome
+        dados.sort((a, b) => a.nome.localeCompare(b.nome));
+        
+        console.log(`✅ [GESTAO-RENOVADA] ${dados.length} registros carregados do Firestore:`, dados);
         return dados;
         
     } catch (error) {
         console.error(`❌ [GESTAO-RENOVADA] Erro ao carregar do Firestore:`, error);
-        return [];
+        // Tentar sem orderBy
+        try {
+            const config = GESTAO_CONFIG.tables[tabId];
+            const snapshot = await firebase.firestore()
+                .collection(config.collection)
+                .get();
+            
+            const dados = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                dados.push({ 
+                    id: doc.id, 
+                    nome: data.nome || '',
+                    descricao: data.descricao || '',
+                    status: data.status || 'ATIVO',
+                    createdAt: data.createdAt,
+                    source: 'firestore'
+                });
+            });
+            
+            console.log(`✅ [GESTAO-RENOVADA] ${dados.length} registros carregados (sem ordenação)`);
+            return dados;
+        } catch (error2) {
+            console.error(`❌ [GESTAO-RENOVADA] Erro definitivo:`, error2);
+            return [];
+        }
     }
 }
 
@@ -296,77 +336,74 @@ async function adicionarNovoItem(tabId) {
     console.log(`➕ [GESTAO-RENOVADA] Adicionando novo item em: ${tabId}`);
     
     const config = GESTAO_CONFIG.tables[tabId];
-    const nome = prompt(`Novo ${config.title.slice(0, -1)}:`);
     
-    if (!nome || nome.trim() === '') {
-        alert('❌ Nome é obrigatório');
-        return;
-    }
-    
-    const descricao = prompt('Descrição (opcional):') || '';
-    
-    try {
-        if (!window.firebase || !firebase.firestore) {
-            throw new Error('Firebase não disponível');
+    // Criar e mostrar popup moderno
+    await mostrarPopupGestao(config.title.slice(0, -1), '', '', async (nome, descricao) => {
+        try {
+            if (!window.firebase || !firebase.firestore) {
+                throw new Error('Firebase não disponível');
+            }
+            
+            const novoItem = {
+                nome: nome.trim(),
+                descricao: descricao.trim(),
+                status: 'ATIVO',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                source: 'manual'
+            };
+            
+            await firebase.firestore()
+                .collection(config.collection)
+                .add(novoItem);
+            
+            mostrarNotificacao(`✅ ${config.title.slice(0, -1)} adicionado com sucesso!`, 'success');
+            
+            // Recarregar aba
+            carregarAbaGestao(tabId);
+            
+        } catch (error) {
+            console.error(`❌ [GESTAO-RENOVADA] Erro ao adicionar:`, error);
+            mostrarNotificacao(`❌ Erro ao adicionar: ${error.message}`, 'error');
         }
-        
-        const novoItem = {
-            nome: nome.trim(),
-            descricao: descricao.trim(),
-            status: 'ATIVO',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            source: 'manual'
-        };
-        
-        await firebase.firestore()
-            .collection(config.collection)
-            .add(novoItem);
-        
-        alert(`✅ ${config.title.slice(0, -1)} adicionado com sucesso!`);
-        
-        // Recarregar aba
-        carregarAbaGestao(tabId);
-        
-    } catch (error) {
-        console.error(`❌ [GESTAO-RENOVADA] Erro ao adicionar:`, error);
-        alert(`❌ Erro ao adicionar: ${error.message}`);
-    }
+    });
 }
 
 async function salvarItemTabela(tabId, nome) {
     console.log(`💾 [GESTAO-RENOVADA] Salvando item da tabela: ${nome}`);
     
     const config = GESTAO_CONFIG.tables[tabId];
-    const descricao = prompt(`Descrição para "${nome}":`) || `Extraído da tabela de endereços`;
     
-    try {
-        if (!window.firebase || !firebase.firestore) {
-            throw new Error('Firebase não disponível');
+    // Usar popup para pedir descrição
+    await mostrarPopupGestao(`Salvar "${nome}"`, nome, 'Extraído da tabela de endereços', async (nomeEditado, descricao) => {
+        try {
+            if (!window.firebase || !firebase.firestore) {
+                throw new Error('Firebase não disponível');
+            }
+            
+            const novoItem = {
+                nome: nomeEditado.trim(),
+                descricao: descricao.trim(),
+                status: 'ATIVO',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                source: 'from_table'
+            };
+            
+            await firebase.firestore()
+                .collection(config.collection)
+                .add(novoItem);
+            
+            mostrarNotificacao(`✅ "${nomeEditado}" salvo no Firestore!`, 'success');
+            
+            // Recarregar aba
+            carregarAbaGestao(tabId);
+            
+        } catch (error) {
+            console.error(`❌ [GESTAO-RENOVADA] Erro ao salvar:`, error);
+            mostrarNotificacao(`❌ Erro ao salvar: ${error.message}`, 'error');
         }
-        
-        const novoItem = {
-            nome: nome.trim(),
-            descricao: descricao.trim(),
-            status: 'ATIVO',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            source: 'from_table'
-        };
-        
-        await firebase.firestore()
-            .collection(config.collection)
-            .add(novoItem);
-        
-        alert(`✅ "${nome}" salvo no Firestore!`);
-        
-        // Recarregar aba
-        carregarAbaGestao(tabId);
-        
-    } catch (error) {
-        console.error(`❌ [GESTAO-RENOVADA] Erro ao salvar:`, error);
-        alert(`❌ Erro ao salvar: ${error.message}`);
-    }
+    });
 }
 
 async function editarItemGestao(tabId, itemId) {
@@ -385,45 +422,45 @@ async function editarItemGestao(tabId, itemId) {
             .get();
         
         if (!doc.exists) {
-            alert('❌ Item não encontrado');
+            mostrarNotificacao('❌ Item não encontrado', 'error');
             return;
         }
         
         const dados = doc.data();
-        const novoNome = prompt(`Editar nome:`, dados.nome);
         
-        if (!novoNome || novoNome.trim() === '') {
-            return;
-        }
-        
-        const novaDescricao = prompt(`Editar descrição:`, dados.descricao || '');
-        const novoStatus = prompt(`Status (ATIVO/INATIVO):`, dados.status || 'ATIVO');
-        
-        await firebase.firestore()
-            .collection(config.collection)
-            .doc(itemId)
-            .update({
-                nome: novoNome.trim(),
-                descricao: novaDescricao?.trim() || '',
-                status: novoStatus?.toUpperCase() || 'ATIVO',
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        
-        alert('✅ Item atualizado com sucesso!');
-        
-        // Recarregar aba
-        carregarAbaGestao(tabId);
+        // Usar popup para editar
+        await mostrarPopupGestao(`Editar ${config.title.slice(0, -1)}`, dados.nome || '', dados.descricao || '', async (novoNome, novaDescricao) => {
+            try {
+                await firebase.firestore()
+                    .collection(config.collection)
+                    .doc(itemId)
+                    .update({
+                        nome: novoNome.trim(),
+                        descricao: novaDescricao.trim(),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                
+                mostrarNotificacao('✅ Item atualizado com sucesso!', 'success');
+                
+                // Recarregar aba
+                carregarAbaGestao(tabId);
+                
+            } catch (error) {
+                console.error(`❌ [GESTAO-RENOVADA] Erro ao editar:`, error);
+                mostrarNotificacao(`❌ Erro ao editar: ${error.message}`, 'error');
+            }
+        });
         
     } catch (error) {
-        console.error(`❌ [GESTAO-RENOVADA] Erro ao editar:`, error);
-        alert(`❌ Erro ao editar: ${error.message}`);
+        console.error(`❌ [GESTAO-RENOVADA] Erro ao buscar item:`, error);
+        mostrarNotificacao(`❌ Erro ao buscar item: ${error.message}`, 'error');
     }
 }
 
 async function excluirItemGestao(tabId, itemId) {
     console.log(`🗑️ [GESTAO-RENOVADA] Excluindo item: ${itemId}`);
     
-    if (!confirm('Tem certeza que deseja excluir este item?')) {
+    if (!confirm('Tem certeza que deseja excluir este item?\n\nEsta ação não pode ser desfeita.')) {
         return;
     }
     
@@ -439,14 +476,14 @@ async function excluirItemGestao(tabId, itemId) {
             .doc(itemId)
             .delete();
         
-        alert('✅ Item excluído com sucesso!');
+        mostrarNotificacao('✅ Item excluído com sucesso!', 'success');
         
         // Recarregar aba
         carregarAbaGestao(tabId);
         
     } catch (error) {
         console.error(`❌ [GESTAO-RENOVADA] Erro ao excluir:`, error);
-        alert(`❌ Erro ao excluir: ${error.message}`);
+        mostrarNotificacao(`❌ Erro ao excluir: ${error.message}`, 'error');
     }
 }
 
@@ -482,11 +519,132 @@ window.showGestaoTab = function(tabId) {
     carregarAbaGestao(tabId);
 };
 
+// ============= POPUP MODERNO E NOTIFICAÇÕES =============
+function mostrarPopupGestao(tipo, nomeAtual = '', descricaoAtual = '', callback) {
+    return new Promise((resolve) => {
+        // Criar overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'gestao-popup-overlay';
+        overlay.innerHTML = `
+            <div class="gestao-popup">
+                <div class="gestao-popup-header">
+                    <h3><i class="fas fa-plus-circle"></i> Novo ${tipo}</h3>
+                    <button class="gestao-popup-close">&times;</button>
+                </div>
+                <div class="gestao-popup-body">
+                    <div class="gestao-form-group">
+                        <label for="gestaoNome">Nome *</label>
+                        <input type="text" id="gestaoNome" value="${nomeAtual}" placeholder="Digite o nome..." required>
+                    </div>
+                    <div class="gestao-form-group">
+                        <label for="gestaoDescricao">Descrição</label>
+                        <textarea id="gestaoDescricao" placeholder="Descrição opcional...">${descricaoAtual}</textarea>
+                    </div>
+                </div>
+                <div class="gestao-popup-footer">
+                    <button class="gestao-btn-cancel">Cancelar</button>
+                    <button class="gestao-btn-save">Salvar</button>
+                </div>
+            </div>
+        `;
+        
+        // Adicionar ao body
+        document.body.appendChild(overlay);
+        
+        // Focar no input
+        setTimeout(() => {
+            document.getElementById('gestaoNome').focus();
+        }, 100);
+        
+        // Event listeners
+        const closeBtn = overlay.querySelector('.gestao-popup-close');
+        const cancelBtn = overlay.querySelector('.gestao-btn-cancel');
+        const saveBtn = overlay.querySelector('.gestao-btn-save');
+        const nomeInput = document.getElementById('gestaoNome');
+        const descricaoInput = document.getElementById('gestaoDescricao');
+        
+        // Fechar popup
+        function fecharPopup() {
+            overlay.remove();
+            resolve();
+        }
+        
+        // Salvar
+        async function salvar() {
+            const nome = nomeInput.value.trim();
+            if (!nome) {
+                mostrarNotificacao('❌ Nome é obrigatório', 'error');
+                nomeInput.focus();
+                return;
+            }
+            
+            const descricao = descricaoInput.value.trim();
+            
+            // Desabilitar botão durante salvamento
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Salvando...';
+            
+            try {
+                await callback(nome, descricao);
+                fecharPopup();
+            } catch (error) {
+                console.error('Erro ao salvar:', error);
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Salvar';
+            }
+        }
+        
+        // Event listeners
+        closeBtn.addEventListener('click', fecharPopup);
+        cancelBtn.addEventListener('click', fecharPopup);
+        saveBtn.addEventListener('click', salvar);
+        
+        // Enter para salvar
+        nomeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') salvar();
+        });
+        
+        // Clique no overlay para fechar
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) fecharPopup();
+        });
+    });
+}
+
+function mostrarNotificacao(mensagem, tipo = 'info') {
+    // Remover notificações existentes
+    const existente = document.querySelector('.gestao-notification');
+    if (existente) existente.remove();
+    
+    // Criar notificação
+    const notification = document.createElement('div');
+    notification.className = `gestao-notification gestao-notification-${tipo}`;
+    
+    const icone = tipo === 'success' ? '✅' : tipo === 'error' ? '❌' : 'ℹ️';
+    
+    notification.innerHTML = `
+        <div class="gestao-notification-content">
+            <span class="gestao-notification-icon">${icone}</span>
+            <span class="gestao-notification-message">${mensagem}</span>
+        </div>
+    `;
+    
+    // Adicionar ao body
+    document.body.appendChild(notification);
+    
+    // Remover após 3 segundos
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
 // ============= FUNÇÕES GLOBAIS =============
 window.adicionarNovoItem = adicionarNovoItem;
 window.salvarItemTabela = salvarItemTabela;
 window.editarItemGestao = editarItemGestao;
 window.excluirItemGestao = excluirItemGestao;
 window.carregarAbaGestao = carregarAbaGestao;
+window.mostrarPopupGestao = mostrarPopupGestao;
+window.mostrarNotificacao = mostrarNotificacao;
 
 console.log('✅ [GESTAO-RENOVADA] Sistema carregado e pronto!');
