@@ -1,8 +1,9 @@
-Cache bust timestamp: 2025-08-22 15:00:00
-Version: 1.5
-Sistema integrado de endereços com gestão de projetos
-- Novo sistema que integra dados de gestão nos dropdowns
-- Salvamento em coleção dedicada (enderecos_cadastrados)  
-- Atualização automática da tabela visual
-- Substituição do sistema antigo por versão integrada
+Cache bust timestamp: 2025-08-22 15:30:00
+Version: 2.0
+Sistema NOVO de endereços totalmente refeito
+- Salva na coleção enderecos_mdu
+- Integra dados das tabelas de gestão nos dropdowns
+- Sistema mais limpo e direto
+- Atualização automática da tabela e estatísticas
+- Função abrirNovoEndereco() completamente nova
 Dynamic Excel Upload System Active
