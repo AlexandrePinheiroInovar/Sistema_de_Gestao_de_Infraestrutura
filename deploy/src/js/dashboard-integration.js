@@ -21,26 +21,16 @@ async function inicializarDashboard() {
         console.log('🚀 [DASHBOARD-INTEGRATION] Carregando dados do dashboard...');
         
         // Carregar dados da coleção enderecos_mdu
-        const dadosCarregados = await carregarDadosEnderecos();
-        
-        if (!dadosCarregados || dadosCarregados.length === 0) {
-            console.warn('⚠️ [DASHBOARD-INTEGRATION] Nenhum dado encontrado na coleção enderecos_mdu');
-            return;
-        }
-        
-        console.log('✅ [DASHBOARD-INTEGRATION] Dados carregados com sucesso:', dadosCarregados.length, 'registros');
+        await carregarDadosEnderecos();
         
         // Aguardar um pouco para garantir que os dados estejam disponíveis
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Configurar filtros conectados à tabela de endereços
+        // Configurar filtros (precisa ser DEPOIS dos dados carregarem)
         configurarFiltros();
         
         // Aguardar dropdowns serem criados e inicializados
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        
-        // Configurar observador para recarregar filtros quando tabela mudar
-        observarMudancasNaTabela();
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
         // Atualizar cards estatísticos
         atualizarCardsEstatisticos();
@@ -672,136 +662,90 @@ function gerarRankingStatus() {
     document.getElementById('totalProdutividade').textContent = `${produtividadeGeral}%`;
 }
 
-// ============= NOVO SISTEMA DE FILTROS =============
+// ============= FILTROS =============
 function configurarFiltros() {
-    console.log('🔍 [NOVO-FILTRO] Configurando novo sistema de filtros...');
+    console.log('🔍 [DASHBOARD-INTEGRATION] Configurando filtros...');
     
-    // Buscar dados diretamente da tabela de endereços no DOM
-    const dados = extrairDadosDaTabelaEndereco();
-    
-    if (!dados || dados.length === 0) {
-        console.warn('⚠️ [NOVO-FILTRO] Nenhum dado encontrado na tabela de endereços');
-        setTimeout(() => configurarFiltros(), 2000); // Tentar novamente em 2s
+    // Verificar se temos dados carregados
+    if (!dashboardData || dashboardData.length === 0) {
+        console.warn('⚠️ [DASHBOARD-INTEGRATION] Nenhum dado carregado para os filtros');
         return;
     }
     
-    console.log('✅ [NOVO-FILTRO] Dados extraídos da tabela:', dados.length, 'registros');
-    console.log('📊 [NOVO-FILTRO] Exemplo de dados:', dados[0]);
-    
-    // Preencher filtros com dados da tabela
-    preencherNovosFiltros(dados);
+    // Preencher options dos filtros
+    preencherFiltros();
 }
 
-function extrairDadosDaTabelaEndereco() {
-    const tabela = document.getElementById('enderecoMainTable');
-    if (!tabela) {
-        console.warn('⚠️ [NOVO-FILTRO] Tabela de endereços não encontrada');
-        return [];
-    }
-    
-    const tbody = tabela.querySelector('#enderecoTableBody');
-    if (!tbody) {
-        console.warn('⚠️ [NOVO-FILTRO] Tbody da tabela não encontrado');
-        return [];
-    }
-    
-    const linhas = tbody.querySelectorAll('tr:not(.empty-state)');
-    if (linhas.length === 0) {
-        console.warn('⚠️ [NOVO-FILTRO] Nenhuma linha de dados encontrada na tabela');
-        return [];
-    }
-    
-    const dados = [];
-    linhas.forEach(linha => {
-        const colunas = linha.querySelectorAll('td');
-        if (colunas.length >= 25) {
-            dados.push({
-                'Projeto': colunas[0]?.textContent?.trim() || '',
-                'Sub Projeto': colunas[1]?.textContent?.trim() || '',
-                'Tipo de Ação': colunas[2]?.textContent?.trim() || '',
-                'CONTRATO': colunas[3]?.textContent?.trim() || '',
-                'Condominio': colunas[4]?.textContent?.trim() || '',
-                'ENDEREÇO': colunas[5]?.textContent?.trim() || '',
-                'Cidade': colunas[6]?.textContent?.trim() || '',
-                'PEP': colunas[7]?.textContent?.trim() || '',
-                'COD IMOVEL GED': colunas[8]?.textContent?.trim() || '',
-                'NODE GERENCIAL': colunas[9]?.textContent?.trim() || '',
-                'Área Técnica': colunas[10]?.textContent?.trim() || '',
-                'HP': colunas[11]?.textContent?.trim() || '',
-                'ANDAR': colunas[12]?.textContent?.trim() || '',
-                'DATA RECEBIMENTO': colunas[13]?.textContent?.trim() || '',
-                'DATA INICIO': colunas[14]?.textContent?.trim() || '',
-                'DATA FINAL': colunas[15]?.textContent?.trim() || '',
-                'EQUIPE': colunas[16]?.textContent?.trim() || '',
-                'Supervisor': colunas[17]?.textContent?.trim() || '',
-                'Status': colunas[18]?.textContent?.trim() || '',
-                'RDO': colunas[19]?.textContent?.trim() || '',
-                'BOOK': colunas[20]?.textContent?.trim() || '',
-                'PROJETO': colunas[21]?.textContent?.trim() || '',
-                'JUSTIFICATIVA': colunas[22]?.textContent?.trim() || '',
-                'Observação': colunas[23]?.textContent?.trim() || '',
-                'Observação2': colunas[24]?.textContent?.trim() || ''
-            });
-        }
-    });
-    
-    return dados;
-}
+// Função global para recarregar filtros manualmente
+window.recarregarFiltrosDashboard = function() {
+    console.log('🔄 [DASHBOARD-INTEGRATION] Recarregando filtros manualmente...');
+    configurarFiltros();
+};
 
-function preencherNovosFiltros(dados) {
-    console.log('📝 [NOVO-FILTRO] Preenchendo filtros com dados da tabela');
+function preencherFiltros() {
+    const dados = dashboardData;
+    
+    console.log('📝 [DASHBOARD-INTEGRATION] Preenchendo filtros com', dados.length, 'registros');
+    console.log('📝 [DASHBOARD-INTEGRATION] Exemplo de dados:', dados[0]);
     
     // Projetos
-    const projetos = [...new Set(dados.map(item => item['Projeto']).filter(p => p))].sort();
-    criarNovoDropdown('infraFilterProjeto', projetos, 'Projetos');
+    const projetos = [...new Set(dados.map(item => item['Projeto']).filter(p => p && p.trim()))].sort();
+    console.log('🏗️ [PROJETOS]', projetos.length, 'encontrados:', projetos.slice(0, 3));
+    preencherSelect('infraFilterProjeto', projetos);
     
     // Sub Projetos
-    const subProjetos = [...new Set(dados.map(item => item['Sub Projeto']).filter(p => p))].sort();
-    criarNovoDropdown('infraFilterSubProjeto', subProjetos, 'Sub-Projetos');
+    const subProjetos = [...new Set(dados.map(item => item['Sub Projeto']).filter(p => p && p.trim()))].sort();
+    console.log('🔧 [SUB-PROJETOS]', subProjetos.length, 'encontrados:', subProjetos.slice(0, 3));
+    preencherSelect('infraFilterSubProjeto', subProjetos);
     
     // Equipes
-    const equipes = [...new Set(dados.map(item => item['EQUIPE']).filter(e => e))].sort();
-    criarNovoDropdown('infraFilterEquipe', equipes, 'Equipes');
+    const equipes = [...new Set(dados.map(item => item['EQUIPE']).filter(e => e && e.trim()))].sort();
+    console.log('👥 [EQUIPES]', equipes.length, 'encontradas:', equipes.slice(0, 3));
+    preencherSelect('infraFilterEquipe', equipes);
     
     // Status
-    const status = [...new Set(dados.map(item => item['Status']).filter(s => s))].sort();
-    criarNovoDropdown('infraFilterStatus', status, 'Status');
+    const status = [...new Set(dados.map(item => item['Status']).filter(s => s && s.trim()))].sort();
+    console.log('✅ [STATUS]', status.length, 'encontrados:', status);
+    preencherSelect('infraFilterStatus', status);
     
     // Cidades
-    const cidades = [...new Set(dados.map(item => item['Cidade']).filter(c => c))].sort();
-    criarNovoDropdown('infraFilterCidade', cidades, 'Cidades');
+    const cidades = [...new Set(dados.map(item => item['Cidade']).filter(c => c && c.trim()))].sort();
+    console.log('🏙️ [CIDADES]', cidades.length, 'encontradas:', cidades.slice(0, 3));
+    preencherSelect('infraFilterCidade', cidades);
     
     // Supervisores
-    const supervisores = [...new Set(dados.map(item => item['Supervisor']).filter(s => s))].sort();
-    criarNovoDropdown('infraFilterSupervisor', supervisores, 'Supervisores');
+    const supervisores = [...new Set(dados.map(item => item['Supervisor']).filter(s => s && s.trim()))].sort();
+    console.log('👨‍💼 [SUPERVISORES]', supervisores.length, 'encontrados:', supervisores.slice(0, 3));
+    preencherSelect('infraFilterSupervisor', supervisores);
     
     // Tipos de Ação
-    const tiposAcao = [...new Set(dados.map(item => item['Tipo de Ação']).filter(t => t))].sort();
-    criarNovoDropdown('infraFilterTipoAcao', tiposAcao, 'Tipos de Ação');
+    const tiposAcao = [...new Set(dados.map(item => item['Tipo de Ação']).filter(t => t && t.trim()))].sort();
+    console.log('⚙️ [TIPOS DE AÇÃO]', tiposAcao.length, 'encontrados:', tiposAcao);
+    preencherSelect('infraFilterTipoAcao', tiposAcao);
     
     // Condomínios
-    const condominios = [...new Set(dados.map(item => item['Condominio']).filter(c => c))].sort();
-    criarNovoDropdown('infraFilterCondominio', condominios, 'Condomínios');
+    const condominios = [...new Set(dados.map(item => item['Condominio']).filter(c => c && c.trim()))].sort();
+    console.log('🏢 [CONDOMÍNIOS]', condominios.length, 'encontrados:', condominios.slice(0, 3));
+    preencherSelect('infraFilterCondominio', condominios);
 }
 
-function criarNovoDropdown(selectId, options, label) {
+function preencherSelect(selectId, options) {
     const select = document.getElementById(selectId);
     if (!select) {
-        console.warn(`⚠️ [NOVO-FILTRO] Select não encontrado: ${selectId}`);
+        console.warn(`⚠️ [DASHBOARD-INTEGRATION] Select não encontrado: ${selectId}`);
         return;
     }
     
-    console.log(`📝 [NOVO-FILTRO] Criando ${label} com ${options.length} opções:`, options.slice(0, 5));
+    console.log(`📝 [DASHBOARD-INTEGRATION] Preenchendo ${selectId} com ${options.length} opções`);
     
-    // Destruir instância anterior se existir
-    if (window.multiSelectInstances && window.multiSelectInstances[selectId]) {
-        window.multiSelectInstances[selectId].destroy();
-        delete window.multiSelectInstances[selectId];
-    }
-    
-    // Limpar e recriar o select
+    // Limpar opções existentes (preservar estrutura multiple se existir)
+    const wasMultiple = select.hasAttribute('multiple');
     select.innerHTML = '';
-    select.setAttribute('multiple', 'multiple');
+    
+    // Adicionar atributo multiple se não existir
+    if (!wasMultiple) {
+        select.setAttribute('multiple', 'multiple');
+    }
     
     // Adicionar opções
     options.forEach(option => {
@@ -811,72 +755,28 @@ function criarNovoDropdown(selectId, options, label) {
         select.appendChild(optionElement);
     });
     
-    // Criar nova instância do dropdown com z-index forçado
+    // Atualizar ou criar instância do dropdown customizado
     setTimeout(() => {
+        // Se já existe uma instância, destruir e recriar
+        if (window.multiSelectInstances && window.multiSelectInstances[selectId]) {
+            console.log(`🔄 [DASHBOARD-INTEGRATION] Atualizando instância existente: ${selectId}`);
+            window.multiSelectInstances[selectId].destroy();
+            delete window.multiSelectInstances[selectId];
+        }
+        
+        // Criar nova instância
         if (window.initializeMultiSelect) {
             window.initializeMultiSelect(select, {
-                placeholder: `Selecionar ${label}...`,
+                placeholder: `Selecionar ${getFilterLabel(selectId)}...`,
                 searchable: true,
                 maxTags: 2,
                 closeOnSelect: false,
                 showCounter: true
             });
-            
-            // Forçar z-index alto após criação
-            setTimeout(() => {
-                const dropdown = document.getElementById(`${selectId}_dropdown`);
-                if (dropdown) {
-                    dropdown.style.zIndex = '999999';
-                    const content = dropdown.querySelector('.checkbox-dropdown-content');
-                    if (content) {
-                        content.style.zIndex = '999999';
-                        content.style.position = 'absolute';
-                        content.style.background = 'white';
-                    }
-                }
-            }, 100);
-            
-            console.log(`✅ [NOVO-FILTRO] ${label} criado com ${options.length} opções`);
+            console.log(`✅ [DASHBOARD-INTEGRATION] Instância criada/atualizada: ${selectId}`);
         }
-    }, 200);
+    }, 150);
 }
-
-// ============= OBSERVADOR DE MUDANÇAS NA TABELA =============
-function observarMudancasNaTabela() {
-    const tbody = document.getElementById('enderecoTableBody');
-    if (!tbody) return;
-    
-    console.log('👁️ [NOVO-FILTRO] Configurando observador de mudanças na tabela');
-    
-    // Observar mudanças no conteúdo da tabela
-    const observer = new MutationObserver((mutations) => {
-        let tabelaMudou = false;
-        
-        mutations.forEach((mutation) => {
-            if (mutation.type === 'childList' || mutation.type === 'subtree') {
-                tabelaMudou = true;
-            }
-        });
-        
-        if (tabelaMudou) {
-            console.log('🔄 [NOVO-FILTRO] Tabela modificada, recarregando filtros...');
-            setTimeout(() => configurarFiltros(), 1000);
-        }
-    });
-    
-    // Configurar observador
-    observer.observe(tbody, {
-        childList: true,
-        subtree: true,
-        characterData: true
-    });
-}
-
-// Função global para recarregar filtros manualmente
-window.recarregarFiltrosDashboard = function() {
-    console.log('🔄 [NOVO-FILTRO] Recarregando filtros manualmente...');
-    configurarFiltros();
-};
 
 function getFilterLabel(selectId) {
     const labels = {

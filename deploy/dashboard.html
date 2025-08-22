@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Análises - Dashboard</title>
-    <link rel="stylesheet" href="src/css/styles.css">
-    <link rel="stylesheet" href="src/css/checkbox-dropdown.css">
+    <link rel="stylesheet" href="src/css/styles.css?v=1.3&t=2025081813">
+    <link rel="stylesheet" href="src/css/checkbox-dropdown.css?v=1.3&t=2025081813">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="src/assets/images/Inovar-Telecom-Logo-Site_.png">
 </head>
@@ -286,6 +286,12 @@
                             <div class="filter-group">
                                 <label for="infraFilterTipoAcao">Tipo de Ação</label>
                                 <select id="infraFilterTipoAcao" multiple onchange="applyInfraFilters()">
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="infraFilterCondominio">Condomínio</label>
+                                <select id="infraFilterCondominio" multiple onchange="applyInfraFilters()">
                                 </select>
                             </div>
                             
@@ -579,58 +585,106 @@
                                 <span class="btn-icon">➕</span>
                                 Novo Endereço
                             </button>
-                            <button class="btn-upload" onclick="openUploadModal()">
-                                <span class="btn-icon">📁</span>
-                                Upload Planilha
-                            </button>
+                            <div class="upload-excel-container">
+                                <input type="file" id="novoExcelUpload" accept=".xlsx,.xls" style="display: none;">
+                                <button class="btn-novo-upload" onclick="document.getElementById('novoExcelUpload').click()">
+                                    <span class="btn-icon">⬆️</span>
+                                    Upload Planilha Excel
+                                </button>
+                            </div>
                         </div>
                     </div>
 
 
+
+                    <!-- Status da Conexão Firebase -->
+                    <div id="firebaseStatus" class="firebase-status">
+                        <div class="status-indicator">
+                            <span class="status-dot connected"></span>
+                            <span class="status-text">Conectado ao Firebase</span>
+                        </div>
+                    </div>
 
                     <!-- Filtros de Busca -->
                     <div class="search-filters">
                         <div class="search-bar">
-                            <input type="text" id="searchInput" placeholder="🔍 Buscar por endereço, condomínio, equipe..." onkeyup="filterTable()">
+                            <input type="text" id="dynamicSearchInput" placeholder="🔍 Buscar nas 25 colunas..." onkeyup="filterDynamicTable()">
+                        </div>
+                        <div class="filter-actions">
+                            <button onclick="reloadCompleteInterface()" class="btn-refresh" title="Recarregar dados">
+                                <span class="btn-icon">🔄</span>
+                                Atualizar
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Tabela de Endereços -->
-                    <div class="crud-table-container">
-                        <table class="crud-table" id="enderecosTable">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Projeto</th>
-                                    <th>Sub Projeto</th>
-                                    <th>Tipo de Ação</th>
-                                    <th>Condomínio</th>
-                                    <th>Endereço</th>
-                                    <th>Cidade</th>
-                                    <th>PEP</th>
-                                    <th>COD IMOVEL GED</th>
-                                    <th>NODE GERENCIAL</th>
-                                    <th>Área Técnica</th>
-                                    <th>HP</th>
-                                    <th>ANDAR</th>
-                                    <th>Data Recebimento</th>
-                                    <th>Data Início</th>
-                                    <th>Data Final</th>
-                                    <th>Equipe</th>
-                                    <th>Supervisor</th>
-                                    <th>Status</th>
-                                    <th>RDO</th>
-                                    <th>BOOK</th>
-                                    <th>PROJETO</th>
-                                    <th>Situação</th>
-                                    <th>Justificativa</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="enderecosTableBody">
-                                <!-- Dados serão inseridos aqui via JavaScript -->
-                            </tbody>
-                        </table>
+                    <!-- Nova Tabela de Endereços com 25 Colunas Exatas -->
+                    <div class="endereco-table-container" id="enderecoTableContainer">
+                        <div class="table-header">
+                            <h4>📋 Tabela de Endereços</h4>
+                            <div class="table-stats">
+                                <span id="enderecoRecordCount"></span>
+                                <span id="enderecoLastUpdate"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="table-wrapper" id="enderecoTableWrapper">
+                            <table class="endereco-table" id="enderecoMainTable">
+                                <thead>
+                                    <tr>
+                                        <th data-column="1">Projeto</th>
+                                        <th data-column="2">Sub Projeto</th>
+                                        <th data-column="3">Tipo de Ação</th>
+                                        <th data-column="4">CONTRATO</th>
+                                        <th data-column="5">Condominio</th>
+                                        <th data-column="6">ENDEREÇO</th>
+                                        <th data-column="7">Cidade</th>
+                                        <th data-column="8">PEP</th>
+                                        <th data-column="9">COD IMOVEL GED</th>
+                                        <th data-column="10">NODE GERENCIAL</th>
+                                        <th data-column="11">Área Técnica</th>
+                                        <th data-column="12">HP</th>
+                                        <th data-column="13">ANDAR</th>
+                                        <th data-column="14">DATA RECEBIMENTO</th>
+                                        <th data-column="15">DATA INICIO</th>
+                                        <th data-column="16">DATA FINAL</th>
+                                        <th data-column="17">EQUIPE</th>
+                                        <th data-column="18">Supervisor</th>
+                                        <th data-column="19">Status</th>
+                                        <th data-column="20">RDO</th>
+                                        <th data-column="21">BOOK</th>
+                                        <th data-column="22">PROJETO</th>
+                                        <th data-column="23">JUSTIFICATIVA</th>
+                                        <th data-column="24">Observação</th>
+                                        <th data-column="25">Observação</th>
+                                        <th data-column="actions">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="enderecoTableBody">
+                                    <tr class="empty-state">
+                                        <td colspan="26">
+                                            <div class="empty-state-content">
+                                                <div class="empty-icon">📊</div>
+                                                <h3>Tabela Vazia</h3>
+                                                <p>Faça upload de uma planilha Excel para preencher a tabela</p>
+                                                <p><small>As colunas devem estar na ordem exata especificada</small></p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Mensagem quando não há dados -->
+                        <div id="noDataMessage" class="no-data-message" style="display: none;">
+                            <div class="no-data-icon">📊</div>
+                            <h3>Nenhum dado encontrado</h3>
+                            <p>Faça o upload de uma planilha Excel para começar.</p>
+                            <button onclick="document.getElementById('excelUpload').click()" class="btn-primary">
+                                <span class="btn-icon">📊</span>
+                                Importar Excel
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -1394,164 +1448,6 @@
         </div>
     </div>
 
-    <!-- Modal de Upload de Planilha -->
-    <div id="uploadModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-upload"></i> Upload de Planilha</h3>
-                <span class="close" onclick="closeUploadModal()">&times;</span>
-            </div>
-            <div class="upload-content">
-                <div class="upload-section">
-                    <h4>📁 Selecione o arquivo</h4>
-                    <p>Faça upload de planilhas Excel (.xlsx, .xls) ou CSV (.csv)</p>
-                    
-                    <!-- Botão para download da planilha padrão -->
-                    <div class="template-download-section">
-                        <div class="template-info">
-                            <h5>📋 Planilha Padrão</h5>
-                            <p>Baixe nossa planilha modelo para preencher os dados corretamente</p>
-                        </div>
-                        <button type="button" class="btn-template-download" onclick="downloadTemplate()">
-                            <i class="fas fa-download"></i> Baixar Planilha Padrão (.xlsx)
-                        </button>
-                    </div>
-                    
-                    <div class="file-upload-area" id="fileUploadArea">
-                        <div class="upload-icon">📄</div>
-                        <div class="upload-text">
-                            <span class="upload-title">Arraste e solte arquivos aqui</span>
-                            <span class="upload-subtitle">ou clique para selecionar</span>
-                        </div>
-                        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display: none;">
-                    </div>
-                    
-                    <div class="upload-options">
-                        <div class="option-group">
-                            <label>
-                                <input type="radio" name="uploadType" value="local" checked>
-                                <span class="radio-custom"></span>
-                                <span class="option-text">
-                                    <strong>Arquivo Local</strong>
-                                    <small>Selecione arquivo do seu computador</small>
-                                </span>
-                            </label>
-                        </div>
-                        
-                        <div class="option-group">
-                            <label>
-                                <input type="radio" name="uploadType" value="web">
-                                <span class="radio-custom"></span>
-                                <span class="option-text">
-                                    <strong>URL da Web</strong>
-                                    <small>Cole o link da planilha online</small>
-                                </span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="web-url-input" id="webUrlInput" style="display: none;">
-                        <label for="webUrl">URL da Planilha:</label>
-                        <div class="url-input-container">
-                            <input type="url" id="webUrl" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
-                            <button type="button" class="btn-url-process" onclick="processWebUrl()">
-                                <i class="fas fa-download"></i> Baixar
-                            </button>
-                        </div>
-                        <small class="url-help">Cole o link do Google Sheets ou URL direta da planilha (CSV, Excel)</small>
-                    </div>
-                </div>
-                
-                <div class="upload-preview" id="uploadPreview" style="display: none;">
-                    <h4>📊 Prévia dos Dados</h4>
-                    <div class="preview-table-container">
-                        <table class="preview-table" id="previewTable">
-                            <thead id="previewTableHead">
-                                <!-- Cabeçalhos serão inseridos aqui -->
-                            </thead>
-                            <tbody id="previewTableBody">
-                                <!-- Dados serão inseridos aqui -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                
-                <div class="upload-mapping" id="uploadMapping" style="display: none;">
-                    <h4>🔗 Mapeamento de Colunas</h4>
-                    <p>Selecione quais colunas da planilha correspondem aos campos do sistema:</p>
-                    
-                    <div class="mapping-grid">
-                        <div class="mapping-item">
-                            <label>Projeto:</label>
-                            <select id="mapProjeto" class="mapping-select">
-                                <option value="">Selecione a coluna...</option>
-                            </select>
-                        </div>
-                        <div class="mapping-item">
-                            <label>Sub Projeto:</label>
-                            <select id="mapSubProjeto" class="mapping-select">
-                                <option value="">Selecione a coluna...</option>
-                            </select>
-                        </div>
-                        <div class="mapping-item">
-                            <label>Tipo de Ação:</label>
-                            <select id="mapTipoAcao" class="mapping-select">
-                                <option value="">Selecione a coluna...</option>
-                            </select>
-                        </div>
-                        <div class="mapping-item">
-                            <label>Condomínio:</label>
-                            <select id="mapCondominio" class="mapping-select">
-                                <option value="">Selecione a coluna...</option>
-                            </select>
-                        </div>
-                        <div class="mapping-item">
-                            <label>Endereço:</label>
-                            <select id="mapEndereco" class="mapping-select">
-                                <option value="">Selecione a coluna...</option>
-                            </select>
-                        </div>
-                        <div class="mapping-item">
-                            <label>Cidade:</label>
-                            <select id="mapCidade" class="mapping-select">
-                                <option value="">Selecione a coluna...</option>
-                            </select>
-                        </div>
-                        <div class="mapping-item">
-                            <label>Equipe:</label>
-                            <select id="mapEquipe" class="mapping-select">
-                                <option value="">Selecione a coluna...</option>
-                            </select>
-                        </div>
-                        <div class="mapping-item">
-                            <label>Supervisor:</label>
-                            <select id="mapSupervisor" class="mapping-select">
-                                <option value="">Selecione a coluna...</option>
-                            </select>
-                        </div>
-                        <div class="mapping-item">
-                            <label>Status:</label>
-                            <select id="mapStatus" class="mapping-select">
-                                <option value="">Selecione a coluna...</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="modal-footer">
-                <button type="button" class="btn-test" onclick="testUploadWithSampleData()" style="margin-right: auto;">
-                    <span class="btn-icon">🧪</span>
-                    Testar com Dados de Exemplo
-                </button>
-                <button type="button" class="btn-upload-process" id="processBtn" onclick="processUpload()" style="display: none;">
-                    <span class="btn-icon">⚡</span>
-                    Processar Upload
-                </button>
-                <button type="button" class="btn-cancel" onclick="closeUploadModal()">❌ Cancelar</button>
-            </div>
-        </div>
-    </div>
 
     <!-- ===== NOVA TELA DE PERFIL DO USUÁRIO ===== -->
     <div id="userProfileScreen" class="profile-screen" style="display: none;">
@@ -1632,25 +1528,216 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
     
-    <!-- Debug script temporário -->
-    <script>
-        console.log('🔍 [DASHBOARD] Debug inicial - Firebase disponível?', typeof firebase);
-        setTimeout(() => {
-            console.log('🔍 [DASHBOARD] Debug após timeout - Firebase:', typeof firebase);
-        }, 100);
-    </script>
-    
-    <script src="src/js/firebase-complete.js"></script>
-    <!-- <script src="script.js"></script> TEMPORARIAMENTE DESABILITADO PARA TESTAR LOOP -->
-    <!-- <script src="new-dropdown.js"></script> TEMPORARIAMENTE DESABILITADO PARA TESTAR LOOP -->
-    <script src="src/js/dashboard-minimal.js"></script>
-    <script src="src/js/checkbox-dropdown.js"></script>
-    <script src="src/js/force-init-dropdowns.js"></script>
+    <!-- Firebase Sistema Unificado (PRODUCTION ONLY) -->
+    <script src="src/js/firebase-complete.js?v=1.3&t=2025081813"></script>
+    <script src="src/js/firestore-integration.js?v=1.3&t=2025081813"></script>
+    <script src="src/js/dashboard-minimal.js?v=1.3&t=2025081813"></script>
+    <script src="src/js/dashboard-functions.js?v=1.3&t=2025081813"></script>
+    <!-- <script src="src/js/dashboard-handlers.js?v=1.3&t=2025081813"></script> --> <!-- Desabilitado - não necessário para tabela simples -->
+    <!-- <script src="src/js/firebase-table-system.js?v=4.2&t=2025081925"></script> --> <!-- Desabilitado - usando excel-reader-complete.js com ordem fixa -->
+    <!-- <script src="src/js/multi-select-filters.js?v=1.0&t=2025081925"></script> --> <!-- Desabilitado - usando novo sistema -->
+    <!-- <script src="src/js/excel-reader-complete.js?v=1.0&t=2025081925"></script> --> <!-- Desabilitado - substituído por endereco-excel-upload.js -->
+    <!-- <script src="src/js/excel-template-standard.js?v=1.0&t=2025082020"></script> --> <!-- Desabilitado - usando novo sistema -->
+    <!-- <script src="src/js/excel-column-ordering.js?v=1.0&t=2025082020"></script> --> <!-- Desabilitado - usando novo sistema -->
+    <!-- <script src="src/js/checkbox-dropdown.js?v=1.3&t=2025081813"></script> --> <!-- Desabilitado - não necessário com sistema de ordem fixa -->
+    <script src="src/js/novo-upload-excel.js?v=1.0&t=2025082121"></script> <!-- Sistema novo e simplificado de upload Excel -->
+    <script src="src/js/dashboard-integration.js?v=1.0&t=2025082121"></script> <!-- Integração dos dados do dashboard -->
+    <script src="src/js/multi-select-dropdown.js?v=1.0&t=2025082121"></script> <!-- Sistema avançado de dropdowns -->
+    <!-- <script src="src/js/permissions-system.js?v=1.0&t=2025082121"></script> --> <!-- Desabilitado - sistema simplificado -->
+    <script src="src/js/force-init-dropdowns.js?v=1.3&t=2025081813"></script>
     <script>
         // O script.js já tem o event listener DOMContentLoaded
         // Não precisamos duplicar aqui
         console.log('📄 Dashboard HTML carregado');
         
+        // ============= CORRIGIR STATUS FIREBASE =============
+        setTimeout(() => {
+            const firebaseStatus = document.getElementById('firebaseStatus');
+            if (firebaseStatus) {
+                const statusDot = firebaseStatus.querySelector('.status-dot');
+                const statusText = firebaseStatus.querySelector('.status-text');
+                
+                if (statusDot && statusText) {
+                    statusDot.className = 'status-dot connected';
+                    statusText.textContent = 'Sistema carregado - Excel Reader ativo';
+                    console.log('✅ Status Firebase corrigido');
+                }
+            }
+        }, 3000);
+        
+        // ============= FUNÇÕES GLOBAIS DE GERENCIAMENTO =============
+        function abrirNovoEndereco() {
+            document.getElementById('modalTitle').textContent = 'Novo Endereço';
+            document.getElementById('crudModal').style.display = 'block';
+        }
+        
+        function closeModal() {
+            document.getElementById('crudModal').style.display = 'none';
+        }
+        
+        function openGestaoModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+        
+        function closeGestaoModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        function showGestaoTab(tabName) {
+            // Esconder todas as abas
+            const tabs = document.querySelectorAll('.gestao-tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Remover classe active de todos os botões
+            const buttons = document.querySelectorAll('.gestao-tab-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Mostrar aba selecionada
+            document.getElementById(`gestao-${tabName}-tab`).classList.add('active');
+            
+            // Adicionar classe active no botão clicado
+            event.target.classList.add('active');
+        }
+        
+        function showSection(sectionName, event) {
+            // Esconder todas as seções
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => section.classList.remove('active'));
+            
+            // Remover classe active de todos os links
+            const links = document.querySelectorAll('.sidebar-menu a');
+            links.forEach(link => link.classList.remove('active'));
+            
+            // Mostrar seção selecionada
+            document.getElementById(sectionName).classList.add('active');
+            
+            // Adicionar classe active no link clicado
+            if (event) {
+                event.target.classList.add('active');
+            }
+            
+            // Atualizar título da seção
+            const titles = {
+                'inicio': 'Início',
+                'infraestrutura': 'Dashboard - Infraestrutura',
+                'enderecos': 'Cadastro de Endereços',
+                'gestao-projetos': 'Gestão de Projetos'
+            };
+            
+            document.getElementById('section-title').textContent = titles[sectionName] || sectionName;
+        }
+        
+        // Funções para modo colorblind e perfil de usuário (caso não existam)
+        function toggleColorblindMode() {
+            console.log('Toggle colorblind mode');
+            // TODO: Implementar modo daltônico
+        }
+        
+        function openUserProfile() {
+            document.getElementById('userProfileScreen').style.display = 'block';
+        }
+        
+        function closeUserProfileScreen() {
+            document.getElementById('userProfileScreen').style.display = 'none';
+        }
+        
+        function confirmLogout() {
+            if (confirm('Deseja realmente sair do sistema?')) {
+                // TODO: Implementar logout
+                console.log('Logout confirmado');
+            }
+        }
+        
+        function toggleNewDropdown() {
+            const dropdown = document.getElementById('newUserDropdown');
+            dropdown.classList.toggle('active');
+        }
+        
+        // Fechar dropdown quando clicar fora
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('newUserDropdown');
+            if (dropdown && !dropdown.contains(event.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
+        
+        // ============= FUNÇÕES DE ADMIN PARA LIMPEZA =============
+        function checkAdminPermissions() {
+            // Verificar se o usuário é admin baseado no role
+            const userRole = document.getElementById('userRoleSimple')?.textContent;
+            const isAdmin = userRole && (userRole.includes('ADMIN') || userRole.includes('admin'));
+            
+            const adminControls = document.getElementById('adminControls');
+            if (adminControls) {
+                adminControls.style.display = isAdmin ? 'block' : 'none';
+            }
+            
+            return isAdmin;
+        }
+        
+        function showAdminCleanupOptions() {
+            if (!checkAdminPermissions()) {
+                alert('⛔ Acesso Negado\n\nApenas administradores podem acessar esta funcionalidade.');
+                return;
+            }
+            
+            const options = `
+🗑️ OPÇÕES DE LIMPEZA ADMINISTRATIVA
+
+Escolha uma opção:
+
+1 - Limpar APENAS tabela de endereços (preserva gestão)
+2 - Limpar TODOS os dados (tabela + gestão de projetos)
+0 - Cancelar
+
+Digite o número da opção desejada:`;
+            
+            const choice = prompt(options);
+            
+            switch(choice) {
+                case '1':
+                    if (window.clearMainTableOnly) {
+                        window.clearMainTableOnly();
+                    } else {
+                        alert('❌ Função não disponível. Verifique se o sistema está carregado.');
+                    }
+                    break;
+                    
+                case '2':
+                    if (window.clearAllFirebaseData) {
+                        window.clearAllFirebaseData();
+                    } else {
+                        alert('❌ Função não disponível. Verifique se o sistema está carregado.');
+                    }
+                    break;
+                    
+                case '0':
+                case null:
+                    // Cancelado
+                    break;
+                    
+                default:
+                    alert('❌ Opção inválida. Operação cancelada.');
+            }
+        }
+        
+        // Verificar permissões quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                checkAdminPermissions();
+            }, 2000);
+        });
+        
+        // Verificar permissões quando mudar de seção
+        const originalShowSection = showSection;
+        showSection = function(sectionName, event) {
+            originalShowSection(sectionName, event);
+            if (sectionName === 'enderecos') {
+                setTimeout(() => {
+                    checkAdminPermissions();
+                }, 500);
+            }
+        };
 
     </script>
 </body>

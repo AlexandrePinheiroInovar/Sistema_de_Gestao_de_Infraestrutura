@@ -198,7 +198,7 @@ window.FirebaseAuthIsolated = (function() {
         log('Configurando listener de autenticação com controle por UID...');
         authListenerActive = true;
         
-        auth.onAuthStateChanged(function(user) {
+        auth.onAuthStateChanged(async function(user) {
             authStateChangeCount++;
             log(`🔄 Auth state changed #${authStateChangeCount}`);
             
@@ -208,7 +208,61 @@ window.FirebaseAuthIsolated = (function() {
                     lastUid = user.uid;
                     log(`✅ Usuário logado: ${user.email} (UID: ${user.uid})`);
                     
-                    // Salvar dados do usuário
+                    // Criar/atualizar documento do usuário no Firestore
+                    try {
+                        const userDocRef = firestore.collection('users').doc(user.uid);
+                        const userDoc = await userDocRef.get();
+                        
+                        if (!userDoc.exists) {
+                            log(`📄 Criando documento do usuário no Firestore...`);
+                            await userDocRef.set({
+                                uid: user.uid,
+                                email: user.email,
+                                displayName: user.displayName || user.email.split('@')[0],
+                                role: 'USER',
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                                environment: 'PRODUCTION'
+                            });
+                            log(`✅ Documento do usuário criado no Firestore`);
+                            
+                            // Auto-promoção especial para yan@test.com.br
+                            if (user.email === 'yan@test.com.br') {
+                                log(`🛡️ Auto-promovendo ${user.email} para ADMIN...`);
+                                await userDocRef.update({
+                                    role: 'ADMIN',
+                                    promotedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                    promotedBy: 'AUTO_SYSTEM'
+                                });
+                                log(`✅ ${user.email} promovido para ADMIN automaticamente`);
+                            }
+                        } else {
+                            log(`📄 Atualizando último login...`);
+                            await userDocRef.update({
+                                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                            log(`✅ Último login atualizado`);
+                            
+                            // Verificar se yan@test.com.br precisa ser promovido
+                            if (user.email === 'yan@test.com.br') {
+                                const userData = userDoc.data();
+                                if (userData.role !== 'ADMIN') {
+                                    log(`🛡️ Promovendo ${user.email} para ADMIN...`);
+                                    await userDocRef.update({
+                                        role: 'ADMIN',
+                                        promotedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                        promotedBy: 'AUTO_SYSTEM'
+                                    });
+                                    log(`✅ ${user.email} promovido para ADMIN`);
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        log(`❌ Erro no Firestore: ${e.message}`, 'error');
+                        console.error('Erro detalhado Firestore:', e);
+                    }
+                    
+                    // Salvar dados do usuário no localStorage
                     localStorage.setItem('user', JSON.stringify({
                         uid: user.uid,
                         email: user.email,
