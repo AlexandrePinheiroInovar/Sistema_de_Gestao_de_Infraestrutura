@@ -6,6 +6,7 @@
     <title>Sistema de Análises - Dashboard</title>
     <link rel="stylesheet" href="src/css/styles.css?v=1.3&t=2025081813">
     <link rel="stylesheet" href="src/css/checkbox-dropdown.css?v=1.3&t=2025081813">
+    <link rel="stylesheet" href="src/css/gestao-renovada.css?v=1.0&t=2025082121">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="src/assets/images/Inovar-Telecom-Logo-Site_.png">
 </head>
@@ -739,7 +740,7 @@
                                 <p>Gerencie os projetos principais</p>
                             </div>
                             <div class="gestao-actions">
-                                <button class="btn-primary" onclick="openGestaoModal('projetoModal')">
+                                <button class="btn-primary" onclick="adicionarNovoItem('projetos')">
                                     <i class="fas fa-plus"></i> Novo Projeto
                                 </button>
                             </div>
@@ -749,12 +750,11 @@
                             <table class="crud-table">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
-                                        <th>Nome do Projeto</th>
-                                        <th>Cliente</th>
+                                        <th>#</th>
+                                        <th>Nome</th>
                                         <th>Descrição</th>
+                                        <th>Uso na Tabela</th>
                                         <th>Status</th>
-                                        <th>Data Criação</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
@@ -772,7 +772,7 @@
                                 <h2><i class="fas fa-sitemap"></i> Sub Projetos</h2>
                                 <p>Gerencie os sub projetos dentro de cada projeto principal</p>
                             </div>
-                            <button class="btn-primary" onclick="openGestaoModal('subprojetoModal')">
+                            <button class="btn-primary" onclick="adicionarNovoItem('subprojetos')">
                                 <i class="fas fa-plus"></i> Novo Sub Projeto
                             </button>
                         </div>
@@ -781,12 +781,11 @@
                             <table class="crud-table">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
+                                        <th>#</th>
                                         <th>Nome</th>
-                                        <th>Projeto Principal</th>
                                         <th>Descrição</th>
+                                        <th>Uso na Tabela</th>
                                         <th>Status</th>
-                                        <th>Data Criação</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
@@ -804,7 +803,7 @@
                                 <h2><i class="fas fa-tasks"></i> Tipos de Ação</h2>
                                 <p>Gerencie os tipos de ação disponíveis (Vistoria, Construção, etc.)</p>
                             </div>
-                            <button class="btn-primary" onclick="openGestaoModal('tipoAcaoModal')">
+                            <button class="btn-primary" onclick="adicionarNovoItem('tipos-acao')">
                                 <i class="fas fa-plus"></i> Novo Tipo de Ação
                             </button>
                         </div>
@@ -813,12 +812,11 @@
                             <table class="crud-table">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
+                                        <th>#</th>
                                         <th>Nome</th>
                                         <th>Descrição</th>
-                                        <th>Categoria</th>
+                                        <th>Uso na Tabela</th>
                                         <th>Status</th>
-                                        <th>Data Criação</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
@@ -836,7 +834,7 @@
                                 <h2><i class="fas fa-user-tie"></i> Supervisores</h2>
                                 <p>Gerencie os supervisores responsáveis pelos projetos</p>
                             </div>
-                            <button class="btn-primary" onclick="openGestaoModal('supervisorModal')">
+                            <button class="btn-primary" onclick="adicionarNovoItem('supervisores')">
                                 <i class="fas fa-plus"></i> Novo Supervisor
                             </button>
                         </div>
@@ -845,13 +843,11 @@
                             <table class="crud-table">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
+                                        <th>#</th>
                                         <th>Nome</th>
-                                        <th>Email</th>
-                                        <th>Telefone</th>
-                                        <th>Área</th>
+                                        <th>Descrição</th>
+                                        <th>Uso na Tabela</th>
                                         <th>Status</th>
-                                        <th>Data Criação</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
@@ -869,7 +865,7 @@
                                 <h2><i class="fas fa-users"></i> Equipes</h2>
                                 <p>Gerencie as equipes de trabalho</p>
                             </div>
-                            <button class="btn-primary" onclick="openGestaoModal('equipeModal')">
+                            <button class="btn-primary" onclick="adicionarNovoItem('equipes')">
                                 <i class="fas fa-plus"></i> Nova Equipe
                             </button>
                         </div>
@@ -878,13 +874,11 @@
                             <table class="crud-table">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
-                                        <th>Nome da Equipe</th>
-                                        <th>Líder</th>
-                                        <th>Membros</th>
-                                        <th>Especialidade</th>
+                                        <th>#</th>
+                                        <th>Nome</th>
+                                        <th>Descrição</th>
+                                        <th>Uso na Tabela</th>
                                         <th>Status</th>
-                                        <th>Data Criação</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
@@ -902,7 +896,7 @@
                                 <h2><i class="fas fa-map-marker-alt"></i> Cidades</h2>
                                 <p>Gerencie as cidades onde atuamos</p>
                             </div>
-                            <button class="btn-primary" onclick="openGestaoModal('cidadeModal')">
+                            <button class="btn-primary" onclick="adicionarNovoItem('cidades')">
                                 <i class="fas fa-plus"></i> Nova Cidade
                             </button>
                         </div>
@@ -911,12 +905,11 @@
                             <table class="crud-table">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
-                                        <th>Nome da Cidade</th>
-                                        <th>Estado</th>
-                                        <th>Região</th>
+                                        <th>#</th>
+                                        <th>Nome</th>
+                                        <th>Descrição</th>
+                                        <th>Uso na Tabela</th>
                                         <th>Status</th>
-                                        <th>Data Criação</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
@@ -1544,6 +1537,7 @@
     <script src="src/js/dashboard-integration.js?v=1.0&t=2025082121"></script> <!-- Integração dos dados do dashboard -->
     <script src="src/js/multi-select-dropdown.js?v=1.0&t=2025082121"></script> <!-- Sistema avançado de dropdowns -->
     <!-- <script src="src/js/permissions-system.js?v=1.0&t=2025082121"></script> --> <!-- Desabilitado - sistema simplificado -->
+    <script src="src/js/gestao-renovada.js?v=1.0&t=2025082121"></script> <!-- Sistema de gestão renovado com dados da tabela -->
     <script src="src/js/force-init-dropdowns.js?v=1.3&t=2025081813"></script>
     <script>
         // O script.js já tem o event listener DOMContentLoaded
