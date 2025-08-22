@@ -40,6 +40,8 @@ const GESTAO_CONFIG = {
 // ============= VARIÁVEIS GLOBAIS =============
 let dadosEnderecos = [];
 let editingItem = null;
+let ultimaExtracao = null;
+let tentativasExtracao = 0;
 
 // ============= INICIALIZAÇÃO =============
 document.addEventListener('DOMContentLoaded', function() {
@@ -49,6 +51,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Observar mudanças de seção para recarregar dados
     observarMudancasSecao();
+    
+    // Observar mudanças na tabela de endereços (CRÍTICO para detectar interferências)
+    observarMudancasNaTabelaEnderecos();
 });
 
 function observarMudancasSecao() {
@@ -64,7 +69,7 @@ function observarMudancasSecao() {
             // Se for gestão de projetos, recarregar dados
             if (sectionName === 'gestao-projetos') {
                 console.log('📂 [GESTAO-RENOVADA] Seção de gestão detectada, aguardando para recarregar...');
-                setTimeout(() => {
+                setTimeout(async () => {
                     if (window.firebase && firebase.firestore) {
                         console.log('🔄 [GESTAO-RENOVADA] Recarregando aba ativa...');
                         // Detectar aba ativa
@@ -73,17 +78,78 @@ function observarMudancasSecao() {
                             const onclick = abaAtiva.getAttribute('onclick');
                             const tabId = onclick.match(/showGestaoTab\('([^']+)'\)/)?.[1];
                             if (tabId) {
-                                carregarAbaGestao(tabId);
+                                await carregarAbaGestao(tabId);
                             }
                         } else {
                             // Se nenhuma aba ativa, carregar projetos
-                            carregarAbaGestao('projetos');
+                            await carregarAbaGestao('projetos');
                         }
                     }
                 }, 1000);
             }
         };
     }
+}
+
+function observarMudancasNaTabelaEnderecos() {
+    console.log('👁️ [GESTAO-RENOVADA] Configurando observador da tabela de endereços...');
+    
+    // Aguardar a tabela existir
+    setTimeout(() => {
+        const tbody = document.getElementById('enderecoTableBody');
+        if (!tbody) {
+            console.warn('⚠️ [GESTAO-RENOVADA] Tabela de endereços não encontrada para observar');
+            // Tentar novamente
+            setTimeout(() => observarMudancasNaTabelaEnderecos(), 2000);
+            return;
+        }
+        
+        console.log('✅ [GESTAO-RENOVADA] Configurando MutationObserver na tabela...');
+        
+        // Observar mudanças no conteúdo da tabela
+        const observer = new MutationObserver(function(mutations) {
+            let tabelaModificada = false;
+            
+            mutations.forEach(mutation => {
+                if (mutation.type === 'childList' || mutation.type === 'subtree') {
+                    tabelaModificada = true;
+                }
+            });
+            
+            if (tabelaModificada) {
+                console.log('🔄 [GESTAO-RENOVADA] Tabela de endereços modificada, re-extraindo dados...');
+                
+                // Aguardar um pouco para a tabela se estabilizar
+                setTimeout(async () => {
+                    await extrairDadosComRecovery();
+                    
+                    // Se estivermos na seção de gestão, recarregar a aba ativa
+                    const gestaoSection = document.getElementById('gestao-projetos');
+                    if (gestaoSection && gestaoSection.style.display !== 'none') {
+                        const abaAtiva = document.querySelector('.gestao-tab-btn.active');
+                        if (abaAtiva) {
+                            const onclick = abaAtiva.getAttribute('onclick');
+                            const tabId = onclick.match(/showGestaoTab\('([^']+)'\)/)?.[1];
+                            if (tabId) {
+                                console.log(`🔄 [GESTAO-RENOVADA] Recarregando aba ativa: ${tabId}`);
+                                await carregarAbaGestao(tabId);
+                            }
+                        }
+                    }
+                }, 500);
+            }
+        });
+        
+        // Iniciar observação
+        observer.observe(tbody, {
+            childList: true,
+            subtree: true,
+            attributes: false
+        });
+        
+        console.log('👁️ [GESTAO-RENOVADA] MutationObserver ativo na tabela de endereços');
+        
+    }, 2000);
 }
 
 function initGestaoRenovada() {
@@ -102,35 +168,61 @@ function initGestaoRenovada() {
     extrairDadosEnderecos();
     
     // Aguardar um pouco antes de carregar a primeira aba
-    setTimeout(() => {
+    setTimeout(async () => {
         console.log('📋 [GESTAO-RENOVADA] Carregando aba inicial...');
-        carregarAbaGestao('projetos');
+        await carregarAbaGestao('projetos');
     }, 1000);
 }
 
 // ============= EXTRAÇÃO DE DADOS DA TABELA =============
 function extrairDadosEnderecos() {
+    tentativasExtracao++;
+    console.log(`📊 [GESTAO-RENOVADA] === INICIO EXTRAÇÃO DADOS (Tentativa ${tentativasExtracao}) ===`);
     console.log('📊 [GESTAO-RENOVADA] Extraindo dados da tabela de endereços...');
     
     const tabela = document.getElementById('enderecoMainTable');
     if (!tabela) {
         console.warn('⚠️ [GESTAO-RENOVADA] Tabela de endereços não encontrada');
+        console.log('🔍 [GESTAO-RENOVADA] Elementos disponíveis:', Object.keys(document.querySelectorAll('[id*="endereco"]')).map(i => document.querySelectorAll('[id*="endereco"]')[i].id));
+        
+        // Se temos dados em cache e a tentativa falhou, usar o cache
+        if (dadosEnderecos.length > 0) {
+            console.log('💾 [GESTAO-RENOVADA] Usando dados em cache');
+            return;
+        }
         return;
     }
     
     const tbody = tabela.querySelector('#enderecoTableBody');
     if (!tbody) {
         console.warn('⚠️ [GESTAO-RENOVADA] Tbody da tabela não encontrado');
+        console.log('🔍 [GESTAO-RENOVADA] Estrutura da tabela:', tabela.innerHTML.slice(0, 500));
+        
+        // Se temos dados em cache e a tentativa falhou, usar o cache
+        if (dadosEnderecos.length > 0) {
+            console.log('💾 [GESTAO-RENOVADA] Usando dados em cache');
+            return;
+        }
         return;
     }
     
     const linhas = tbody.querySelectorAll('tr:not(.empty-state)');
+    console.log(`🔍 [GESTAO-RENOVADA] Encontradas ${linhas.length} linhas na tabela`);
+    
+    // Se não há linhas, verificar se temos dados em cache
+    if (linhas.length === 0 && dadosEnderecos.length > 0) {
+        console.log('💾 [GESTAO-RENOVADA] Tabela vazia, mas há dados em cache. Mantendo cache...');
+        return;
+    }
+    
     dadosEnderecos = [];
     
-    linhas.forEach(linha => {
+    linhas.forEach((linha, index) => {
         const colunas = linha.querySelectorAll('td');
+        console.log(`🔍 [GESTAO-RENOVADA] Linha ${index}: ${colunas.length} colunas`);
+        
         if (colunas.length >= 25) {
-            dadosEnderecos.push({
+            const dadoLinha = {
                 'Projeto': colunas[0]?.textContent?.trim() || '',
                 'Sub Projeto': colunas[1]?.textContent?.trim() || '',
                 'Tipo de Ação': colunas[2]?.textContent?.trim() || '',
@@ -156,25 +248,99 @@ function extrairDadosEnderecos() {
                 'JUSTIFICATIVA': colunas[22]?.textContent?.trim() || '',
                 'Observação': colunas[23]?.textContent?.trim() || '',
                 'Observação2': colunas[24]?.textContent?.trim() || ''
-            });
+            };
+            
+            dadosEnderecos.push(dadoLinha);
+            
+            // Log de amostra dos primeiros 3 registros
+            if (index < 3) {
+                console.log(`📄 [GESTAO-RENOVADA] Linha ${index} dados:`, {
+                    Projeto: dadoLinha.Projeto,
+                    SubProjeto: dadoLinha['Sub Projeto'],
+                    TipoAcao: dadoLinha['Tipo de Ação'],
+                    Supervisor: dadoLinha.Supervisor,
+                    Equipe: dadoLinha.EQUIPE,
+                    Cidade: dadoLinha.Cidade
+                });
+            }
+        } else {
+            console.warn(`⚠️ [GESTAO-RENOVADA] Linha ${index} tem apenas ${colunas.length} colunas (esperado 25+)`);
         }
     });
     
     console.log(`✅ [GESTAO-RENOVADA] ${dadosEnderecos.length} registros extraídos`);
+    console.log('📊 [GESTAO-RENOVADA] === FIM EXTRAÇÃO DADOS ===');
+    
+    // Marcar a última extração bem-sucedida
+    if (dadosEnderecos.length > 0) {
+        ultimaExtracao = {
+            timestamp: Date.now(),
+            registros: dadosEnderecos.length,
+            tentativa: tentativasExtracao
+        };
+        console.log('💾 [GESTAO-RENOVADA] Cache atualizado:', ultimaExtracao);
+    }
+    
+    // Log de resumo por coluna para debug
+    ['Projeto', 'Sub Projeto', 'Tipo de Ação', 'Supervisor', 'EQUIPE', 'Cidade'].forEach(coluna => {
+        const valores = dadosEnderecos
+            .map(item => item[coluna])
+            .filter(valor => valor && valor.trim() !== '')
+            .filter((valor, index, array) => array.indexOf(valor) === index);
+        console.log(`📋 [GESTAO-RENOVADA] ${coluna}: ${valores.length} valores únicos`);
+    });
+}
+
+// ============= SISTEMA DE RECOVERY PARA EXTRAÇÃO =============
+async function extrairDadosComRecovery(maxTentativas = 5) {
+    console.log(`🔄 [GESTAO-RENOVADA] Iniciando extração com recovery (max ${maxTentativas} tentativas)...`);
+    
+    for (let tentativa = 1; tentativa <= maxTentativas; tentativa++) {
+        console.log(`🔍 [GESTAO-RENOVADA] Tentativa ${tentativa}/${maxTentativas}...`);
+        
+        extrairDadosEnderecos();
+        
+        // Se conseguimos extrair dados, sucesso!
+        if (dadosEnderecos.length > 0) {
+            console.log(`✅ [GESTAO-RENOVADA] Extração bem-sucedida na tentativa ${tentativa}!`);
+            return;
+        }
+        
+        // Se não conseguimos e é a última tentativa, parar
+        if (tentativa === maxTentativas) {
+            console.error(`❌ [GESTAO-RENOVADA] Falha na extração após ${maxTentativas} tentativas`);
+            return;
+        }
+        
+        // Aguardar antes da próxima tentativa
+        console.log(`⏳ [GESTAO-RENOVADA] Aguardando 1s antes da próxima tentativa...`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
 }
 
 // ============= FUNÇÕES DE GESTÃO DE ABAS =============
-function carregarAbaGestao(tabId) {
-    console.log(`📑 [GESTAO-RENOVADA] Carregando aba: ${tabId}`);
+async function carregarAbaGestao(tabId) {
+    console.log(`📑 [GESTAO-RENOVADA] === INICIO CARREGAMENTO ABA ${tabId.toUpperCase()} ===`);
+    console.log(`📑 [GESTAO-RENOVADA] Timestamp: ${new Date().toISOString()}`);
     
     // Verificar se Firebase ainda está disponível
     if (!window.firebase || !firebase.firestore) {
         console.error(`❌ [GESTAO-RENOVADA] Firebase não disponível ao carregar aba ${tabId}`);
+        console.log(`🔍 [GESTAO-RENOVADA] window.firebase:`, !!window.firebase);
+        console.log(`🔍 [GESTAO-RENOVADA] firebase.firestore:`, !!(window.firebase && firebase.firestore));
         return;
     }
     
-    // Atualizar dados primeiro
-    extrairDadosEnderecos();
+    // Verificar estado da tabela antes da extração
+    const tabela = document.getElementById('enderecoMainTable');
+    const tbody = tabela?.querySelector('#enderecoTableBody');
+    const linhas = tbody?.querySelectorAll('tr:not(.empty-state)');
+    console.log(`🔍 [GESTAO-RENOVADA] PRE-EXTRAÇÃO - Tabela: ${!!tabela}, Tbody: ${!!tbody}, Linhas: ${linhas?.length || 0}`);
+    
+    // Atualizar dados primeiro com recovery
+    await extrairDadosComRecovery();
+    
+    console.log(`🔍 [GESTAO-RENOVADA] PÓS-EXTRAÇÃO - dadosEnderecos.length: ${dadosEnderecos.length}`);
     
     const config = GESTAO_CONFIG.tables[tabId];
     if (!config) {
@@ -186,23 +352,27 @@ function carregarAbaGestao(tabId) {
     
     // Extrair valores únicos da coluna correspondente
     const valoresUnicos = extrairValoresUnicos(config.column);
-    console.log(`📋 [GESTAO-RENOVADA] Valores únicos extraídos:`, valoresUnicos);
+    console.log(`📋 [GESTAO-RENOVADA] Valores únicos extraídos para ${config.column}:`, valoresUnicos);
     
     // Carregar dados salvos do Firestore (se houver)
     carregarDadosFirestore(tabId).then(dadosFirestore => {
-        console.log(`🔥 [GESTAO-RENOVADA] Dados do Firestore:`, dadosFirestore);
+        console.log(`🔥 [GESTAO-RENOVADA] Dados do Firestore para ${tabId}:`, dadosFirestore);
         
         // Combinar dados únicos da tabela com dados do Firestore
         const dadosCombinados = combinarDados(valoresUnicos, dadosFirestore, config.column);
-        console.log(`🔀 [GESTAO-RENOVADA] Dados combinados:`, dadosCombinados);
+        console.log(`🔀 [GESTAO-RENOVADA] Dados combinados para ${tabId}:`, dadosCombinados);
         
         // Renderizar tabela
+        console.log(`🎨 [GESTAO-RENOVADA] Iniciando renderização para ${tabId}...`);
         renderizarTabelaGestao(tabId, dadosCombinados, config);
+        console.log(`📑 [GESTAO-RENOVADA] === FIM CARREGAMENTO ABA ${tabId.toUpperCase()} ===`);
     }).catch(error => {
-        console.error(`❌ [GESTAO-RENOVADA] Erro ao carregar dados:`, error);
+        console.error(`❌ [GESTAO-RENOVADA] Erro ao carregar dados do Firestore para ${tabId}:`, error);
         // Tentar renderizar só com dados da tabela
         const dadosCombinados = combinarDados(valoresUnicos, [], config.column);
+        console.log(`🔀 [GESTAO-RENOVADA] Dados combinados (sem Firestore) para ${tabId}:`, dadosCombinados);
         renderizarTabelaGestao(tabId, dadosCombinados, config);
+        console.log(`📑 [GESTAO-RENOVADA] === FIM CARREGAMENTO ABA ${tabId.toUpperCase()} (COM ERRO) ===`);
     });
 }
 
@@ -336,13 +506,19 @@ function contarOcorrencias(valor, coluna) {
 
 // ============= RENDERIZAÇÃO DE TABELAS =============
 function renderizarTabelaGestao(tabId, dados, config) {
-    console.log(`🎨 [GESTAO-RENOVADA] Renderizando tabela: ${tabId}`);
+    console.log(`🎨 [GESTAO-RENOVADA] === INICIO RENDERIZAÇÃO ${tabId.toUpperCase()} ===`);
+    console.log(`🎨 [GESTAO-RENOVADA] Renderizando tabela: ${tabId} com ${dados.length} registros`);
+    console.log(`🎨 [GESTAO-RENOVADA] Dados para renderizar:`, dados);
     
     const tbody = document.getElementById(`${tabId}TableBody`);
     if (!tbody) {
         console.error(`❌ [GESTAO-RENOVADA] Tbody não encontrado: ${tabId}TableBody`);
+        console.log(`🔍 [GESTAO-RENOVADA] Elementos de gestão disponíveis:`, 
+            Array.from(document.querySelectorAll('[id*="gestao"]')).map(el => el.id));
         return;
     }
+    
+    console.log(`✅ [GESTAO-RENOVADA] Tbody encontrado para ${tabId}, preparando renderização...`);
     
     if (dados.length === 0) {
         tbody.innerHTML = `
@@ -420,7 +596,7 @@ async function adicionarNovoItem(tabId) {
             mostrarNotificacao(`✅ ${config.title.slice(0, -1)} adicionado com sucesso!`, 'success');
             
             // Recarregar aba
-            carregarAbaGestao(tabId);
+            await carregarAbaGestao(tabId);
             
         } catch (error) {
             console.error(`❌ [GESTAO-RENOVADA] Erro ao adicionar:`, error);
@@ -457,7 +633,7 @@ async function salvarItemTabela(tabId, nome) {
             mostrarNotificacao(`✅ "${nomeEditado}" salvo no Firestore!`, 'success');
             
             // Recarregar aba
-            carregarAbaGestao(tabId);
+            await carregarAbaGestao(tabId);
             
         } catch (error) {
             console.error(`❌ [GESTAO-RENOVADA] Erro ao salvar:`, error);
@@ -550,7 +726,10 @@ async function excluirItemGestao(tabId, itemId) {
 // ============= SUBSTITUIR FUNÇÕES ANTIGAS =============
 // Substituir a função de mostrar aba
 window.showGestaoTab = function(tabId) {
-    console.log(`📑 [GESTAO-RENOVADA] Mostrando aba: ${tabId}`);
+    console.log(`📑 [GESTAO-RENOVADA] === MOSTRANDO ABA ${tabId.toUpperCase()} ===`);
+    console.log(`📑 [GESTAO-RENOVADA] Timestamp: ${new Date().toISOString()}`);
+    console.log(`📑 [GESTAO-RENOVADA] Cache atual: ${dadosEnderecos.length} registros`);
+    console.log(`📑 [GESTAO-RENOVADA] Última extração:`, ultimaExtracao);
     
     // Verificar se Firebase está disponível
     if (!window.firebase || !firebase.firestore) {
@@ -585,9 +764,19 @@ window.showGestaoTab = function(tabId) {
         activeButton.classList.add('active');
     }
     
-    // Carregar dados da aba renovada
-    console.log(`🔄 [GESTAO-RENOVADA] Carregando dados para aba: ${tabId}`);
-    carregarAbaGestao(tabId);
+    // Força re-extração dos dados antes de carregar a aba (CRÍTICO)
+    console.log(`🔄 [GESTAO-RENOVADA] Forçando re-extração antes de carregar aba: ${tabId}`);
+    
+    // Usar um timeout para permitir que scripts concorrentes terminem
+    setTimeout(async () => {
+        try {
+            await extrairDadosComRecovery(3);
+            console.log(`🔄 [GESTAO-RENOVADA] Carregando dados para aba: ${tabId}`);
+            await carregarAbaGestao(tabId);
+        } catch (error) {
+            console.error(`❌ [GESTAO-RENOVADA] Erro ao carregar aba ${tabId}:`, error);
+        }
+    }, 100);
 };
 
 // ============= POPUP MODERNO SIMPLIFICADO =============
@@ -648,4 +837,47 @@ window.carregarAbaGestao = carregarAbaGestao;
 window.mostrarPopupGestao = mostrarPopupGestao;
 window.mostrarNotificacao = mostrarNotificacao;
 
+// ============= FUNÇÃO DE DEBUG =============
+window.debugGestaoRenovada = function() {
+    console.log('🔍 [DEBUG-GESTAO] === ESTADO DO SISTEMA ===');
+    console.log('🔍 [DEBUG-GESTAO] Timestamp:', new Date().toISOString());
+    console.log('🔍 [DEBUG-GESTAO] Firebase disponível:', !!(window.firebase && firebase.firestore));
+    console.log('🔍 [DEBUG-GESTAO] Dados extraídos:', dadosEnderecos.length);
+    console.log('🔍 [DEBUG-GESTAO] Última extração:', ultimaExtracao);
+    console.log('🔍 [DEBUG-GESTAO] Total tentativas:', tentativasExtracao);
+    
+    const tabela = document.getElementById('enderecoMainTable');
+    const tbody = tabela?.querySelector('#enderecoTableBody');
+    const linhas = tbody?.querySelectorAll('tr:not(.empty-state)');
+    
+    console.log('🔍 [DEBUG-GESTAO] Estado da tabela:');
+    console.log('  - Tabela existe:', !!tabela);
+    console.log('  - Tbody existe:', !!tbody);
+    console.log('  - Linhas encontradas:', linhas?.length || 0);
+    
+    if (linhas?.length > 0) {
+        console.log('  - Primeira linha colunas:', linhas[0].querySelectorAll('td').length);
+        console.log('  - Amostra primeira linha:', {
+            Projeto: linhas[0].querySelectorAll('td')[0]?.textContent?.trim(),
+            SubProjeto: linhas[0].querySelectorAll('td')[1]?.textContent?.trim(),
+            TipoAcao: linhas[0].querySelectorAll('td')[2]?.textContent?.trim()
+        });
+    }
+    
+    // Tentar extrair dados em tempo real
+    console.log('🔍 [DEBUG-GESTAO] Tentando extração imediata...');
+    extrairDadosEnderecos();
+    console.log('🔍 [DEBUG-GESTAO] Após extração:', dadosEnderecos.length, 'registros');
+    
+    return {
+        dadosEnderecos,
+        ultimaExtracao,
+        tentativasExtracao,
+        tabelaDisponivel: !!tabela,
+        tbodyDisponivel: !!tbody,
+        linhasEncontradas: linhas?.length || 0
+    };
+};
+
 console.log('✅ [GESTAO-RENOVADA] Sistema carregado e pronto!');
+console.log('🔧 [GESTAO-RENOVADA] Use debugGestaoRenovada() para debug detalhado');

@@ -213,7 +213,7 @@ function showGestaoTab(tabId) {
     }
     
     // Carregar dados da aba
-    loadTabData(tabId);
+    // loadTabData(tabId); // Desabilitado - usando gestao-renovada.js
 }
 
 async function loadTabData(tabId) {
