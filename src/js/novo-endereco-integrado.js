@@ -17,6 +17,10 @@ const ENDERECO_CONFIG = {
 
 let sistemaCarregado = false;
 let dadosGestao = {};
+let paginaAtual = 1;
+let itensPorPagina = 100;
+let totalPaginas = 1;
+let todosOsDados = [];
 
 // ============= INICIALIZAÇÃO =============
 document.addEventListener('DOMContentLoaded', function() {
@@ -408,10 +412,9 @@ async function carregarTabelaEnderecos() {
     try {
         const db = firebase.firestore();
         
-        // Carregar apenas da coleção unificada (enderecos_mdu)
+        // Carregar TODOS os dados da coleção unificada (enderecos_mdu) - sem limit para paginação
         const snapshot = await db.collection(ENDERECO_CONFIG.collections.enderecos)
             .orderBy('dataInclusao', 'desc')
-            .limit(200)
             .get();
         
         const tbody = document.getElementById('enderecoTableBody');
@@ -432,61 +435,27 @@ async function carregarTabelaEnderecos() {
                     </td>
                 </tr>
             `;
+            await criarControlsPaginacao(0);
             return;
         }
         
-        const linhas = [];
+        // Armazenar todos os dados para paginação
+        todosOsDados = [];
         snapshot.forEach(doc => {
             const dados = doc.data();
-            
-            // Mapear campos do Firestore para exibição (compatibilidade com dados antigos)
-            const projeto = dados.projeto || dados.Projeto || '';
-            const subProjeto = dados.subProjeto || dados['Sub Projeto'] || '';
-            const tipoAcao = dados.tipoAcao || dados['Tipo de Ação'] || '';
-            const condominio = dados.condominio || dados.Condominio || '';
-            const endereco = dados.endereco || dados.ENDEREÇO || '';
-            const cidade = dados.cidade || dados.Cidade || '';
-            const equipe = dados.equipe || dados.EQUIPE || '';
-            const supervisor = dados.supervisor || dados.Supervisor || '';
-            const status = dados.status || dados.Status || '';
-            
-            linhas.push(`
-                <tr>
-                    <td>${projeto}</td>
-                    <td>${subProjeto}</td>
-                    <td>${tipoAcao}</td>
-                    <td>${dados.contrato || dados.CONTRATO || ''}</td>
-                    <td>${condominio}</td>
-                    <td>${endereco}</td>
-                    <td>${cidade}</td>
-                    <td>${dados.pep || dados.PEP || ''}</td>
-                    <td>${dados.codImovelGed || dados['COD IMOVEL GED'] || ''}</td>
-                    <td>${dados.nodeGerencial || dados['NODE GERENCIAL'] || ''}</td>
-                    <td>${dados.areaTecnica || dados['Área Técnica'] || ''}</td>
-                    <td>${dados.hp || dados.HP || ''}</td>
-                    <td>${dados.andar || dados.ANDAR || ''}</td>
-                    <td>${formatarData(dados.dataRecebimento || dados['DATA RECEBIMENTO'])}</td>
-                    <td>${formatarData(dados.dataInicio || dados['DATA INICIO'])}</td>
-                    <td>${formatarData(dados.dataFinal || dados['DATA FINAL'])}</td>
-                    <td>${equipe}</td>
-                    <td>${supervisor}</td>
-                    <td><span class="status-badge ${status.toLowerCase()}">${status}</span></td>
-                    <td>${dados.rdo || dados.RDO || ''}</td>
-                    <td>${dados.book || dados.BOOK || ''}</td>
-                    <td>${dados.projetoStatus || dados.PROJETO || ''}</td>
-                    <td>${dados.justificativa || dados.JUSTIFICATIVA || ''}</td>
-                    <td>${dados.observacao || dados.Observação || ''}</td>
-                    <td>${dados.observacao || dados.Observação || ''}</td>
-                    <td>
-                        <button class="btn-edit" onclick="editarEndereco('${doc.id}')" title="Editar">✏️</button>
-                        <button class="btn-delete" onclick="excluirEndereco('${doc.id}')" title="Excluir">🗑️</button>
-                    </td>
-                </tr>
-            `);
+            todosOsDados.push({ id: doc.id, ...dados });
         });
         
-        tbody.innerHTML = linhas.join('');
-        console.log(`✅ [NOVO-ENDERECO] Carregados ${snapshot.size} endereços da coleção ${snapshot.docs[0]?.ref.parent.id}`);
+        console.log(`📊 [NOVO-ENDERECO] Total de ${todosOsDados.length} registros carregados`);
+        
+        // Calcular paginação
+        totalPaginas = Math.ceil(todosOsDados.length / itensPorPagina);
+        
+        // Exibir primeira página
+        exibirPagina(1);
+        
+        // Criar controles de paginação
+        await criarControlsPaginacao(todosOsDados.length);
         
         // Atualizar estatísticas após carregar
         await atualizarEstatisticasEnderecos();
@@ -660,6 +629,172 @@ window.debugNovoEndereco = function() {
     console.log('🔍 [DEBUG] Dados gestão:', dadosGestao);
     console.log('🔍 [DEBUG] Firebase:', !!(window.firebase && firebase.firestore));
     return { sistemaCarregado, dadosGestao };
+};
+
+// ============= FUNÇÕES DE PAGINAÇÃO =============
+function exibirPagina(numeroPagina) {
+    paginaAtual = numeroPagina;
+    const inicio = (paginaAtual - 1) * itensPorPagina;
+    const fim = inicio + itensPorPagina;
+    const dadosPagina = todosOsDados.slice(inicio, fim);
+    
+    const tbody = document.getElementById('enderecoTableBody');
+    if (!tbody) return;
+    
+    const linhas = dadosPagina.map(registro => {
+        // Mapear campos do Firestore para exibição (compatibilidade com dados antigos)
+        const projeto = registro.projeto || registro.Projeto || '';
+        const subProjeto = registro.subProjeto || registro['Sub Projeto'] || '';
+        const tipoAcao = registro.tipoAcao || registro['Tipo de Ação'] || '';
+        const condominio = registro.condominio || registro.Condominio || '';
+        const endereco = registro.endereco || registro.ENDEREÇO || '';
+        const cidade = registro.cidade || registro.Cidade || '';
+        const equipe = registro.equipe || registro.EQUIPE || '';
+        const supervisor = registro.supervisor || registro.Supervisor || '';
+        const status = registro.status || registro.Status || '';
+        
+        return `
+            <tr>
+                <td>${projeto}</td>
+                <td>${subProjeto}</td>
+                <td>${tipoAcao}</td>
+                <td>${registro.contrato || registro.CONTRATO || ''}</td>
+                <td>${condominio}</td>
+                <td>${endereco}</td>
+                <td>${cidade}</td>
+                <td>${registro.pep || registro.PEP || ''}</td>
+                <td>${registro.codImovelGed || registro['COD IMOVEL GED'] || ''}</td>
+                <td>${registro.nodeGerencial || registro['NODE GERENCIAL'] || ''}</td>
+                <td>${registro.areaTecnica || registro['Área Técnica'] || ''}</td>
+                <td>${registro.hp || registro.HP || ''}</td>
+                <td>${registro.andar || registro.ANDAR || ''}</td>
+                <td>${formatarData(registro.dataRecebimento || registro['DATA RECEBIMENTO'])}</td>
+                <td>${formatarData(registro.dataInicio || registro['DATA INICIO'])}</td>
+                <td>${formatarData(registro.dataFinal || registro['DATA FINAL'])}</td>
+                <td>${equipe}</td>
+                <td>${supervisor}</td>
+                <td><span class="status-badge ${status.toLowerCase()}">${status}</span></td>
+                <td>${registro.rdo || registro.RDO || ''}</td>
+                <td>${registro.book || registro.BOOK || ''}</td>
+                <td>${registro.projetoStatus || registro.PROJETO || ''}</td>
+                <td>${registro.justificativa || registro.JUSTIFICATIVA || ''}</td>
+                <td>${registro.observacao || registro.Observação || ''}</td>
+                <td>${registro.observacao || registro.Observação || ''}</td>
+                <td>
+                    <button class="btn-edit" onclick="editarEndereco('${registro.id}')" title="Editar">✏️</button>
+                    <button class="btn-delete" onclick="excluirEndereco('${registro.id}')" title="Excluir">🗑️</button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = linhas.join('');
+    
+    // Atualizar controles de paginação
+    atualizarControlsPaginacao();
+    
+    console.log(`📄 [NOVO-ENDERECO] Página ${paginaAtual}/${totalPaginas} (${dadosPagina.length} registros)`);
+}
+
+async function criarControlsPaginacao(totalRegistros) {
+    // Procurar ou criar container de paginação
+    let paginationContainer = document.getElementById('paginationControls');
+    if (!paginationContainer) {
+        paginationContainer = document.createElement('div');
+        paginationContainer.id = 'paginationControls';
+        paginationContainer.className = 'pagination-controls';
+        
+        // Inserir após a tabela
+        const tableContainer = document.getElementById('enderecoTableContainer');
+        if (tableContainer) {
+            tableContainer.appendChild(paginationContainer);
+        }
+    }
+    
+    if (totalRegistros === 0) {
+        paginationContainer.innerHTML = '';
+        return;
+    }
+    
+    paginationContainer.innerHTML = `
+        <div class="pagination-info">
+            <span>Total: <strong>${totalRegistros.toLocaleString()}</strong> registros | 
+            Exibindo <strong>${itensPorPagina}</strong> por página</span>
+        </div>
+        <div class="pagination-buttons">
+            <button onclick="irParaPagina(1)" ${paginaAtual === 1 ? 'disabled' : ''}>
+                ⏪ Primeira
+            </button>
+            <button onclick="irParaPagina(${paginaAtual - 1})" ${paginaAtual === 1 ? 'disabled' : ''}>
+                ◀️ Anterior
+            </button>
+            <span class="pagination-current">
+                Página <strong>${paginaAtual}</strong> de <strong>${totalPaginas}</strong>
+            </span>
+            <button onclick="irParaPagina(${paginaAtual + 1})" ${paginaAtual === totalPaginas ? 'disabled' : ''}>
+                Próxima ▶️
+            </button>
+            <button onclick="irParaPagina(${totalPaginas})" ${paginaAtual === totalPaginas ? 'disabled' : ''}>
+                Última ⏩
+            </button>
+        </div>
+        <div class="pagination-options">
+            <label for="itensPorPaginaSelect">Itens por página:</label>
+            <select id="itensPorPaginaSelect" onchange="alterarItensPorPagina(this.value)">
+                <option value="50" ${itensPorPagina === 50 ? 'selected' : ''}>50</option>
+                <option value="100" ${itensPorPagina === 100 ? 'selected' : ''}>100</option>
+                <option value="200" ${itensPorPagina === 200 ? 'selected' : ''}>200</option>
+                <option value="500" ${itensPorPagina === 500 ? 'selected' : ''}>500</option>
+            </select>
+        </div>
+    `;
+}
+
+function atualizarControlsPaginacao() {
+    const paginationContainer = document.getElementById('paginationControls');
+    if (!paginationContainer) return;
+    
+    // Atualizar apenas os botões
+    const buttons = paginationContainer.querySelector('.pagination-buttons');
+    
+    if (buttons) {
+        buttons.innerHTML = `
+            <button onclick="irParaPagina(1)" ${paginaAtual === 1 ? 'disabled' : ''}>
+                ⏪ Primeira
+            </button>
+            <button onclick="irParaPagina(${paginaAtual - 1})" ${paginaAtual === 1 ? 'disabled' : ''}>
+                ◀️ Anterior
+            </button>
+            <span class="pagination-current">
+                Página <strong>${paginaAtual}</strong> de <strong>${totalPaginas}</strong>
+            </span>
+            <button onclick="irParaPagina(${paginaAtual + 1})" ${paginaAtual === totalPaginas ? 'disabled' : ''}>
+                Próxima ▶️
+            </button>
+            <button onclick="irParaPagina(${totalPaginas})" ${paginaAtual === totalPaginas ? 'disabled' : ''}>
+                Última ⏩
+            </button>
+        `;
+    }
+}
+
+// Funções globais para controles de paginação
+window.irParaPagina = function(numeroPagina) {
+    if (numeroPagina < 1 || numeroPagina > totalPaginas) return;
+    exibirPagina(numeroPagina);
+};
+
+window.alterarItensPorPagina = function(novoValor) {
+    itensPorPagina = parseInt(novoValor);
+    totalPaginas = Math.ceil(todosOsDados.length / itensPorPagina);
+    
+    // Se a página atual não existir mais, ir para a última página válida
+    if (paginaAtual > totalPaginas) {
+        paginaAtual = totalPaginas;
+    }
+    
+    exibirPagina(paginaAtual);
+    criarControlsPaginacao(todosOsDados.length);
 };
 
 console.log('✅ [NOVO-ENDERECO] Sistema novo inicializado!');
