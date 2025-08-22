@@ -95,22 +95,34 @@ function mostrarNovaAba(tabId) {
 }
 
 async function carregarDadosAba(tabId) {
-    console.log(`🔄 [GESTAO-NOVA] Carregando dados para ${tabId}...`);
+    console.log(`🔄 [GESTAO-NOVA] === CARREGANDO ${tabId.toUpperCase()} ===`);
     
     const config = GESTAO_NOVA_CONFIG[tabId];
     if (!config) {
         console.error(`❌ [GESTAO-NOVA] Configuração não encontrada para ${tabId}`);
+        console.log(`🔍 [GESTAO-NOVA] Configurações disponíveis:`, Object.keys(GESTAO_NOVA_CONFIG));
         return;
     }
     
+    console.log(`🔍 [GESTAO-NOVA] Config para ${tabId}:`, config);
+    
     // Extrair dados atuais
     const dadosTabela = extrairDadosTabela();
+    console.log(`📊 [GESTAO-NOVA] Dados da tabela extraídos: ${dadosTabela.length}`);
+    
+    // Debug específico para tipos de ação
+    if (tabId === 'tipos-acao') {
+        console.log(`🔍 [GESTAO-NOVA] DEBUG TIPOS DE AÇÃO - Coluna: "${config.column}"`);
+        console.log(`🔍 [GESTAO-NOVA] Primeiros 5 registros da coluna:`, 
+            dadosTabela.slice(0, 5).map(item => item[config.column]));
+    }
+    
     const valoresUnicos = [...new Set(
         dadosTabela.map(item => item[config.column])
             .filter(valor => valor && valor.trim() !== '')
     )].sort();
     
-    console.log(`📋 [GESTAO-NOVA] Valores únicos de ${config.column}:`, valoresUnicos);
+    console.log(`📋 [GESTAO-NOVA] Valores únicos de "${config.column}": ${valoresUnicos.length}`, valoresUnicos);
     
     // Carregar dados do Firestore
     let dadosFirestore = [];
@@ -176,9 +188,23 @@ async function carregarDadosAba(tabId) {
 function renderizarTabela(tabId, dados) {
     console.log(`🎨 [GESTAO-NOVA] Renderizando ${tabId} com ${dados.length} dados`);
     
-    const tbody = document.getElementById(`${tabId}TableBody`);
+    // Mapear IDs corretos das tabelas (baseado no HTML real)
+    const tableBodyIds = {
+        'projetos': 'projetosTableBody',
+        'subprojetos': 'subprojetosTableBody', 
+        'tipos-acao': 'tiposAcaoTableBody',  // ID correto do HTML
+        'supervisores': 'supervisoresTableBody',
+        'equipes': 'equipesTableBody',
+        'cidades': 'cidadesTableBody'
+    };
+    
+    const tbodyId = tableBodyIds[tabId];
+    console.log(`🎨 [GESTAO-NOVA] Procurando tbody: ${tbodyId}`);
+    
+    const tbody = document.getElementById(tbodyId);
     if (!tbody) {
-        console.error(`❌ [GESTAO-NOVA] Tbody não encontrado: ${tabId}TableBody`);
+        console.error(`❌ [GESTAO-NOVA] Tbody não encontrado: ${tbodyId}`);
+        console.log(`🔍 [GESTAO-NOVA] Elementos disponíveis:`, Object.keys(document.querySelectorAll('[id*="TableBody"]')).map(i => document.querySelectorAll('[id*="TableBody"]')[i].id));
         return;
     }
     
@@ -326,9 +352,40 @@ window.debugGestaoNova = function() {
             Equipe: dados[0].EQUIPE,
             Cidade: dados[0].Cidade
         });
+        
+        // Debug específico para tipos de ação
+        const tiposUnicos = [...new Set(dados.map(d => d['Tipo de Ação']).filter(t => t && t.trim()))];
+        console.log('🔍 [DEBUG] Tipos de Ação únicos:', tiposUnicos);
     }
     
     return { sistemaIniciado, dados: dados.length };
+};
+
+window.debugTiposAcao = function() {
+    console.log('🔍 [DEBUG-TIPOS] === DEBUG ESPECÍFICO TIPOS DE AÇÃO ===');
+    
+    const dados = extrairDadosTabela();
+    const tiposAcao = dados.map(d => d['Tipo de Ação']).filter(t => t && t.trim());
+    const tiposUnicos = [...new Set(tiposAcao)];
+    
+    console.log('🔍 [DEBUG-TIPOS] Total dados extraídos:', dados.length);
+    console.log('🔍 [DEBUG-TIPOS] Tipos de ação encontrados:', tiposAcao.length);
+    console.log('🔍 [DEBUG-TIPOS] Tipos únicos:', tiposUnicos);
+    console.log('🔍 [DEBUG-TIPOS] Primeiro tipo:', tiposAcao[0]);
+    
+    // Verificar tbody
+    const tbody = document.getElementById('tiposAcaoTableBody');
+    console.log('🔍 [DEBUG-TIPOS] Tbody existe:', !!tbody);
+    
+    if (tbody) {
+        console.log('🔍 [DEBUG-TIPOS] HTML atual do tbody:', tbody.innerHTML.slice(0, 200));
+    }
+    
+    // Tentar carregar manualmente
+    console.log('🔍 [DEBUG-TIPOS] Tentando carregar manualmente...');
+    carregarDadosAba('tipos-acao');
+    
+    return { dados: dados.length, tipos: tiposUnicos };
 };
 
 console.log('✅ [GESTAO-NOVA] Sistema carregado! Use debugGestaoNova() para testar');
