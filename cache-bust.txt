@@ -1,12 +1,11 @@
-Cache bust timestamp: 2025-08-22 17:20:00
-Version: 2.3
-Sistema UNIFICADO com Paginação Completa - Suporte a +2000 registros
-- Migra automaticamente dados antigos para 'enderecos_mdu'
+Cache bust timestamp: 2025-08-22 17:30:00
+Version: 2.4
+Sistema HÍBRIDO - Carrega dados de ambas as coleções
+- Carrega dados de 'enderecos' (upload) E 'enderecos_mdu' (novos)
+- Novos endereços salvam em 'enderecos_mdu'
 - Sistema de paginação avançado (50/100/200/500 itens por página)
-- Carrega TODOS os dados sem limitação (mais de 2000 registros)
-- Desabilitado sistemas conflitantes (dashboard-handlers, novo-upload-excel)
-- Sistema totalmente unificado - sem conflitos entre coleções
-- Navegação por páginas com controles completos
-- Função abrirNovoEndereco() com integração completa
+- Mantém dados do upload E dados adicionados manualmente
+- Desabilitado migração automática que estava causando problemas
+- Sistema híbrido garantindo compatibilidade total
 - Performance otimizada para grandes volumes de dados
 Dynamic Excel Upload System Active

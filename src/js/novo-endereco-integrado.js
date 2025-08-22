@@ -38,8 +38,8 @@ async function inicializarNovoSistema() {
 
         console.log('🔥 [NOVO-ENDERECO] Firebase disponível, carregando dados...');
         
-        // Primeiro, migrar dados antigos se necessário
-        await migrarDadosAntigos();
+        // DESABILITADO: Migração automática (causando problemas)
+        // await migrarDadosAntigos();
         
         await carregarDadosDaGestao();
         configurarFormularioEndereco();
@@ -412,10 +412,33 @@ async function carregarTabelaEnderecos() {
     try {
         const db = firebase.firestore();
         
-        // Carregar TODOS os dados da coleção unificada (enderecos_mdu) - sem limit para paginação
-        const snapshot = await db.collection(ENDERECO_CONFIG.collections.enderecos)
-            .orderBy('dataInclusao', 'desc')
-            .get();
+        // Carregar dados das DUAS coleções para garantir que não perdemos nada
+        console.log('📊 [NOVO-ENDERECO] Carregando dados de ambas as coleções...');
+        
+        const [snapshotNovo, snapshotAntigo] = await Promise.all([
+            db.collection(ENDERECO_CONFIG.collections.enderecos).get().catch(() => ({ empty: true, docs: [] })),
+            db.collection(ENDERECO_CONFIG.collections.enderecos_origem).get().catch(() => ({ empty: true, docs: [] }))
+        ]);
+        
+        console.log(`📊 [NOVO-ENDERECO] Encontrados ${snapshotNovo.size || 0} registros em enderecos_mdu`);
+        console.log(`📊 [NOVO-ENDERECO] Encontrados ${snapshotAntigo.size || 0} registros em enderecos`);
+        
+        // Combinar todos os dados
+        const todosDocumentos = [];
+        if (snapshotNovo && !snapshotNovo.empty) {
+            snapshotNovo.forEach(doc => todosDocumentos.push(doc));
+        }
+        if (snapshotAntigo && !snapshotAntigo.empty) {
+            snapshotAntigo.forEach(doc => todosDocumentos.push(doc));
+        }
+        
+        // Criar um snapshot simulado
+        const snapshot = {
+            empty: todosDocumentos.length === 0,
+            size: todosDocumentos.length,
+            docs: todosDocumentos,
+            forEach: (callback) => todosDocumentos.forEach(callback)
+        };
         
         const tbody = document.getElementById('enderecoTableBody');
         if (!tbody) {
