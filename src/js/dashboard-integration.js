@@ -826,13 +826,32 @@ function criarNovoDropdown(selectId, options, label) {
             setTimeout(() => {
                 const dropdown = document.getElementById(`${selectId}_dropdown`);
                 if (dropdown) {
-                    dropdown.style.zIndex = '999999';
+                    dropdown.style.zIndex = '999999999';
+                    dropdown.style.position = 'relative';
+                    
                     const content = dropdown.querySelector('.checkbox-dropdown-content');
                     if (content) {
-                        content.style.zIndex = '999999';
+                        content.style.zIndex = '999999999999';
                         content.style.position = 'absolute';
                         content.style.background = 'white';
+                        content.style.color = '#000000';
+                        
+                        // Forçar cor preta para todos os elementos dentro
+                        const items = content.querySelectorAll('*');
+                        items.forEach(item => {
+                            item.style.color = '#000000';
+                        });
                     }
+                    
+                    // Adicionar evento para forçar z-index quando abrir
+                    dropdown.addEventListener('click', () => {
+                        setTimeout(() => {
+                            dropdown.style.zIndex = '999999999999';
+                            if (content) {
+                                content.style.zIndex = '999999999999';
+                            }
+                        }, 10);
+                    });
                 }
             }, 100);
             
