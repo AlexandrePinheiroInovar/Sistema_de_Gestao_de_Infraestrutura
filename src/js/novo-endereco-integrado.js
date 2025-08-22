@@ -4,8 +4,8 @@ console.log('🏠 [NOVO-ENDERECO] Inicializando sistema de cadastro integrado v2
 // ============= CONFIGURAÇÕES =============
 const ENDERECO_CONFIG = {
     collections: {
-        enderecos: 'enderecos', // Usar coleção principal onde estão os dados
-        enderecos_backup: 'enderecos_mdu', // Coleção alternativa para novos dados
+        enderecos: 'enderecos_mdu', // Usar apenas uma coleção para tudo
+        enderecos_origem: 'enderecos', // Coleção com dados antigos (migrar para enderecos_mdu)
         projetos: 'nova_gestao_projetos',
         subprojetos: 'nova_gestao_subprojetos',
         tiposAcao: 'nova_gestao_tipos_acao',
@@ -34,6 +34,9 @@ async function inicializarNovoSistema() {
 
         console.log('🔥 [NOVO-ENDERECO] Firebase disponível, carregando dados...');
         
+        // Primeiro, migrar dados antigos se necessário
+        await migrarDadosAntigos();
+        
         await carregarDadosDaGestao();
         configurarFormularioEndereco();
         await carregarTabelaEnderecos();
@@ -43,6 +46,86 @@ async function inicializarNovoSistema() {
         
     } catch (error) {
         console.error('❌ [NOVO-ENDERECO] Erro na inicialização:', error);
+    }
+}
+
+// ============= MIGRAÇÃO DE DADOS ANTIGOS =============
+async function migrarDadosAntigos() {
+    try {
+        const db = firebase.firestore();
+        
+        // Verificar se já existem dados na coleção de destino
+        const destinoSnapshot = await db.collection(ENDERECO_CONFIG.collections.enderecos).limit(1).get();
+        
+        if (!destinoSnapshot.empty) {
+            console.log('✅ [NOVO-ENDERECO] Dados já existem na coleção unificada, pulando migração');
+            return;
+        }
+        
+        console.log('🔄 [NOVO-ENDERECO] Iniciando migração de dados antigos...');
+        
+        // Buscar dados da coleção antiga
+        const origemSnapshot = await db.collection(ENDERECO_CONFIG.collections.enderecos_origem).get();
+        
+        if (origemSnapshot.empty) {
+            console.log('ℹ️ [NOVO-ENDERECO] Nenhum dado antigo para migrar');
+            return;
+        }
+        
+        const batch = db.batch();
+        let contador = 0;
+        
+        origemSnapshot.forEach(doc => {
+            const dadosAntigos = doc.data();
+            
+            // Mapear dados antigos para novo formato
+            const dadosNovos = {
+                // Campos básicos com mapeamento
+                projeto: dadosAntigos.projeto || dadosAntigos.Projeto || '',
+                subProjeto: dadosAntigos.subProjeto || dadosAntigos['Sub Projeto'] || '',
+                tipoAcao: dadosAntigos.tipoAcao || dadosAntigos['Tipo de Ação'] || '',
+                contrato: dadosAntigos.contrato || dadosAntigos.CONTRATO || '',
+                condominio: dadosAntigos.condominio || dadosAntigos.Condominio || '',
+                endereco: dadosAntigos.endereco || dadosAntigos.ENDEREÇO || '',
+                cidade: dadosAntigos.cidade || dadosAntigos.Cidade || '',
+                pep: dadosAntigos.pep || dadosAntigos.PEP || '',
+                codImovelGed: dadosAntigos.codImovelGed || dadosAntigos['COD IMOVEL GED'] || '',
+                nodeGerencial: dadosAntigos.nodeGerencial || dadosAntigos['NODE GERENCIAL'] || '',
+                areaTecnica: dadosAntigos.areaTecnica || dadosAntigos['Área Técnica'] || '',
+                hp: dadosAntigos.hp || dadosAntigos.HP || '',
+                andar: dadosAntigos.andar || dadosAntigos.ANDAR || '',
+                dataRecebimento: dadosAntigos.dataRecebimento || dadosAntigos['DATA RECEBIMENTO'] || '',
+                dataInicio: dadosAntigos.dataInicio || dadosAntigos['DATA INICIO'] || '',
+                dataFinal: dadosAntigos.dataFinal || dadosAntigos['DATA FINAL'] || '',
+                equipe: dadosAntigos.equipe || dadosAntigos.EQUIPE || '',
+                supervisor: dadosAntigos.supervisor || dadosAntigos.Supervisor || '',
+                status: dadosAntigos.status || dadosAntigos.Status || '',
+                rdo: dadosAntigos.rdo || dadosAntigos.RDO || '',
+                book: dadosAntigos.book || dadosAntigos.BOOK || '',
+                projetoStatus: dadosAntigos.projetoStatus || dadosAntigos.PROJETO || '',
+                justificativa: dadosAntigos.justificativa || dadosAntigos.JUSTIFICATIVA || '',
+                observacao: dadosAntigos.observacao || dadosAntigos.Observação || '',
+                
+                // Metadados
+                dataInclusao: dadosAntigos.dataInclusao || dadosAntigos.timestamp || new Date().toISOString(),
+                usuario: dadosAntigos.usuario || 'migração_sistema',
+                fonte: 'migração_planilha',
+                documentoOriginal: doc.id
+            };
+            
+            // Adicionar ao batch
+            const novaRef = db.collection(ENDERECO_CONFIG.collections.enderecos).doc();
+            batch.set(novaRef, dadosNovos);
+            contador++;
+        });
+        
+        // Executar migração
+        await batch.commit();
+        console.log(`✅ [NOVO-ENDERECO] Migração concluída: ${contador} registros movidos para ${ENDERECO_CONFIG.collections.enderecos}`);
+        
+    } catch (error) {
+        console.error('❌ [NOVO-ENDERECO] Erro na migração:', error);
+        // Continuar mesmo se a migração falhar
     }
 }
 
@@ -325,20 +408,11 @@ async function carregarTabelaEnderecos() {
     try {
         const db = firebase.firestore();
         
-        // Primeiro tentar carregar da coleção principal
-        let snapshot = await db.collection(ENDERECO_CONFIG.collections.enderecos)
-            .orderBy('updatedAt', 'desc')
-            .limit(100)
+        // Carregar apenas da coleção unificada (enderecos_mdu)
+        const snapshot = await db.collection(ENDERECO_CONFIG.collections.enderecos)
+            .orderBy('dataInclusao', 'desc')
+            .limit(200)
             .get();
-        
-        // Se não houver dados na principal, tentar na backup
-        if (snapshot.empty) {
-            console.log('📋 [NOVO-ENDERECO] Coleção principal vazia, tentando backup...');
-            snapshot = await db.collection(ENDERECO_CONFIG.collections.enderecos_backup)
-                .orderBy('createdAt', 'desc')
-                .limit(100)
-                .get();
-        }
         
         const tbody = document.getElementById('enderecoTableBody');
         if (!tbody) {

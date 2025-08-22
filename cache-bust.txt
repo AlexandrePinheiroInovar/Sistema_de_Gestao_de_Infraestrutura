@@ -1,11 +1,11 @@
-Cache bust timestamp: 2025-08-22 16:45:00
-Version: 2.1
-Sistema NOVO de endereços com compatibilidade total
-- Carrega dados existentes da coleção 'enderecos'
-- Salva novos endereços na coleção 'enderecos_mdu'
+Cache bust timestamp: 2025-08-22 17:00:00
+Version: 2.2
+Sistema UNIFICADO de endereços - Todos os dados em uma coleção
+- Migra automaticamente dados antigos para 'enderecos_mdu'
+- Salva todos os novos endereços na coleção 'enderecos_mdu' 
 - Integra dados das tabelas de gestão nos dropdowns
-- Sistema compatível com dados antigos e novos
+- Sistema totalmente unificado - sem conflitos entre coleções
 - Atualização automática da tabela e estatísticas
 - Função abrirNovoEndereco() com integração completa
-- Fallback automático para sistema legacy
+- Migração automática na primeira execução
 Dynamic Excel Upload System Active
