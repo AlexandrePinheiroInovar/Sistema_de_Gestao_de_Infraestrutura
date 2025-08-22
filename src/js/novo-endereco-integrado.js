@@ -4,8 +4,7 @@ console.log('🏠 [NOVO-ENDERECO] Inicializando sistema de cadastro integrado v2
 // ============= CONFIGURAÇÕES =============
 const ENDERECO_CONFIG = {
     collections: {
-        enderecos: 'enderecos_mdu', // Usar apenas uma coleção para tudo
-        enderecos_origem: 'enderecos', // Coleção com dados antigos (migrar para enderecos_mdu)
+        enderecos: 'enderecos_mdu', // Coleção única onde está tudo (upload + novos)
         projetos: 'nova_gestao_projetos',
         subprojetos: 'nova_gestao_subprojetos',
         tiposAcao: 'nova_gestao_tipos_acao',
@@ -350,6 +349,7 @@ async function salvarEnderecoFirestore(dados) {
     
     const docRef = await db.collection(ENDERECO_CONFIG.collections.enderecos).add({
         ...dados,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -412,33 +412,26 @@ async function carregarTabelaEnderecos() {
     try {
         const db = firebase.firestore();
         
-        // Carregar dados das DUAS coleções para garantir que não perdemos nada
-        console.log('📊 [NOVO-ENDERECO] Carregando dados de ambas as coleções...');
+        // Carregar APENAS da coleção enderecos_mdu (upload + novos dados)
+        console.log('📊 [NOVO-ENDERECO] Carregando dados da coleção enderecos_mdu...');
         
-        const [snapshotNovo, snapshotAntigo] = await Promise.all([
-            db.collection(ENDERECO_CONFIG.collections.enderecos).get().catch(() => ({ empty: true, docs: [] })),
-            db.collection(ENDERECO_CONFIG.collections.enderecos_origem).get().catch(() => ({ empty: true, docs: [] }))
-        ]);
-        
-        console.log(`📊 [NOVO-ENDERECO] Encontrados ${snapshotNovo.size || 0} registros em enderecos_mdu`);
-        console.log(`📊 [NOVO-ENDERECO] Encontrados ${snapshotAntigo.size || 0} registros em enderecos`);
-        
-        // Combinar todos os dados
-        const todosDocumentos = [];
-        if (snapshotNovo && !snapshotNovo.empty) {
-            snapshotNovo.forEach(doc => todosDocumentos.push(doc));
+        // Tentar diferentes campos de ordenação para compatibilidade
+        let snapshot;
+        try {
+            snapshot = await db.collection(ENDERECO_CONFIG.collections.enderecos)
+                .orderBy('timestamp', 'desc')
+                .get();
+        } catch (error) {
+            console.log('📊 [NOVO-ENDERECO] timestamp não existe, tentando createdAt...');
+            try {
+                snapshot = await db.collection(ENDERECO_CONFIG.collections.enderecos)
+                    .orderBy('createdAt', 'desc')
+                    .get();
+            } catch (error2) {
+                console.log('📊 [NOVO-ENDERECO] createdAt não existe, carregando sem ordenação...');
+                snapshot = await db.collection(ENDERECO_CONFIG.collections.enderecos).get();
+            }
         }
-        if (snapshotAntigo && !snapshotAntigo.empty) {
-            snapshotAntigo.forEach(doc => todosDocumentos.push(doc));
-        }
-        
-        // Criar um snapshot simulado
-        const snapshot = {
-            empty: todosDocumentos.length === 0,
-            size: todosDocumentos.length,
-            docs: todosDocumentos,
-            forEach: (callback) => todosDocumentos.forEach(callback)
-        };
         
         const tbody = document.getElementById('enderecoTableBody');
         if (!tbody) {
