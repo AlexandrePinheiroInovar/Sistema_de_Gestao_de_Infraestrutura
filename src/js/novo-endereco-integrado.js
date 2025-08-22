@@ -4,7 +4,8 @@ console.log('🏠 [NOVO-ENDERECO] Inicializando sistema de cadastro integrado v2
 // ============= CONFIGURAÇÕES =============
 const ENDERECO_CONFIG = {
     collections: {
-        enderecos: 'enderecos_mdu',
+        enderecos: 'enderecos', // Usar coleção principal onde estão os dados
+        enderecos_backup: 'enderecos_mdu', // Coleção alternativa para novos dados
         projetos: 'nova_gestao_projetos',
         subprojetos: 'nova_gestao_subprojetos',
         tiposAcao: 'nova_gestao_tipos_acao',
@@ -323,13 +324,27 @@ async function carregarTabelaEnderecos() {
     
     try {
         const db = firebase.firestore();
-        const snapshot = await db.collection(ENDERECO_CONFIG.collections.enderecos)
-            .orderBy('createdAt', 'desc')
+        
+        // Primeiro tentar carregar da coleção principal
+        let snapshot = await db.collection(ENDERECO_CONFIG.collections.enderecos)
+            .orderBy('updatedAt', 'desc')
             .limit(100)
             .get();
         
+        // Se não houver dados na principal, tentar na backup
+        if (snapshot.empty) {
+            console.log('📋 [NOVO-ENDERECO] Coleção principal vazia, tentando backup...');
+            snapshot = await db.collection(ENDERECO_CONFIG.collections.enderecos_backup)
+                .orderBy('createdAt', 'desc')
+                .limit(100)
+                .get();
+        }
+        
         const tbody = document.getElementById('enderecoTableBody');
-        if (!tbody) return;
+        if (!tbody) {
+            console.warn('⚠️ [NOVO-ENDERECO] Elemento enderecoTableBody não encontrado');
+            return;
+        }
         
         if (snapshot.empty) {
             tbody.innerHTML = `
@@ -349,33 +364,45 @@ async function carregarTabelaEnderecos() {
         const linhas = [];
         snapshot.forEach(doc => {
             const dados = doc.data();
+            
+            // Mapear campos do Firestore para exibição (compatibilidade com dados antigos)
+            const projeto = dados.projeto || dados.Projeto || '';
+            const subProjeto = dados.subProjeto || dados['Sub Projeto'] || '';
+            const tipoAcao = dados.tipoAcao || dados['Tipo de Ação'] || '';
+            const condominio = dados.condominio || dados.Condominio || '';
+            const endereco = dados.endereco || dados.ENDEREÇO || '';
+            const cidade = dados.cidade || dados.Cidade || '';
+            const equipe = dados.equipe || dados.EQUIPE || '';
+            const supervisor = dados.supervisor || dados.Supervisor || '';
+            const status = dados.status || dados.Status || '';
+            
             linhas.push(`
                 <tr>
-                    <td>${dados.projeto || ''}</td>
-                    <td>${dados.subProjeto || ''}</td>
-                    <td>${dados.tipoAcao || ''}</td>
-                    <td>${dados.contrato || ''}</td>
-                    <td>${dados.condominio || ''}</td>
-                    <td>${dados.endereco || ''}</td>
-                    <td>${dados.cidade || ''}</td>
-                    <td>${dados.pep || ''}</td>
-                    <td>${dados.codImovelGed || ''}</td>
-                    <td>${dados.nodeGerencial || ''}</td>
-                    <td>${dados.areaTecnica || ''}</td>
-                    <td>${dados.hp || ''}</td>
-                    <td>${dados.andar || ''}</td>
-                    <td>${formatarData(dados.dataRecebimento)}</td>
-                    <td>${formatarData(dados.dataInicio)}</td>
-                    <td>${formatarData(dados.dataFinal)}</td>
-                    <td>${dados.equipe || ''}</td>
-                    <td>${dados.supervisor || ''}</td>
-                    <td><span class="status-badge ${(dados.status || '').toLowerCase()}">${dados.status || ''}</span></td>
-                    <td>${dados.rdo || ''}</td>
-                    <td>${dados.book || ''}</td>
-                    <td>${dados.projetoStatus || ''}</td>
-                    <td>${dados.justificativa || ''}</td>
-                    <td>${dados.observacao || ''}</td>
-                    <td>${dados.observacao || ''}</td>
+                    <td>${projeto}</td>
+                    <td>${subProjeto}</td>
+                    <td>${tipoAcao}</td>
+                    <td>${dados.contrato || dados.CONTRATO || ''}</td>
+                    <td>${condominio}</td>
+                    <td>${endereco}</td>
+                    <td>${cidade}</td>
+                    <td>${dados.pep || dados.PEP || ''}</td>
+                    <td>${dados.codImovelGed || dados['COD IMOVEL GED'] || ''}</td>
+                    <td>${dados.nodeGerencial || dados['NODE GERENCIAL'] || ''}</td>
+                    <td>${dados.areaTecnica || dados['Área Técnica'] || ''}</td>
+                    <td>${dados.hp || dados.HP || ''}</td>
+                    <td>${dados.andar || dados.ANDAR || ''}</td>
+                    <td>${formatarData(dados.dataRecebimento || dados['DATA RECEBIMENTO'])}</td>
+                    <td>${formatarData(dados.dataInicio || dados['DATA INICIO'])}</td>
+                    <td>${formatarData(dados.dataFinal || dados['DATA FINAL'])}</td>
+                    <td>${equipe}</td>
+                    <td>${supervisor}</td>
+                    <td><span class="status-badge ${status.toLowerCase()}">${status}</span></td>
+                    <td>${dados.rdo || dados.RDO || ''}</td>
+                    <td>${dados.book || dados.BOOK || ''}</td>
+                    <td>${dados.projetoStatus || dados.PROJETO || ''}</td>
+                    <td>${dados.justificativa || dados.JUSTIFICATIVA || ''}</td>
+                    <td>${dados.observacao || dados.Observação || ''}</td>
+                    <td>${dados.observacao || dados.Observação || ''}</td>
                     <td>
                         <button class="btn-edit" onclick="editarEndereco('${doc.id}')" title="Editar">✏️</button>
                         <button class="btn-delete" onclick="excluirEndereco('${doc.id}')" title="Excluir">🗑️</button>
@@ -385,10 +412,61 @@ async function carregarTabelaEnderecos() {
         });
         
         tbody.innerHTML = linhas.join('');
-        console.log(`✅ [NOVO-ENDERECO] Carregados ${snapshot.size} endereços`);
+        console.log(`✅ [NOVO-ENDERECO] Carregados ${snapshot.size} endereços da coleção ${snapshot.docs[0]?.ref.parent.id}`);
+        
+        // Atualizar estatísticas após carregar
+        await atualizarEstatisticasEnderecos();
         
     } catch (error) {
         console.error('❌ [NOVO-ENDERECO] Erro ao carregar tabela:', error);
+        
+        // Em caso de erro, tentar usar sistema antigo se disponível
+        if (window.FirestoreIntegration && typeof window.FirestoreIntegration.loadEnderecos === 'function') {
+            console.log('🔄 [NOVO-ENDERECO] Tentando usar sistema FirestoreIntegration...');
+            try {
+                const enderecos = await window.FirestoreIntegration.loadEnderecos();
+                const tbody = document.getElementById('enderecoTableBody');
+                if (tbody && enderecos.length > 0) {
+                    // Usar formato do sistema antigo
+                    tbody.innerHTML = enderecos.map(endereco => `
+                        <tr>
+                            <td>${endereco.projeto || ''}</td>
+                            <td>${endereco.subProjeto || ''}</td>
+                            <td>${endereco.tipoAcao || ''}</td>
+                            <td>${endereco.contrato || ''}</td>
+                            <td>${endereco.condominio || ''}</td>
+                            <td>${endereco.endereco || ''}</td>
+                            <td>${endereco.cidade || ''}</td>
+                            <td>${endereco.pep || ''}</td>
+                            <td>${endereco.codImovelGed || ''}</td>
+                            <td>${endereco.nodeGerencial || ''}</td>
+                            <td>${endereco.areaTecnica || ''}</td>
+                            <td>${endereco.hp || ''}</td>
+                            <td>${endereco.andar || ''}</td>
+                            <td>${endereco.dataRecebimento || ''}</td>
+                            <td>${endereco.dataInicio || ''}</td>
+                            <td>${endereco.dataFinal || ''}</td>
+                            <td>${endereco.equipe || ''}</td>
+                            <td>${endereco.supervisor || ''}</td>
+                            <td><span class="status-badge ${endereco.status?.toLowerCase()}">${endereco.status || ''}</span></td>
+                            <td>${endereco.rdo || ''}</td>
+                            <td>${endereco.book || ''}</td>
+                            <td>${endereco.projetoStatus || ''}</td>
+                            <td>${endereco.situacao || ''}</td>
+                            <td>${endereco.justificativa || ''}</td>
+                            <td>${endereco.observacao || ''}</td>
+                            <td>
+                                <button class="btn-edit" onclick="editarEndereco('${endereco.id}')" title="Editar">✏️</button>
+                                <button class="btn-delete" onclick="excluirEndereco('${endereco.id}')" title="Excluir">🗑️</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                    console.log('✅ [NOVO-ENDERECO] Fallback carregado com sucesso');
+                }
+            } catch (fallbackError) {
+                console.error('❌ [NOVO-ENDERECO] Fallback também falhou:', fallbackError);
+            }
+        }
     }
 }
 
