@@ -377,7 +377,19 @@ async function carregarAbaGestao(tabId) {
 }
 
 function extrairValoresUnicos(coluna) {
-    console.log(`📋 [GESTAO-RENOVADA] Extraindo valores únicos de: ${coluna}`);
+    console.log(`📋 [GESTAO-RENOVADA] === EXTRAINDO VALORES ÚNICOS ===`);
+    console.log(`📋 [GESTAO-RENOVADA] Extraindo valores únicos de coluna: "${coluna}"`);
+    console.log(`📋 [GESTAO-RENOVADA] Total dadosEnderecos: ${dadosEnderecos.length}`);
+    
+    if (dadosEnderecos.length === 0) {
+        console.warn(`⚠️ [GESTAO-RENOVADA] ATENÇÃO: dadosEnderecos está vazio!`);
+        return [];
+    }
+    
+    // Verificar se a coluna existe nos dados
+    const primeiroRegistro = dadosEnderecos[0];
+    console.log(`🔍 [GESTAO-RENOVADA] Primeiro registro colunas:`, Object.keys(primeiroRegistro));
+    console.log(`🔍 [GESTAO-RENOVADA] Valor na coluna "${coluna}":`, primeiroRegistro[coluna]);
     
     const valores = dadosEnderecos
         .map(item => item[coluna])
@@ -386,10 +398,12 @@ function extrairValoresUnicos(coluna) {
         .sort();
     
     console.log(`🔍 [GESTAO-RENOVADA] ${valores.length} valores únicos encontrados:`, valores);
+    console.log(`📋 [GESTAO-RENOVADA] === FIM EXTRAÇÃO VALORES ÚNICOS ===`);
     return valores;
 }
 
 async function carregarDadosFirestore(tabId) {
+    console.log(`🔥 [GESTAO-RENOVADA] === CARREGANDO FIRESTORE ${tabId.toUpperCase()} ===`);
     console.log(`🔥 [GESTAO-RENOVADA] Carregando dados do Firestore para: ${tabId}`);
     
     try {
@@ -399,9 +413,14 @@ async function carregarDadosFirestore(tabId) {
         }
         
         const config = GESTAO_CONFIG.tables[tabId];
+        console.log(`🔥 [GESTAO-RENOVADA] Configuração para ${tabId}:`, config);
+        console.log(`🔥 [GESTAO-RENOVADA] Acessando coleção: ${config.collection}`);
+        
         const snapshot = await firebase.firestore()
             .collection(config.collection)
             .get(); // Remover orderBy se der erro
+        
+        console.log(`🔥 [GESTAO-RENOVADA] Snapshot obtido. Empty: ${snapshot.empty}, Size: ${snapshot.size}`);
         
         const dados = [];
         snapshot.forEach(doc => {
@@ -424,16 +443,21 @@ async function carregarDadosFirestore(tabId) {
         return dados;
         
     } catch (error) {
-        console.error(`❌ [GESTAO-RENOVADA] Erro ao carregar do Firestore:`, error);
-        // Tentar sem orderBy
+        console.error(`❌ [GESTAO-RENOVADA] Erro ao carregar do Firestore (primeira tentativa):`, error);
+        
+        // TENTAR COLEÇÕES ALTERNATIVAS (compatibilidade com sistema antigo)
+        const colecaoAlternativa = config.collection.replace('gestao_', '').replace('_tipos_acao', 'acao');
+        console.log(`🔄 [GESTAO-RENOVADA] Tentando coleção alternativa: ${colecaoAlternativa}`);
+        
         try {
-            const config = GESTAO_CONFIG.tables[tabId];
-            const snapshot = await firebase.firestore()
-                .collection(config.collection)
+            const snapshotAlt = await firebase.firestore()
+                .collection(colecaoAlternativa)
                 .get();
             
+            console.log(`🔥 [GESTAO-RENOVADA] Snapshot alternativo. Empty: ${snapshotAlt.empty}, Size: ${snapshotAlt.size}`);
+            
             const dados = [];
-            snapshot.forEach(doc => {
+            snapshotAlt.forEach(doc => {
                 const data = doc.data();
                 dados.push({ 
                     id: doc.id, 
@@ -445,22 +469,60 @@ async function carregarDadosFirestore(tabId) {
                 });
             });
             
-            console.log(`✅ [GESTAO-RENOVADA] ${dados.length} registros carregados (sem ordenação)`);
+            console.log(`✅ [GESTAO-RENOVADA] ${dados.length} registros carregados da coleção alternativa`);
             return dados;
+            
         } catch (error2) {
-            console.error(`❌ [GESTAO-RENOVADA] Erro definitivo:`, error2);
-            return [];
+            console.error(`❌ [GESTAO-RENOVADA] Erro na coleção alternativa também:`, error2);
+            
+            // Última tentativa: tentar padrão dashboard-minimal
+            const colecaoDashboard = `gestao/${tabId}`;
+            console.log(`🔄 [GESTAO-RENOVADA] Última tentativa com padrão dashboard: ${colecaoDashboard}`);
+            
+            try {
+                const snapshotDash = await firebase.firestore()
+                    .collection(colecaoDashboard)
+                    .get();
+                
+                console.log(`🔥 [GESTAO-RENOVADA] Snapshot dashboard. Empty: ${snapshotDash.empty}, Size: ${snapshotDash.size}`);
+                
+                const dados = [];
+                snapshotDash.forEach(doc => {
+                    const data = doc.data();
+                    dados.push({ 
+                        id: doc.id, 
+                        nome: data.nome || '',
+                        descricao: data.descricao || '',
+                        status: data.status || 'ATIVO',
+                        createdAt: data.createdAt,
+                        source: 'firestore'
+                    });
+                });
+                
+                console.log(`✅ [GESTAO-RENOVADA] ${dados.length} registros carregados do padrão dashboard`);
+                return dados;
+                
+            } catch (error3) {
+                console.error(`❌ [GESTAO-RENOVADA] Erro definitivo em todas as tentativas:`, error3);
+                return [];
+            }
         }
     }
 }
 
 function combinarDados(valoresUnicos, dadosFirestore, coluna) {
-    console.log(`🔀 [GESTAO-RENOVADA] Combinando dados...`);
+    console.log(`🔀 [GESTAO-RENOVADA] === COMBINANDO DADOS ===`);
+    console.log(`🔀 [GESTAO-RENOVADA] Valores únicos (${valoresUnicos.length}):`, valoresUnicos);
+    console.log(`🔀 [GESTAO-RENOVADA] Dados Firestore (${dadosFirestore.length}):`, dadosFirestore.map(d => d.nome));
+    console.log(`🔀 [GESTAO-RENOVADA] Coluna de referência: ${coluna}`);
     
     const dadosCombinados = [];
     
     // Adicionar dados do Firestore primeiro
-    dadosFirestore.forEach(item => {
+    dadosFirestore.forEach((item, index) => {
+        const count = contarOcorrencias(item.nome, coluna);
+        console.log(`🔥 [GESTAO-RENOVADA] Firestore ${index}: "${item.nome}" -> ${count} ocorrências`);
+        
         dadosCombinados.push({
             id: item.id,
             nome: item.nome || '',
@@ -468,17 +530,22 @@ function combinarDados(valoresUnicos, dadosFirestore, coluna) {
             status: item.status || 'ATIVO',
             createdAt: item.createdAt,
             source: 'firestore',
-            count: contarOcorrencias(item.nome, coluna)
+            count: count
         });
     });
     
     // Adicionar valores únicos da tabela que não existem no Firestore
-    valoresUnicos.forEach(valor => {
+    valoresUnicos.forEach((valor, index) => {
         const existeNoFirestore = dadosFirestore.some(item => 
             item.nome && item.nome.toLowerCase() === valor.toLowerCase()
         );
         
+        console.log(`📊 [GESTAO-RENOVADA] Valor ${index}: "${valor}" -> Existe no Firestore: ${existeNoFirestore}`);
+        
         if (!existeNoFirestore) {
+            const count = contarOcorrencias(valor, coluna);
+            console.log(`📊 [GESTAO-RENOVADA] Adicionando "${valor}" da tabela -> ${count} ocorrências`);
+            
             dadosCombinados.push({
                 id: `auto_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 nome: valor,
@@ -486,7 +553,7 @@ function combinarDados(valoresUnicos, dadosFirestore, coluna) {
                 status: 'ATIVO',
                 createdAt: new Date(),
                 source: 'tabela',
-                count: contarOcorrencias(valor, coluna)
+                count: count
             });
         }
     });
@@ -495,13 +562,25 @@ function combinarDados(valoresUnicos, dadosFirestore, coluna) {
     dadosCombinados.sort((a, b) => a.nome.localeCompare(b.nome));
     
     console.log(`✅ [GESTAO-RENOVADA] ${dadosCombinados.length} registros combinados`);
+    console.log(`🔀 [GESTAO-RENOVADA] Resultado final:`, dadosCombinados.map(d => `${d.nome} (${d.source})`));
+    console.log(`🔀 [GESTAO-RENOVADA] === FIM COMBINAÇÃO ===`);
     return dadosCombinados;
 }
 
 function contarOcorrencias(valor, coluna) {
-    return dadosEnderecos.filter(item => 
+    const ocorrencias = dadosEnderecos.filter(item => 
         item[coluna] && item[coluna].toLowerCase() === valor.toLowerCase()
     ).length;
+    
+    // Log detalhado para debug
+    if (ocorrencias === 0) {
+        console.log(`⚠️ [GESTAO-RENOVADA] "${valor}" não encontrado na coluna "${coluna}"`);
+        console.log(`🔍 [GESTAO-RENOVADA] Valores disponíveis em "${coluna}":`, 
+            dadosEnderecos.map(item => item[coluna]).filter(v => v && v.trim()).slice(0, 5)
+        );
+    }
+    
+    return ocorrencias;
 }
 
 // ============= RENDERIZAÇÃO DE TABELAS =============
@@ -838,7 +917,7 @@ window.mostrarPopupGestao = mostrarPopupGestao;
 window.mostrarNotificacao = mostrarNotificacao;
 
 // ============= FUNÇÃO DE DEBUG =============
-window.debugGestaoRenovada = function() {
+window.debugGestaoRenovada = function(tabId = null) {
     console.log('🔍 [DEBUG-GESTAO] === ESTADO DO SISTEMA ===');
     console.log('🔍 [DEBUG-GESTAO] Timestamp:', new Date().toISOString());
     console.log('🔍 [DEBUG-GESTAO] Firebase disponível:', !!(window.firebase && firebase.firestore));
@@ -860,7 +939,10 @@ window.debugGestaoRenovada = function() {
         console.log('  - Amostra primeira linha:', {
             Projeto: linhas[0].querySelectorAll('td')[0]?.textContent?.trim(),
             SubProjeto: linhas[0].querySelectorAll('td')[1]?.textContent?.trim(),
-            TipoAcao: linhas[0].querySelectorAll('td')[2]?.textContent?.trim()
+            TipoAcao: linhas[0].querySelectorAll('td')[2]?.textContent?.trim(),
+            Supervisor: linhas[0].querySelectorAll('td')[17]?.textContent?.trim(),
+            Equipe: linhas[0].querySelectorAll('td')[16]?.textContent?.trim(),
+            Cidade: linhas[0].querySelectorAll('td')[6]?.textContent?.trim()
         });
     }
     
@@ -868,6 +950,21 @@ window.debugGestaoRenovada = function() {
     console.log('🔍 [DEBUG-GESTAO] Tentando extração imediata...');
     extrairDadosEnderecos();
     console.log('🔍 [DEBUG-GESTAO] Após extração:', dadosEnderecos.length, 'registros');
+    
+    // Se uma tabela específica foi pedida, testar ela
+    if (tabId && GESTAO_CONFIG.tables[tabId]) {
+        console.log(`🔍 [DEBUG-GESTAO] === TESTANDO TABELA ${tabId.toUpperCase()} ===`);
+        const config = GESTAO_CONFIG.tables[tabId];
+        const valoresUnicos = extrairValoresUnicos(config.column);
+        
+        console.log(`📋 [DEBUG-GESTAO] Configuração:`, config);
+        console.log(`📋 [DEBUG-GESTAO] Valores únicos:`, valoresUnicos);
+        
+        // Tentar carregar dados do Firestore
+        carregarDadosFirestore(tabId).then(dadosFirestore => {
+            console.log(`🔥 [DEBUG-GESTAO] Dados Firestore para ${tabId}:`, dadosFirestore);
+        });
+    }
     
     return {
         dadosEnderecos,
