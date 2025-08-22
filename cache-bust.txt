@@ -1,4 +1,8 @@
-Cache bust timestamp: 2025-08-22 14:30:00
-Version: 1.4
-Gestão de Projeto - Fixed tipos-acao tbody mapping
+Cache bust timestamp: 2025-08-22 15:00:00
+Version: 1.5
+Sistema integrado de endereços com gestão de projetos
+- Novo sistema que integra dados de gestão nos dropdowns
+- Salvamento em coleção dedicada (enderecos_cadastrados)  
+- Atualização automática da tabela visual
+- Substituição do sistema antigo por versão integrada
 Dynamic Excel Upload System Active

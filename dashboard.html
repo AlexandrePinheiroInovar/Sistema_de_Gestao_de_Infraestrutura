@@ -1526,7 +1526,7 @@
     <script src="src/js/firestore-integration.js?v=1.3&t=2025081813"></script>
     <script src="src/js/dashboard-minimal.js?v=1.3&t=2025081813"></script>
     <script src="src/js/dashboard-functions.js?v=1.3&t=2025081813"></script>
-    <!-- <script src="src/js/dashboard-handlers.js?v=1.3&t=2025081813"></script> --> <!-- Desabilitado - não necessário para tabela simples -->
+    <!-- <script src="src/js/dashboard-handlers.js?v=1.3&t=2025081813"></script> --> <!-- Desabilitado - substituído por endereco-gestao-integrado.js -->
     <!-- <script src="src/js/firebase-table-system.js?v=4.2&t=2025081925"></script> --> <!-- Desabilitado - usando excel-reader-complete.js com ordem fixa -->
     <!-- <script src="src/js/multi-select-filters.js?v=1.0&t=2025081925"></script> --> <!-- Desabilitado - usando novo sistema -->
     <!-- <script src="src/js/excel-reader-complete.js?v=1.0&t=2025081925"></script> --> <!-- Desabilitado - substituído por endereco-excel-upload.js -->
@@ -1540,6 +1540,7 @@
     <script src="src/js/force-init-dropdowns.js?v=1.3&t=2025081813"></script>
     <!-- <script src="src/js/gestao-renovada.js?v=1.0&t=2025082121"></script> --> <!-- Desabilitado - substituído por sistema novo -->
     <script src="src/js/gestao-nova-simples.js?v=1.1&t=2025082214"></script> <!-- Sistema de gestão NOVO E SIMPLES -->
+    <script src="src/js/endereco-gestao-integrado.js?v=1.0&t=2025082215"></script> <!-- Sistema integrado de endereços com gestão -->
     <script>
         // O script.js já tem o event listener DOMContentLoaded
         // Não precisamos duplicar aqui
@@ -1561,10 +1562,7 @@
         }, 3000);
         
         // ============= FUNÇÕES GLOBAIS DE GERENCIAMENTO =============
-        function abrirNovoEndereco() {
-            document.getElementById('modalTitle').textContent = 'Novo Endereço';
-            document.getElementById('crudModal').style.display = 'block';
-        }
+        // function abrirNovoEndereco() - Agora gerenciado por endereco-gestao-integrado.js
         
         function closeModal() {
             document.getElementById('crudModal').style.display = 'none';
