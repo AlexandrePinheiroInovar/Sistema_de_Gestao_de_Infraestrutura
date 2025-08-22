@@ -199,12 +199,24 @@ function renderizarTabela(tabId, dados) {
     };
     
     const tbodyId = tableBodyIds[tabId];
+    console.log(`🎨 [GESTAO-NOVA] Tab ID: ${tabId}`);
     console.log(`🎨 [GESTAO-NOVA] Procurando tbody: ${tbodyId}`);
+    console.log(`🎨 [GESTAO-NOVA] Mapeamento completo:`, tableBodyIds);
+    
+    // Verificar todos os elementos com TableBody no ID
+    const allTableBodies = document.querySelectorAll('[id*="TableBody"]');
+    console.log(`🔍 [GESTAO-NOVA] Elementos TableBody encontrados:`, Array.from(allTableBodies).map(el => el.id));
     
     const tbody = document.getElementById(tbodyId);
     if (!tbody) {
         console.error(`❌ [GESTAO-NOVA] Tbody não encontrado: ${tbodyId}`);
-        console.log(`🔍 [GESTAO-NOVA] Elementos disponíveis:`, Object.keys(document.querySelectorAll('[id*="TableBody"]')).map(i => document.querySelectorAll('[id*="TableBody"]')[i].id));
+        
+        // Tentar encontrar por nome similar
+        const similares = Array.from(allTableBodies).filter(el => el.id.toLowerCase().includes(tabId.toLowerCase()));
+        if (similares.length > 0) {
+            console.log(`🔍 [GESTAO-NOVA] Elementos similares encontrados:`, similares.map(el => el.id));
+        }
+        
         return;
     }
     
@@ -364,6 +376,25 @@ window.debugGestaoNova = function() {
 window.debugTiposAcao = function() {
     console.log('🔍 [DEBUG-TIPOS] === DEBUG ESPECÍFICO TIPOS DE AÇÃO ===');
     
+    // Verificar DOM primeiro
+    console.log('🔍 [DEBUG-TIPOS] DOM Ready State:', document.readyState);
+    console.log('🔍 [DEBUG-TIPOS] Sistema iniciado:', sistemaIniciado);
+    
+    // Verificar todos os elementos TableBody
+    const allTableBodies = document.querySelectorAll('[id*="TableBody"]');
+    console.log('🔍 [DEBUG-TIPOS] Todos os TableBodies:', Array.from(allTableBodies).map(el => el.id));
+    
+    // Verificar especificamente o elemento que procuramos
+    const tbody = document.getElementById('tiposAcaoTableBody');
+    console.log('🔍 [DEBUG-TIPOS] Tbody tiposAcaoTableBody existe:', !!tbody);
+    
+    if (tbody) {
+        console.log('🔍 [DEBUG-TIPOS] Tbody parent:', tbody.parentElement?.tagName);
+        console.log('🔍 [DEBUG-TIPOS] Tbody className:', tbody.className);
+        console.log('🔍 [DEBUG-TIPOS] HTML atual do tbody:', tbody.innerHTML.slice(0, 200));
+    }
+    
+    // Verificar dados da tabela
     const dados = extrairDadosTabela();
     const tiposAcao = dados.map(d => d['Tipo de Ação']).filter(t => t && t.trim());
     const tiposUnicos = [...new Set(tiposAcao)];
@@ -373,19 +404,18 @@ window.debugTiposAcao = function() {
     console.log('🔍 [DEBUG-TIPOS] Tipos únicos:', tiposUnicos);
     console.log('🔍 [DEBUG-TIPOS] Primeiro tipo:', tiposAcao[0]);
     
-    // Verificar tbody
-    const tbody = document.getElementById('tiposAcaoTableBody');
-    console.log('🔍 [DEBUG-TIPOS] Tbody existe:', !!tbody);
-    
-    if (tbody) {
-        console.log('🔍 [DEBUG-TIPOS] HTML atual do tbody:', tbody.innerHTML.slice(0, 200));
-    }
-    
     // Tentar carregar manualmente
     console.log('🔍 [DEBUG-TIPOS] Tentando carregar manualmente...');
     carregarDadosAba('tipos-acao');
     
-    return { dados: dados.length, tipos: tiposUnicos };
+    return { 
+        domReady: document.readyState,
+        sistemaIniciado,
+        tbodyExists: !!tbody,
+        dados: dados.length, 
+        tipos: tiposUnicos,
+        allTableBodies: Array.from(allTableBodies).map(el => el.id)
+    };
 };
 
 console.log('✅ [GESTAO-NOVA] Sistema carregado! Use debugGestaoNova() para testar');
