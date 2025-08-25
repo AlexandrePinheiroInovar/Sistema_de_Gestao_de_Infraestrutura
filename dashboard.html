@@ -1527,20 +1527,20 @@
     <script src="src/js/dashboard-minimal.js?v=1.3&t=2025081813"></script>
     <script src="src/js/dashboard-functions.js?v=1.3&t=2025081813"></script>
     <!-- <script src="src/js/dashboard-handlers.js?v=1.3&t=2025081813"></script> DESABILITADO - Conflitando com novo sistema -->
-    <!-- <script src="src/js/firebase-table-system.js?v=4.2&t=2025081925"></script> --> <!-- Desabilitado - usando excel-reader-complete.js com ordem fixa -->
+    <script src="src/js/firebase-table-system.js?v=4.3&t=2025082530"></script> <!-- Reabilitado - gráficos desabilitados para usar dashboard-integration.js -->
     <!-- <script src="src/js/multi-select-filters.js?v=1.0&t=2025081925"></script> --> <!-- Desabilitado - usando novo sistema -->
     <!-- <script src="src/js/excel-reader-complete.js?v=1.0&t=2025081925"></script> --> <!-- Desabilitado - substituído por endereco-excel-upload.js -->
     <!-- <script src="src/js/excel-template-standard.js?v=1.0&t=2025082020"></script> --> <!-- Desabilitado - usando novo sistema -->
     <!-- <script src="src/js/excel-column-ordering.js?v=1.0&t=2025082020"></script> --> <!-- Desabilitado - usando novo sistema -->
     <!-- <script src="src/js/checkbox-dropdown.js?v=1.3&t=2025081813"></script> --> <!-- Desabilitado - não necessário com sistema de ordem fixa -->
     <!-- <script src="src/js/novo-upload-excel.js?v=1.0&t=2025082121"></script> DESABILITADO - Conflitando com sistema integrado -->
-    <script src="src/js/dashboard-integration.js?v=1.0&t=2025082121"></script> <!-- Integração dos dados do dashboard -->
+    <script src="src/js/dashboard-integration.js?v=6.0&t=2025082520"></script> <!-- SISTEMA REVERTIDO AO ESTADO FUNCIONAL -->
     <script src="src/js/multi-select-dropdown.js?v=1.0&t=2025082121"></script> <!-- Sistema avançado de dropdowns -->
     <!-- <script src="src/js/permissions-system.js?v=1.0&t=2025082121"></script> --> <!-- Desabilitado - sistema simplificado -->
     <script src="src/js/force-init-dropdowns.js?v=1.3&t=2025081813"></script>
     <!-- <script src="src/js/gestao-renovada.js?v=1.0&t=2025082121"></script> --> <!-- Desabilitado - substituído por sistema novo -->
     <script src="src/js/gestao-nova-simples.js?v=1.1&t=2025082214"></script> <!-- Sistema de gestão NOVO E SIMPLES -->
-    <script src="src/js/novo-endereco-integrado.js?v=2.0&t=2025082216"></script> <!-- Sistema NOVO de endereços integrado -->
+    <!-- <script src="src/js/novo-endereco-integrado.js?v=2.0&t=2025082216"></script> --> <!-- DESABILITADO - Conflitava com firebase-table-system -->
     <script>
         // O script.js já tem o event listener DOMContentLoaded
         // Não precisamos duplicar aqui
@@ -1636,14 +1636,109 @@
         
         function confirmLogout() {
             if (confirm('Deseja realmente sair do sistema?')) {
-                // TODO: Implementar logout
-                console.log('Logout confirmado');
+                console.log('🚪 [LOGOUT] Realizando logout...');
+                
+                // Fazer logout do Firebase
+                if (firebase && firebase.auth) {
+                    firebase.auth().signOut().then(() => {
+                        console.log('✅ [LOGOUT] Logout realizado com sucesso');
+                        // Redirecionar para página de login ou recarregar
+                        window.location.href = 'login.html';
+                    }).catch((error) => {
+                        console.error('❌ [LOGOUT] Erro no logout:', error);
+                        alert('Erro ao fazer logout. Tente novamente.');
+                    });
+                } else {
+                    // Fallback se Firebase não disponível
+                    console.log('⚠️ [LOGOUT] Firebase não disponível, redirecionando...');
+                    window.location.href = 'login.html';
+                }
             }
         }
         
         function toggleNewDropdown() {
             const dropdown = document.getElementById('newUserDropdown');
             dropdown.classList.toggle('active');
+        }
+        
+        // ============= SISTEMA DE TROCA DE SENHA =============
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            const button = input.nextElementSibling.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                button.className = 'fas fa-eye';
+            }
+        }
+        
+        async function changePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            // Validações
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                alert('❌ Erro: Todos os campos são obrigatórios');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                alert('❌ Erro: Nova senha e confirmação não coincidem');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                alert('❌ Erro: Nova senha deve ter no mínimo 6 caracteres');
+                return;
+            }
+            
+            try {
+                console.log('🔐 [PASSWORD] Iniciando alteração de senha...');
+                
+                if (!firebase || !firebase.auth) {
+                    throw new Error('Firebase não disponível');
+                }
+                
+                const user = firebase.auth().currentUser;
+                if (!user) {
+                    throw new Error('Usuário não autenticado');
+                }
+                
+                // Re-autenticar usuário com senha atual
+                const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPassword);
+                
+                await user.reauthenticateWithCredential(credential);
+                console.log('✅ [PASSWORD] Re-autenticação realizada');
+                
+                // Alterar senha
+                await user.updatePassword(newPassword);
+                console.log('✅ [PASSWORD] Senha alterada com sucesso');
+                
+                // Limpar campos
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+                
+                // Fechar modal
+                closeUserProfileScreen();
+                
+                alert('✅ Senha alterada com sucesso!');
+                
+            } catch (error) {
+                console.error('❌ [PASSWORD] Erro ao alterar senha:', error);
+                
+                if (error.code === 'auth/wrong-password') {
+                    alert('❌ Erro: Senha atual incorreta');
+                } else if (error.code === 'auth/weak-password') {
+                    alert('❌ Erro: Nova senha muito fraca');
+                } else {
+                    alert('❌ Erro ao alterar senha: ' + error.message);
+                }
+            }
         }
         
         // Fechar dropdown quando clicar fora
@@ -1666,6 +1761,49 @@
             }
             
             return isAdmin;
+        }
+        
+        // ============= SISTEMA DE CONTROLE DE PERMISSÕES =============
+        function setupUserPermissions() {
+            const userRole = document.getElementById('userRoleSimple')?.textContent;
+            if (!userRole) return;
+            
+            console.log('🔐 [PERMISSIONS] Configurando permissões para:', userRole);
+            
+            // Elementos do menu lateral
+            const menuItems = {
+                'inicio': document.querySelector('a[onclick*="inicio"]')?.parentElement,
+                'infraestrutura': document.querySelector('a[onclick*="infraestrutura"]')?.parentElement,  
+                'enderecos': document.querySelector('a[onclick*="enderecos"]')?.parentElement,
+                'gestao-projetos': document.querySelector('a[onclick*="gestao-projetos"]')?.parentElement
+            };
+            
+            // Controle de acesso baseado no role
+            if (userRole.toLowerCase().includes('admin')) {
+                console.log('👑 [PERMISSIONS] Usuário ADMIN - Acesso total');
+                // Admin tem acesso a tudo - não ocultar nada
+                
+            } else if (userRole.toLowerCase().includes('supervisor')) {
+                console.log('👨‍💼 [PERMISSIONS] Usuário SUPERVISOR - Acesso restrito');
+                // Supervisor: início, dashboard, gestão de projetos, cadastro de endereços
+                // Não ocultar nada, supervisor tem acesso a todos módulos
+                
+            } else {
+                console.log('👤 [PERMISSIONS] Usuário COMUM - Acesso limitado');
+                // Usuário comum: apenas início e dashboard
+                if (menuItems['enderecos']) {
+                    menuItems['enderecos'].style.display = 'none';
+                }
+                if (menuItems['gestao-projetos']) {
+                    menuItems['gestao-projetos'].style.display = 'none';
+                }
+                
+                // Se estiver em uma seção restrita, redirecionar para início
+                const currentSection = document.querySelector('.section.active')?.id;
+                if (currentSection === 'enderecos' || currentSection === 'gestao-projetos') {
+                    showSection('inicio');
+                }
+            }
         }
         
         function showAdminCleanupOptions() {
@@ -1718,6 +1856,7 @@ Digite o número da opção desejada:`;
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 checkAdminPermissions();
+                setupUserPermissions();
             }, 2000);
         });
         
@@ -1728,6 +1867,11 @@ Digite o número da opção desejada:`;
             if (sectionName === 'enderecos') {
                 setTimeout(() => {
                     checkAdminPermissions();
+                    // Carregar tabela de endereços se não foi carregada ainda
+                    if (window.carregarTabelaEnderecos && typeof window.carregarTabelaEnderecos === 'function') {
+                        console.log('🏠 Carregando tabela de endereços...');
+                        window.carregarTabelaEnderecos();
+                    }
                 }, 500);
             }
         };

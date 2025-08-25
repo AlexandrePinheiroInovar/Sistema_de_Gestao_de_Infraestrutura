@@ -256,7 +256,7 @@ async function loadFirebaseTableData() {
             try {
                 await updateDashboardCards();
                 await updateDashboardFilters();
-                await updateDashboardCharts();
+                // await updateDashboardCharts(); // DESABILITADO - usando dashboard-integration.js
                 console.log('✅ [FIREBASE-TABLE] Cards, filtros e gráficos atualizados');
             } catch (error) {
                 console.warn('⚠️ [FIREBASE-TABLE] Erro ao atualizar dashboard:', error);
@@ -1200,9 +1200,12 @@ function populateFilterSelect(selectId, values) {
 }
 
 // ============= ATUALIZAÇÃO COMPLETA DE GRÁFICOS DO DASHBOARD =============
+// FUNÇÃO DESABILITADA - Os gráficos agora são gerenciados por dashboard-integration.js
 async function updateDashboardCharts() {
-    console.log('📈 [FIREBASE-TABLE] Atualizando TODOS os gráficos do dashboard...');
+    console.log('📈 [FIREBASE-TABLE] Função de gráficos DESABILITADA - usando dashboard-integration.js');
+    return true; // Retornar sucesso para não quebrar outras funções
     
+    /* CÓDIGO DE GRÁFICOS COMENTADO - USANDO dashboard-integration.js
     try {
         const stats = await getFirebaseTableStatistics();
         
@@ -1226,6 +1229,7 @@ async function updateDashboardCharts() {
         console.error('❌ [FIREBASE-TABLE] Erro ao atualizar gráficos:', error);
         return false;
     }
+    */ // FIM DO CÓDIGO COMENTADO
 }
 
 function updateProjetosChart(projetosCount, topEquipes) {
@@ -1896,7 +1900,7 @@ function integrateWithExistingSystems() {
                 // Depois integrar nossos dados
                 await updateDashboardCards();
                 await updateDashboardFilters();
-                await updateDashboardCharts();
+                // await updateDashboardCharts(); // DESABILITADO - usando dashboard-integration.js
                 
                 console.log('✅ [FIREBASE-TABLE] Integração completa realizada');
             } catch (error) {
@@ -1912,7 +1916,7 @@ function integrateWithExistingSystems() {
                 console.log('🔄 [FIREBASE-TABLE] Executando atualização forçada...');
                 await updateDashboardCards();
                 await updateDashboardFilters();
-                await updateDashboardCharts();
+                // await updateDashboardCharts(); // DESABILITADO - usando dashboard-integration.js
             }
         } catch (error) {
             console.warn('⚠️ [FIREBASE-TABLE] Erro na atualização forçada:', error);

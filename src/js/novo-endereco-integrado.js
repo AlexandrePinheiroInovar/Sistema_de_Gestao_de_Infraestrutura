@@ -24,6 +24,8 @@ let todosOsDados = [];
 // ============= INICIALIZAÇÃO =============
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🏠 [NOVO-ENDERECO] DOM carregado, aguardando Firebase...');
+    
+    
     setTimeout(inicializarNovoSistema, 2000);
 });
 
@@ -406,6 +408,9 @@ async function adicionarEnderecoNaTabela(dados, docId) {
     tbody.insertBefore(novaLinha, tbody.firstChild);
 }
 
+// Tornar função global para ser chamada pelo HTML
+window.carregarTabelaEnderecos = carregarTabelaEnderecos;
+
 async function carregarTabelaEnderecos() {
     console.log('📋 [NOVO-ENDERECO] Carregando tabela de endereços...');
     
@@ -645,13 +650,14 @@ window.abrirNovoEndereco = function() {
     }
 };
 
-// ============= FUNÇÃO DE DEBUG =============
+// ============= FUNÇÕES GLOBAIS =============
 window.debugNovoEndereco = function() {
     console.log('🔍 [DEBUG] Sistema carregado:', sistemaCarregado);
     console.log('🔍 [DEBUG] Dados gestão:', dadosGestao);
     console.log('🔍 [DEBUG] Firebase:', !!(window.firebase && firebase.firestore));
     return { sistemaCarregado, dadosGestao };
 };
+
 
 // ============= FUNÇÕES DE PAGINAÇÃO =============
 function exibirPagina(numeroPagina) {

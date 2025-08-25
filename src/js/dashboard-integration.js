@@ -159,25 +159,45 @@ function calcularTempoMedio(dados, campoInicio, campoFim) {
 
 // ============= GRÁFICOS =============
 function gerarGraficos() {
-    console.log('📈 [DASHBOARD-INTEGRATION] Gerando gráficos...');
+    console.log('📈 [DASHBOARD-INTEGRATION] Gerando gráficos modernos V3.0...');
     
     // Aguardar Chart.js carregar
     if (typeof Chart === 'undefined') {
+        console.warn('⚠️ Chart.js não carregado, reagendando...');
         setTimeout(gerarGraficos, 500);
         return;
     }
     
-    gerarGraficoProjects();
-    gerarGraficoSubProjects();
-    gerarGraficoCidades();
-    gerarGraficoHPProjects();
-    gerarGraficoRecebimentos();
-    gerarGraficoSupervisorStatus();
+    // Verificar se ChartDataLabels está disponível
+    if (typeof ChartDataLabels === 'undefined') {
+        console.warn('⚠️ ChartDataLabels não carregado, carregando graficos sem rótulos...');
+    }
+    
+    // Destruir todos os gráficos existentes primeiro
+    Object.values(charts).forEach(chart => {
+        if (chart && typeof chart.destroy === 'function') {
+            chart.destroy();
+        }
+    });
+    
+    // Recriar todos os gráficos modernos
+    criarGraficoProjetosModerno();
+    criarGraficoSubProjetosModerno();
+    criarGraficoCidadesModerno();
+    criarGraficoHPProjetosModerno();
+    criarGraficoRecebimentosModerno();
+    criarGraficoSupervisorModerno();
 }
 
-function gerarGraficoProjects() {
+// ============= GRÁFICOS MODERNOS V3.0 =============
+function criarGraficoProjetosModerno() {
+    console.log('📊 [DASHBOARD-INTEGRATION] Criando gráfico de Projetos Moderno (Barras + Linhas)...');
+    
     const ctx = document.getElementById('projetosChart');
-    if (!ctx) return;
+    if (!ctx) {
+        console.warn('❌ Canvas projetosChart não encontrado');
+        return;
+    }
     
     // Contar projetos
     const contadorProjetos = {};
@@ -191,11 +211,12 @@ function gerarGraficoProjects() {
     const total = data.reduce((a, b) => a + b, 0);
     const percentuais = data.map(val => Math.round((val / total) * 100));
     
-    // Destruir gráfico anterior se existir
+    // Destruir gráfico anterior
     if (charts.projetos) {
         charts.projetos.destroy();
     }
     
+    // Criar gráfico combinado moderno
     charts.projetos = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -219,7 +240,10 @@ function gerarGraficoProjects() {
                     borderWidth: 3,
                     fill: false,
                     tension: 0.1,
-                    yAxisID: 'y1'
+                    yAxisID: 'y1',
+                    pointBackgroundColor: 'rgba(239, 68, 68, 1)',
+                    pointBorderColor: 'rgba(239, 68, 68, 1)',
+                    pointRadius: 5
                 }
             ]
         },
@@ -232,6 +256,10 @@ function gerarGraficoProjects() {
             scales: {
                 x: {
                     display: true,
+                    title: {
+                        display: true,
+                        text: 'Projetos'
+                    }
                 },
                 y: {
                     type: 'linear',
@@ -239,8 +267,10 @@ function gerarGraficoProjects() {
                     position: 'left',
                     title: {
                         display: true,
-                        text: 'Quantidade'
-                    }
+                        text: 'Quantidade',
+                        color: 'rgba(59, 130, 246, 1)'
+                    },
+                    beginAtZero: true
                 },
                 y1: {
                     type: 'linear',
@@ -248,21 +278,26 @@ function gerarGraficoProjects() {
                     position: 'right',
                     title: {
                         display: true,
-                        text: 'Percentual (%)'
+                        text: 'Percentual (%)',
+                        color: 'rgba(239, 68, 68, 1)'
                     },
                     grid: {
                         drawOnChartArea: false,
                     },
+                    beginAtZero: true,
+                    max: 100
                 }
             },
             plugins: {
                 legend: {
-                    position: 'top'
+                    position: 'top',
+                    display: true
                 },
                 datalabels: {
                     display: true,
                     anchor: 'end',
                     align: 'top',
+                    offset: 4,
                     formatter: function(value, context) {
                         if (context.datasetIndex === 0) {
                             return value; // Quantidade
@@ -272,7 +307,7 @@ function gerarGraficoProjects() {
                     },
                     font: {
                         weight: 'bold',
-                        size: 11
+                        size: 10
                     },
                     color: function(context) {
                         return context.datasetIndex === 0 ? '#1e40af' : '#dc2626';
@@ -280,13 +315,20 @@ function gerarGraficoProjects() {
                 }
             }
         },
-        plugins: [ChartDataLabels]
+        plugins: typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : []
     });
+    
+    console.log('✅ Gráfico de Projetos Moderno criado');
 }
 
-function gerarGraficoSubProjects() {
+function criarGraficoSubProjetosModerno() {
+    console.log('📊 [DASHBOARD-INTEGRATION] Criando gráfico de Sub-Projetos Moderno (Barras + Linhas)...');
+    
     const ctx = document.getElementById('subProjetosChart');
-    if (!ctx) return;
+    if (!ctx) {
+        console.warn('❌ Canvas subProjetosChart não encontrado');
+        return;
+    }
     
     // Contar sub projetos
     const contadorSubProjetos = {};
@@ -300,11 +342,12 @@ function gerarGraficoSubProjects() {
     const total = data.reduce((a, b) => a + b, 0);
     const percentuais = data.map(val => Math.round((val / total) * 100));
     
-    // Destruir gráfico anterior se existir
+    // Destruir gráfico anterior
     if (charts.subProjetos) {
         charts.subProjetos.destroy();
     }
     
+    // Criar gráfico combinado moderno
     charts.subProjetos = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -328,7 +371,10 @@ function gerarGraficoSubProjects() {
                     borderWidth: 3,
                     fill: false,
                     tension: 0.1,
-                    yAxisID: 'y1'
+                    yAxisID: 'y1',
+                    pointBackgroundColor: 'rgba(245, 158, 11, 1)',
+                    pointBorderColor: 'rgba(245, 158, 11, 1)',
+                    pointRadius: 5
                 }
             ]
         },
@@ -341,6 +387,10 @@ function gerarGraficoSubProjects() {
             scales: {
                 x: {
                     display: true,
+                    title: {
+                        display: true,
+                        text: 'Sub-Projetos'
+                    }
                 },
                 y: {
                     type: 'linear',
@@ -348,8 +398,10 @@ function gerarGraficoSubProjects() {
                     position: 'left',
                     title: {
                         display: true,
-                        text: 'Quantidade'
-                    }
+                        text: 'Quantidade',
+                        color: 'rgba(16, 185, 129, 1)'
+                    },
+                    beginAtZero: true
                 },
                 y1: {
                     type: 'linear',
@@ -357,21 +409,26 @@ function gerarGraficoSubProjects() {
                     position: 'right',
                     title: {
                         display: true,
-                        text: 'Percentual (%)'
+                        text: 'Percentual (%)',
+                        color: 'rgba(245, 158, 11, 1)'
                     },
                     grid: {
                         drawOnChartArea: false,
                     },
+                    beginAtZero: true,
+                    max: 100
                 }
             },
             plugins: {
                 legend: {
-                    position: 'top'
+                    position: 'top',
+                    display: true
                 },
                 datalabels: {
                     display: true,
                     anchor: 'end',
                     align: 'top',
+                    offset: 4,
                     formatter: function(value, context) {
                         if (context.datasetIndex === 0) {
                             return value; // Quantidade
@@ -381,7 +438,7 @@ function gerarGraficoSubProjects() {
                     },
                     font: {
                         weight: 'bold',
-                        size: 11
+                        size: 10
                     },
                     color: function(context) {
                         return context.datasetIndex === 0 ? '#059669' : '#d97706';
@@ -389,13 +446,20 @@ function gerarGraficoSubProjects() {
                 }
             }
         },
-        plugins: [ChartDataLabels]
+        plugins: typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : []
     });
+    
+    console.log('✅ Gráfico de Sub-Projetos Moderno criado');
 }
 
-function gerarGraficoCidades() {
+function criarGraficoCidadesModerno() {
+    console.log('📊 [DASHBOARD-INTEGRATION] Criando gráfico de Cidades Moderno (Barras Azuis)...');
+    
     const ctx = document.getElementById('cidadesChart');
-    if (!ctx) return;
+    if (!ctx) {
+        console.warn('❌ Canvas cidadesChart não encontrado');
+        return;
+    }
     
     // Contar cidades
     const contadorCidades = {};
@@ -421,13 +485,13 @@ function gerarGraficoCidades() {
     
     const labels = sortedCidades.map(([nome]) => nome);
     const data = sortedCidades.map(([,qty]) => qty);
-    const colors = gerarCores(labels.length);
     
-    // Destruir gráfico anterior se existir
+    // Destruir gráfico anterior
     if (charts.cidades) {
         charts.cidades.destroy();
     }
     
+    // Criar gráfico moderno com barras azuis uniformes
     charts.cidades = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -450,19 +514,30 @@ function gerarGraficoCidades() {
                     display: true,
                     anchor: 'end',
                     align: 'top',
+                    offset: 4,
                     formatter: function(value) {
                         return value;
                     },
                     font: {
                         weight: 'bold',
-                        size: 11
+                        size: 10
                     },
                     color: '#1e40af'
                 }
             },
             scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Cidades'
+                    }
+                },
                 y: {
                     beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Quantidade'
+                    },
                     ticks: {
                         maxTicksLimit: 10,
                         callback: function(value) {
@@ -474,13 +549,20 @@ function gerarGraficoCidades() {
                 }
             }
         },
-        plugins: [ChartDataLabels]
+        plugins: typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : []
     });
+    
+    console.log('✅ Gráfico de Cidades Moderno criado');
 }
 
-function gerarGraficoHPProjects() {
+function criarGraficoHPProjetosModerno() {
+    console.log('📊 [DASHBOARD-INTEGRATION] Criando gráfico de HP por Projeto Moderno (Barras Azuis)...');
+    
     const ctx = document.getElementById('hpProjetosChart');
-    if (!ctx) return;
+    if (!ctx) {
+        console.warn('❌ Canvas hpProjetosChart não encontrado');
+        return;
+    }
     
     // Somar HP por projeto
     const hpPorProjeto = {};
@@ -492,13 +574,13 @@ function gerarGraficoHPProjects() {
     
     const labels = Object.keys(hpPorProjeto);
     const data = Object.values(hpPorProjeto);
-    const colors = gerarCores(labels.length);
     
-    // Destruir gráfico anterior se existir
+    // Destruir gráfico anterior
     if (charts.hpProjetos) {
         charts.hpProjetos.destroy();
     }
     
+    // Criar gráfico moderno com barras azuis uniformes
     charts.hpProjetos = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -521,29 +603,47 @@ function gerarGraficoHPProjects() {
                     display: true,
                     anchor: 'end',
                     align: 'top',
+                    offset: 4,
                     formatter: function(value) {
                         return value;
                     },
                     font: {
                         weight: 'bold',
-                        size: 11
+                        size: 10
                     },
                     color: '#1e40af'
                 }
             },
             scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Projetos'
+                    }
+                },
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Total HP'
+                    }
                 }
             }
         },
-        plugins: [ChartDataLabels]
+        plugins: typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : []
     });
+    
+    console.log('✅ Gráfico de HP por Projeto Moderno criado');
 }
 
-function gerarGraficoRecebimentos() {
+function criarGraficoRecebimentosModerno() {
+    console.log('📊 [DASHBOARD-INTEGRATION] Criando gráfico de Recebimentos Moderno...');
+    
     const ctx = document.getElementById('recebimentosChart');
-    if (!ctx) return;
+    if (!ctx) {
+        console.warn('❌ Canvas recebimentosChart não encontrado');
+        return;
+    }
     
     // Agrupar por mês
     const recebimentosPorMes = {};
@@ -576,11 +676,12 @@ function gerarGraficoRecebimentos() {
     const dataRecebimentos = labels.map(mes => recebimentosPorMes[mes] || 0);
     const dataConclusoes = labels.map(mes => conclusoesPorMes[mes] || 0);
     
-    // Destruir gráfico anterior se existir
+    // Destruir gráfico anterior
     if (charts.recebimentos) {
         charts.recebimentos.destroy();
     }
     
+    // Criar gráfico moderno
     charts.recebimentos = new Chart(ctx, {
         type: 'line',
         data: {
@@ -588,22 +689,45 @@ function gerarGraficoRecebimentos() {
             datasets: [{
                 label: 'Recebidos',
                 data: dataRecebimentos,
-                borderColor: '#3b82f6',
+                borderColor: 'rgba(59, 130, 246, 1)',
                 backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderWidth: 3,
+                pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                pointBorderColor: 'rgba(59, 130, 246, 1)',
+                pointRadius: 5,
                 tension: 0.4
             }, {
                 label: 'Concluídos',
                 data: dataConclusoes,
-                borderColor: '#10b981',
+                borderColor: 'rgba(16, 185, 129, 1)',
                 backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderWidth: 3,
+                pointBackgroundColor: 'rgba(16, 185, 129, 1)',
+                pointBorderColor: 'rgba(16, 185, 129, 1)',
+                pointRadius: 5,
                 tension: 0.4
             }]
         },
         options: {
             responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            },
             scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Período (Mês/Ano)'
+                    }
+                },
                 y: {
                     beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Quantidade'
+                    },
                     ticks: {
                         maxTicksLimit: 10,
                         callback: function(value) {
@@ -616,11 +740,18 @@ function gerarGraficoRecebimentos() {
             }
         }
     });
+    
+    console.log('✅ Gráfico de Recebimentos Moderno criado');
 }
 
-function gerarGraficoSupervisorStatus() {
+function criarGraficoSupervisorModerno() {
+    console.log('📊 [DASHBOARD-INTEGRATION] Criando gráfico de Supervisores Moderno (2 Barras Separadas)...');
+    
     const ctx = document.getElementById('supervisorStatusChart');
-    if (!ctx) return;
+    if (!ctx) {
+        console.warn('❌ Canvas supervisorStatusChart não encontrado');
+        return;
+    }
     
     // Agrupar por supervisor e status
     const supervisorStatus = {};
@@ -644,11 +775,12 @@ function gerarGraficoSupervisorStatus() {
     const produtivas = supervisores.map(s => supervisorStatus[s].PRODUTIVA);
     const improdutivas = supervisores.map(s => supervisorStatus[s].IMPRODUTIVA);
     
-    // Destruir gráfico anterior se existir
+    // Destruir gráfico anterior
     if (charts.supervisorStatus) {
         charts.supervisorStatus.destroy();
     }
     
+    // Criar gráfico moderno com 2 barras separadas por supervisor
     charts.supervisorStatus = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -671,18 +803,20 @@ function gerarGraficoSupervisorStatus() {
             responsive: true,
             plugins: {
                 legend: {
-                    position: 'top'
+                    position: 'top',
+                    display: true
                 },
                 datalabels: {
                     display: true,
                     anchor: 'end',
                     align: 'top',
+                    offset: 4,
                     formatter: function(value) {
                         return value > 0 ? value : '';
                     },
                     font: {
                         weight: 'bold',
-                        size: 11
+                        size: 10
                     },
                     color: function(context) {
                         return context.datasetIndex === 0 ? '#065f46' : '#991b1b';
@@ -691,17 +825,29 @@ function gerarGraficoSupervisorStatus() {
             },
             scales: {
                 x: {
-                    stacked: false
+                    stacked: false,
+                    title: {
+                        display: true,
+                        text: 'Supervisores'
+                    }
                 },
                 y: {
                     stacked: false,
-                    beginAtZero: true
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Quantidade'
+                    }
                 }
             }
         },
-        plugins: [ChartDataLabels]
+        plugins: typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : []
     });
+    
+    console.log('✅ Gráfico de Supervisores Moderno criado');
 }
+
+// ============= FINAL DOS GRÁFICOS MODERNOS =============
 
 // ============= TABELAS DE RANKING =============
 function gerarTabelasRanking() {
@@ -852,7 +998,21 @@ function configurarFiltros() {
     
     if (!dados || dados.length === 0) {
         console.warn('⚠️ [NOVO-FILTRO] Nenhum dado encontrado na tabela de endereços');
-        setTimeout(() => configurarFiltros(), 2000); // Tentar novamente em 2s
+        // NÃO fazer loop infinito - aguardar firebase-table-system carregar
+        if (window.FirebaseTableSystem && window.FirebaseTableSystem.getData) {
+            const firebaseData = window.FirebaseTableSystem.getData();
+            if (firebaseData && firebaseData.length > 0) {
+                console.log('📊 [NOVO-FILTRO] Usando dados do FirebaseTableSystem:', firebaseData.length, 'registros');
+                preencherNovosFiltros(firebaseData);
+                return;
+            }
+        }
+        
+        // Fallback: usar dados do dashboard se disponível
+        if (dashboardData && dashboardData.length > 0) {
+            console.log('📊 [NOVO-FILTRO] Usando dados do dashboard:', dashboardData.length, 'registros');
+            preencherNovosFiltros(dashboardData);
+        }
         return;
     }
     
