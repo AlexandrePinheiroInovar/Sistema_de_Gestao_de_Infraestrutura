@@ -179,11 +179,20 @@ window.FirebaseAuthIsolated = (function() {
         
         try {
             log('Configurando persistência de sessão...');
-            await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+            
+            // Timeout para evitar travamento
+            const persistencePromise = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Timeout na configuração de persistência')), 3000)
+            );
+            
+            await Promise.race([persistencePromise, timeoutPromise]);
             persistenceSet = true;
             log('Persistência configurada: LOCAL');
         } catch (error) {
             log('Erro ao configurar persistência: ' + error.message, 'warn');
+            // Continuar mesmo com erro na persistência
+            persistenceSet = true;
         }
     }
     
@@ -389,8 +398,19 @@ window.FirebaseAuthIsolated = (function() {
         }
         
         try {
-            await ensurePersistence();
+            // Tentar configurar persistência com timeout
+            try {
+                await Promise.race([
+                    ensurePersistence(),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout na persistência')), 2000)
+                    )
+                ]);
+            } catch (persistenceError) {
+                log('Pulando persistência devido a timeout: ' + persistenceError.message, 'warn');
+            }
             
+            log('Realizando autenticação...');
             const userCredential = await auth.signInWithEmailAndPassword(email, password);
             const user = userCredential.user;
             
