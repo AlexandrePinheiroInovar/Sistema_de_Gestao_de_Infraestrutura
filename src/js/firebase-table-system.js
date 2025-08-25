@@ -285,33 +285,27 @@ async function loadFirebaseTableData() {
 function extractTableColumns(sampleData) {
     if (!sampleData) return;
     
-    const excludeFields = [
-        'id', 'createdAt', 'updatedAt', 'createdBy', 
-        'source', 'originalColumns'
+    console.log('🔍 [FIREBASE-TABLE] Definindo colunas fixas conforme HTML...');
+    
+    // Colunas fixas conforme definidas no HTML (25 colunas)
+    firebaseTableColumns = [
+        'projeto', 'subProjeto', 'tipoAcao', 'contrato', 'condominio',
+        'endereco', 'cidade', 'pep', 'codImovelGed', 'nodeGerencial',
+        'areaTecnica', 'hp', 'andar', 'dataRecebimento', 'dataInicio',
+        'dataFinal', 'equipe', 'supervisor', 'status', 'rdo',
+        'book', 'projeto2', 'justificativa', 'observacao1', 'observacao2'
     ];
     
-    const allColumns = Object.keys(sampleData);
-    firebaseTableColumns = allColumns.filter(column => {
-        // Excluir campos internos
-        if (excludeFields.includes(column)) return false;
-        
-        // Excluir campos vazios
-        const value = sampleData[column];
-        if (value === null || value === undefined || value === '') return false;
-        
-        return true;
-    });
-    
-    console.log('📊 [FIREBASE-TABLE] Colunas detectadas:', firebaseTableColumns);
+    console.log('📊 [FIREBASE-TABLE] Colunas fixas definidas:', firebaseTableColumns.length, 'colunas');
 }
 
 // ============= RENDERIZAR TABELA =============
 function renderFirebaseTable(data) {
     console.log('🎨 [FIREBASE-TABLE] Renderizando tabela com', data.length, 'registros');
     
-    const table = document.getElementById('firebaseTable');
-    const thead = document.getElementById('firebaseTableHead');
-    const tbody = document.getElementById('firebaseTableBody');
+    const table = document.getElementById('enderecoMainTable');
+    const thead = table ? table.querySelector('thead') : null;
+    const tbody = document.getElementById('enderecoTableBody');
     const noDataMsg = document.getElementById('noDataMessage');
     
     if (!table || !thead || !tbody) {
@@ -322,10 +316,10 @@ function renderFirebaseTable(data) {
     // Esconder mensagem "sem dados"
     if (noDataMsg) noDataMsg.style.display = 'none';
     
-    // Renderizar cabeçalho
-    renderTableHeader(thead);
+    // NÃO recriar cabeçalho - usar o que já existe no HTML
+    // renderTableHeader(thead);
     
-    // Renderizar corpo
+    // Renderizar apenas o corpo
     renderTableBody(tbody, data);
     
     console.log('✅ [FIREBASE-TABLE] Tabela renderizada com sucesso');
@@ -478,7 +472,7 @@ window.filterDynamicTable = function() {
     console.log('🔍 [FIREBASE-TABLE] Aplicando filtro:', filterText);
     
     if (firebaseTableData.length > 0) {
-        const tbody = document.getElementById('firebaseTableBody');
+        const tbody = document.getElementById('enderecoTableBody');
         renderTableBody(tbody, firebaseTableData);
     }
 };
@@ -537,7 +531,7 @@ function updateTableStats(recordCount) {
 }
 
 function showNoDataMessage() {
-    const tbody = document.getElementById('firebaseTableBody');
+    const tbody = document.getElementById('enderecoTableBody');
     const noDataMsg = document.getElementById('noDataMessage');
     
     if (tbody) {
