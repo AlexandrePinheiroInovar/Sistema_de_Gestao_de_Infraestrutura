@@ -1,11 +1,11 @@
-Cache bust timestamp: 2025-08-22 17:50:00
-Version: 2.6
-Sistema UNIFICADO com Visual Moderno de Paginação
-- Carrega APENAS de 'enderecos_mdu' onde estão todos os dados
-- Upload da planilha + Novos endereços na MESMA coleção
+Cache bust timestamp: 2025-08-22 18:00:00
+Version: 2.7
+Sistema com Estatísticas Corrigidas - Compatibilidade Total
+- Corrigir função atualizarEstatisticasEnderecos para dados do upload
+- Compatibilidade com campos MAIÚSCULAS (planilha) e minúsculas (novos)
+- Cards Endereços Distintos, Equipes Distintas e Produtividade funcionando
 - Sistema de paginação com visual moderno e responsivo
-- Botões com gradientes, hover effects e animações suaves
-- Layout responsivo para mobile (50/100/200/500 itens por página)
-- Compatibilidade com diferentes campos de timestamp
-- Sistema completamente unificado e com design profissional
+- Carregamento unificado da coleção enderecos_mdu
+- Mapeamento inteligente de campos (ENDEREÇO/endereco, EQUIPE/equipe)
+- Filtros e trim() para dados mais precisos
 Dynamic Excel Upload System Active

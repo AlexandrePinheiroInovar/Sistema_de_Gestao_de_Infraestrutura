@@ -542,9 +542,15 @@ async function atualizarEstatisticasEnderecos() {
         
         snapshot.forEach(doc => {
             const dados = doc.data();
-            if (dados.status === 'PRODUTIVA') produtivos++;
-            if (dados.endereco) enderecosUnicos.add(dados.endereco);
-            if (dados.equipe) equipesUnicas.add(dados.equipe);
+            
+            // Compatibilidade com dados do upload (maiúsculas) e novos dados (minúsculas)
+            const status = dados.status || dados.Status || '';
+            const endereco = dados.endereco || dados.ENDEREÇO || dados['ENDEREÇO'] || '';
+            const equipe = dados.equipe || dados.EQUIPE || dados['EQUIPE'] || '';
+            
+            if (status.toUpperCase() === 'PRODUTIVA') produtivos++;
+            if (endereco.trim()) enderecosUnicos.add(endereco.trim());
+            if (equipe.trim()) equipesUnicas.add(equipe.trim());
         });
         
         const produtividade = total > 0 ? Math.round((produtivos / total) * 100) : 0;
