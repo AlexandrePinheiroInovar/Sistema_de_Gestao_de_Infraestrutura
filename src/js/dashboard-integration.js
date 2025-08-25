@@ -10,25 +10,57 @@ let charts = {};
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🔧 [DASHBOARD-INTEGRATION] Configurando sistema...');
     
-    // Aguardar Firebase carregar
+    // Aguardar Firebase E firebase-table-system carregarem
     setTimeout(() => {
-        inicializarDashboard();
-    }, 2000);
+        // Aguardar firebase-table-system estar pronto
+        const waitForFirebaseTable = () => {
+            if (window.FirebaseTableSystem && window.FirebaseTableSystem.isInitialized) {
+                if (window.FirebaseTableSystem.isInitialized()) {
+                    console.log('📋 [DASHBOARD-INTEGRATION] FirebaseTableSystem está pronto');
+                    inicializarDashboard();
+                } else {
+                    console.log('⏳ [DASHBOARD-INTEGRATION] Aguardando FirebaseTableSystem...');
+                    setTimeout(waitForFirebaseTable, 1000);
+                }
+            } else {
+                console.log('⏳ [DASHBOARD-INTEGRATION] Aguardando FirebaseTableSystem carregar...');
+                setTimeout(waitForFirebaseTable, 1000);
+            }
+        };
+        
+        waitForFirebaseTable();
+    }, 3000);
 });
 
 async function inicializarDashboard() {
     try {
         console.log('🚀 [DASHBOARD-INTEGRATION] Carregando dados do dashboard...');
         
-        // Carregar dados da coleção enderecos_mdu
-        const dadosCarregados = await carregarDadosEnderecos();
-        
-        if (!dadosCarregados || dadosCarregados.length === 0) {
-            console.warn('⚠️ [DASHBOARD-INTEGRATION] Nenhum dado encontrado na coleção enderecos_mdu');
-            return;
+        // Tentar usar dados do firebase-table-system primeiro
+        if (window.FirebaseTableSystem && window.FirebaseTableSystem.getData) {
+            const firebaseData = window.FirebaseTableSystem.getData();
+            if (firebaseData && firebaseData.length > 0) {
+                console.log('✅ [DASHBOARD-INTEGRATION] Usando dados do FirebaseTableSystem:', firebaseData.length, 'registros');
+                dashboardData = firebaseData;
+                filteredData = [...dashboardData];
+            } else {
+                // Se não há dados no FirebaseTableSystem, carregar diretamente
+                const dadosCarregados = await carregarDadosEnderecos();
+                if (!dadosCarregados || dadosCarregados.length === 0) {
+                    console.warn('⚠️ [DASHBOARD-INTEGRATION] Nenhum dado encontrado na coleção enderecos_mdu');
+                    return;
+                }
+            }
+        } else {
+            // Fallback: carregar dados diretamente
+            const dadosCarregados = await carregarDadosEnderecos();
+            if (!dadosCarregados || dadosCarregados.length === 0) {
+                console.warn('⚠️ [DASHBOARD-INTEGRATION] Nenhum dado encontrado na coleção enderecos_mdu');
+                return;
+            }
         }
         
-        console.log('✅ [DASHBOARD-INTEGRATION] Dados carregados com sucesso:', dadosCarregados.length, 'registros');
+        console.log('✅ [DASHBOARD-INTEGRATION] Dados carregados com sucesso:', dashboardData.length, 'registros');
         
         // Aguardar um pouco para garantir que os dados estejam disponíveis
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -1360,7 +1392,7 @@ function extrairMesAno(dataString) {
 }
 
 // ============= TORNAR FUNÇÕES GLOBAIS =============
-window.applyInfraFilters = applyInfraFilters;
+// REMOVIDO window.applyInfraFilters - definido em firebase-table-system.js para evitar conflito
 window.clearInfraFilters = clearInfraFilters;
 window.carregarDadosEnderecos = carregarDadosEnderecos;
 window.inicializarDashboard = inicializarDashboard;
