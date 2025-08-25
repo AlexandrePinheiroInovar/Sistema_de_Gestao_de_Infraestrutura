@@ -188,7 +188,8 @@ function gerarGraficoProjects() {
     
     const labels = Object.keys(contadorProjetos);
     const data = Object.values(contadorProjetos);
-    const colors = gerarCores(labels.length);
+    const total = data.reduce((a, b) => a + b, 0);
+    const percentuais = data.map(val => Math.round((val / total) * 100));
     
     // Destruir gráfico anterior se existir
     if (charts.projetos) {
@@ -196,33 +197,90 @@ function gerarGraficoProjects() {
     }
     
     charts.projetos = new Chart(ctx, {
-        type: 'pie',
+        type: 'bar',
         data: {
             labels: labels,
-            datasets: [{
-                data: data,
-                backgroundColor: colors,
-                borderWidth: 2,
-                borderColor: '#ffffff'
-            }]
+            datasets: [
+                {
+                    type: 'bar',
+                    label: 'Quantidade',
+                    data: data,
+                    backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 2,
+                    yAxisID: 'y'
+                },
+                {
+                    type: 'line',
+                    label: 'Percentual (%)',
+                    data: percentuais,
+                    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                    borderColor: 'rgba(239, 68, 68, 1)',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.1,
+                    yAxisID: 'y1'
+                }
+            ]
         },
         options: {
             responsive: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            scales: {
+                x: {
+                    display: true,
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Quantidade'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Percentual (%)'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                }
+            },
             plugins: {
                 legend: {
-                    position: 'bottom'
+                    position: 'top'
                 },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = Math.round((context.parsed / total) * 100);
-                            return `${context.label}: ${context.parsed} (${percentage}%)`;
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'top',
+                    formatter: function(value, context) {
+                        if (context.datasetIndex === 0) {
+                            return value; // Quantidade
+                        } else {
+                            return value + '%'; // Percentual
                         }
+                    },
+                    font: {
+                        weight: 'bold',
+                        size: 11
+                    },
+                    color: function(context) {
+                        return context.datasetIndex === 0 ? '#1e40af' : '#dc2626';
                     }
                 }
             }
-        }
+        },
+        plugins: [ChartDataLabels]
     });
 }
 
@@ -239,7 +297,8 @@ function gerarGraficoSubProjects() {
     
     const labels = Object.keys(contadorSubProjetos);
     const data = Object.values(contadorSubProjetos);
-    const colors = gerarCores(labels.length);
+    const total = data.reduce((a, b) => a + b, 0);
+    const percentuais = data.map(val => Math.round((val / total) * 100));
     
     // Destruir gráfico anterior se existir
     if (charts.subProjetos) {
@@ -247,33 +306,90 @@ function gerarGraficoSubProjects() {
     }
     
     charts.subProjetos = new Chart(ctx, {
-        type: 'doughnut',
+        type: 'bar',
         data: {
             labels: labels,
-            datasets: [{
-                data: data,
-                backgroundColor: colors,
-                borderWidth: 2,
-                borderColor: '#ffffff'
-            }]
+            datasets: [
+                {
+                    type: 'bar',
+                    label: 'Quantidade',
+                    data: data,
+                    backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                    borderColor: 'rgba(16, 185, 129, 1)',
+                    borderWidth: 2,
+                    yAxisID: 'y'
+                },
+                {
+                    type: 'line',
+                    label: 'Percentual (%)',
+                    data: percentuais,
+                    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+                    borderColor: 'rgba(245, 158, 11, 1)',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.1,
+                    yAxisID: 'y1'
+                }
+            ]
         },
         options: {
             responsive: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            scales: {
+                x: {
+                    display: true,
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Quantidade'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Percentual (%)'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                }
+            },
             plugins: {
                 legend: {
-                    position: 'bottom'
+                    position: 'top'
                 },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = Math.round((context.parsed / total) * 100);
-                            return `${context.label}: ${context.parsed} (${percentage}%)`;
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'top',
+                    formatter: function(value, context) {
+                        if (context.datasetIndex === 0) {
+                            return value; // Quantidade
+                        } else {
+                            return value + '%'; // Percentual
                         }
+                    },
+                    font: {
+                        weight: 'bold',
+                        size: 11
+                    },
+                    color: function(context) {
+                        return context.datasetIndex === 0 ? '#059669' : '#d97706';
                     }
                 }
             }
-        }
+        },
+        plugins: [ChartDataLabels]
     });
 }
 
@@ -319,8 +435,9 @@ function gerarGraficoCidades() {
             datasets: [{
                 label: 'Quantidade por Cidade',
                 data: data,
-                backgroundColor: colors,
-                borderWidth: 1
+                backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 2
             }]
         },
         options: {
@@ -328,6 +445,19 @@ function gerarGraficoCidades() {
             plugins: {
                 legend: {
                     display: false
+                },
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'top',
+                    formatter: function(value) {
+                        return value;
+                    },
+                    font: {
+                        weight: 'bold',
+                        size: 11
+                    },
+                    color: '#1e40af'
                 }
             },
             scales: {
@@ -343,7 +473,8 @@ function gerarGraficoCidades() {
                     }
                 }
             }
-        }
+        },
+        plugins: [ChartDataLabels]
     });
 }
 
@@ -375,8 +506,9 @@ function gerarGraficoHPProjects() {
             datasets: [{
                 label: 'Total HP',
                 data: data,
-                backgroundColor: colors,
-                borderWidth: 1
+                backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 2
             }]
         },
         options: {
@@ -384,6 +516,19 @@ function gerarGraficoHPProjects() {
             plugins: {
                 legend: {
                     display: false
+                },
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'top',
+                    formatter: function(value) {
+                        return value;
+                    },
+                    font: {
+                        weight: 'bold',
+                        size: 11
+                    },
+                    color: '#1e40af'
                 }
             },
             scales: {
@@ -391,7 +536,8 @@ function gerarGraficoHPProjects() {
                     beginAtZero: true
                 }
             }
-        }
+        },
+        plugins: [ChartDataLabels]
     });
 }
 
@@ -510,25 +656,50 @@ function gerarGraficoSupervisorStatus() {
             datasets: [{
                 label: 'Produtiva',
                 data: produtivas,
-                backgroundColor: '#10b981'
+                backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                borderColor: 'rgba(16, 185, 129, 1)',
+                borderWidth: 2
             }, {
                 label: 'Improdutiva',
                 data: improdutivas,
-                backgroundColor: '#ef4444'
+                backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                borderColor: 'rgba(239, 68, 68, 1)',
+                borderWidth: 2
             }]
         },
         options: {
             responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'top',
+                    formatter: function(value) {
+                        return value > 0 ? value : '';
+                    },
+                    font: {
+                        weight: 'bold',
+                        size: 11
+                    },
+                    color: function(context) {
+                        return context.datasetIndex === 0 ? '#065f46' : '#991b1b';
+                    }
+                }
+            },
             scales: {
                 x: {
-                    stacked: true
+                    stacked: false
                 },
                 y: {
-                    stacked: true,
+                    stacked: false,
                     beginAtZero: true
                 }
             }
-        }
+        },
+        plugins: [ChartDataLabels]
     });
 }
 

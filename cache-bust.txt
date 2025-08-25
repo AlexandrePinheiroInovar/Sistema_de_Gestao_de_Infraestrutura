@@ -1,11 +1,11 @@
-Cache bust timestamp: 2025-08-22 18:00:00
-Version: 2.7
-Sistema com Estatísticas Corrigidas - Compatibilidade Total
-- Corrigir função atualizarEstatisticasEnderecos para dados do upload
-- Compatibilidade com campos MAIÚSCULAS (planilha) e minúsculas (novos)
-- Cards Endereços Distintos, Equipes Distintas e Produtividade funcionando
-- Sistema de paginação com visual moderno e responsivo
-- Carregamento unificado da coleção enderecos_mdu
-- Mapeamento inteligente de campos (ENDEREÇO/endereco, EQUIPE/equipe)
-- Filtros e trim() para dados mais precisos
+Cache bust timestamp: 2025-08-22 18:15:00
+Version: 3.0
+Dashboard com Gráficos Modernizados - Visual Profissional
+- Gráficos de Projetos e Sub-Projetos: Barras + Linhas com percentuais
+- Gráficos de Cidades e HP: Barras azuis uniformes com rótulos
+- Gráfico Supervisores: 2 barras separadas (Produtiva/Improdutiva)
+- Rótulos em todos os gráficos sem sobreposição
+- Cores de ranking removidas (ouro/prata/bronze) para visual limpo
+- ChartDataLabels integrado em todos os gráficos
+- Eixos duplos (quantidade/percentual) nos gráficos combinados
 Dynamic Excel Upload System Active

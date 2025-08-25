@@ -6997,7 +6997,7 @@ div, section, nav, aside, header, footer, main {
     z-index: 2;
 }
 
-/* Estilos para top 3 */
+/* Estilos para top 3 - DESABILITADO para visual uniforme
 .ranking-table tr.gold {
     background: linear-gradient(90deg, rgba(251, 191, 36, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%);
 }
@@ -7021,6 +7021,7 @@ div, section, nav, aside, header, footer, main {
 .ranking-table tr.bronze:hover {
     background: linear-gradient(90deg, rgba(217, 119, 6, 0.15) 0%, rgba(217, 119, 6, 0.1) 100%);
 }
+*/
 
 /* Responsividade */
 @media (max-width: 768px) {
@@ -8188,7 +8189,7 @@ body:not(.login-body) {
     font-weight: 600;
 }
 
-/* Posições especiais */
+/* Posições especiais - DESABILITADO para visual uniforme
 .ranking-table tr.gold {
     background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
     border-left: 4px solid #fbbf24;
@@ -8221,6 +8222,7 @@ body:not(.login-body) {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(248, 113, 113, 0.2);
 }
+*/
 
 /* Elementos específicos do ranking */
 .ranking-table .position {
@@ -9907,7 +9909,7 @@ body:not(.login-body) {
     margin: 0 4px;
 }
 
-/* Top 3 - Medalhas */
+/* Top 3 - Medalhas - DESABILITADO para visual uniforme
 #infraestrutura .ranking-table tr.gold {
     background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 193, 7, 0.1) 100%);
     border-left: 4px solid #ffd700;
@@ -9937,6 +9939,7 @@ body:not(.login-body) {
     background: linear-gradient(135deg, #cd7f32 0%, #b87333 100%);
     box-shadow: 0 2px 8px rgba(205, 127, 50, 0.3);
 }
+*/
 
 /* Linha de total geral */
 #infraestrutura .ranking-table tr.total-row {
