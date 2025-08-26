@@ -272,14 +272,14 @@ function criarGraficoProjetosModerno() {
                     type: 'line',
                     label: 'Percentual (%)',
                     data: percentuais,
-                    backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                    borderColor: 'rgba(239, 68, 68, 1)',
+                    backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                    borderColor: 'rgba(37, 99, 235, 1)',
                     borderWidth: 3,
                     fill: false,
                     tension: 0.1,
                     yAxisID: 'y1',
-                    pointBackgroundColor: 'rgba(239, 68, 68, 1)',
-                    pointBorderColor: 'rgba(239, 68, 68, 1)',
+                    pointBackgroundColor: 'rgba(37, 99, 235, 1)',
+                    pointBorderColor: 'rgba(37, 99, 235, 1)',
                     pointRadius: 5
                 }
             ]
@@ -316,7 +316,7 @@ function criarGraficoProjetosModerno() {
                     title: {
                         display: true,
                         text: 'Percentual (%)',
-                        color: 'rgba(239, 68, 68, 1)'
+                        color: 'rgba(37, 99, 235, 1)'
                     },
                     grid: {
                         drawOnChartArea: false,
@@ -347,7 +347,7 @@ function criarGraficoProjetosModerno() {
                         size: 10
                     },
                     color: function(context) {
-                        return context.datasetIndex === 0 ? '#1e40af' : '#dc2626';
+                        return context.datasetIndex === 0 ? '#1e40af' : '#2563eb';
                     }
                 }
             }
@@ -395,8 +395,8 @@ function criarGraficoSubProjetosModerno() {
                     type: 'bar',
                     label: 'Quantidade',
                     data: data,
-                    backgroundColor: 'rgba(16, 185, 129, 0.6)',
-                    borderColor: 'rgba(16, 185, 129, 1)',
+                    backgroundColor: 'rgba(30, 64, 175, 0.6)',
+                    borderColor: 'rgba(30, 64, 175, 1)',
                     borderWidth: 2,
                     yAxisID: 'y'
                 },
@@ -404,14 +404,14 @@ function criarGraficoSubProjetosModerno() {
                     type: 'line',
                     label: 'Percentual (%)',
                     data: percentuais,
-                    backgroundColor: 'rgba(245, 158, 11, 0.2)',
-                    borderColor: 'rgba(245, 158, 11, 1)',
+                    backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                    borderColor: 'rgba(37, 99, 235, 1)',
                     borderWidth: 3,
                     fill: false,
                     tension: 0.1,
                     yAxisID: 'y1',
-                    pointBackgroundColor: 'rgba(245, 158, 11, 1)',
-                    pointBorderColor: 'rgba(245, 158, 11, 1)',
+                    pointBackgroundColor: 'rgba(37, 99, 235, 1)',
+                    pointBorderColor: 'rgba(37, 99, 235, 1)',
                     pointRadius: 5
                 }
             ]
@@ -437,7 +437,7 @@ function criarGraficoSubProjetosModerno() {
                     title: {
                         display: true,
                         text: 'Quantidade',
-                        color: 'rgba(16, 185, 129, 1)'
+                        color: 'rgba(30, 64, 175, 1)'
                     },
                     beginAtZero: true
                 },
@@ -448,7 +448,7 @@ function criarGraficoSubProjetosModerno() {
                     title: {
                         display: true,
                         text: 'Percentual (%)',
-                        color: 'rgba(245, 158, 11, 1)'
+                        color: 'rgba(37, 99, 235, 1)'
                     },
                     grid: {
                         drawOnChartArea: false,
@@ -479,7 +479,7 @@ function criarGraficoSubProjetosModerno() {
                         size: 10
                     },
                     color: function(context) {
-                        return context.datasetIndex === 0 ? '#059669' : '#d97706';
+                        return context.datasetIndex === 0 ? '#1e40af' : '#2563eb';
                     }
                 }
             }
@@ -755,11 +755,11 @@ function criarGraficoRecebimentosModerno() {
             }, {
                 label: 'Concluídos',
                 data: dataConclusoes,
-                borderColor: 'rgba(16, 185, 129, 1)',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderColor: 'rgba(30, 64, 175, 1)',
+                backgroundColor: 'rgba(30, 64, 175, 0.1)',
                 borderWidth: 3,
-                pointBackgroundColor: 'rgba(16, 185, 129, 1)',
-                pointBorderColor: 'rgba(16, 185, 129, 1)',
+                pointBackgroundColor: 'rgba(30, 64, 175, 1)',
+                pointBorderColor: 'rgba(30, 64, 175, 1)',
                 pointRadius: 5,
                 tension: 0.4
             }]
@@ -845,14 +845,14 @@ function criarGraficoSupervisorModerno() {
             datasets: [{
                 label: 'Produtiva',
                 data: produtivas,
-                backgroundColor: 'rgba(16, 185, 129, 0.7)',
-                borderColor: 'rgba(16, 185, 129, 1)',
+                backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                borderColor: 'rgba(59, 130, 246, 1)',
                 borderWidth: 2
             }, {
                 label: 'Improdutiva',
                 data: improdutivas,
-                backgroundColor: 'rgba(239, 68, 68, 0.7)',
-                borderColor: 'rgba(239, 68, 68, 1)',
+                backgroundColor: 'rgba(30, 64, 175, 0.7)',
+                borderColor: 'rgba(30, 64, 175, 1)',
                 borderWidth: 2
             }]
         },
@@ -876,7 +876,7 @@ function criarGraficoSupervisorModerno() {
                         size: 10
                     },
                     color: function(context) {
-                        return context.datasetIndex === 0 ? '#065f46' : '#991b1b';
+                        return context.datasetIndex === 0 ? '#3b82f6' : '#1e40af';
                     }
                 }
             },
