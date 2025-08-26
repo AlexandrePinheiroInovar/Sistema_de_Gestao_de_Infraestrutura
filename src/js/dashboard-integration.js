@@ -166,7 +166,10 @@ function calcularTempoMedio(dados, campoInicio, campoFim) {
     const registrosComDatas = dados.filter(item => {
         const inicio = item[campoInicio];
         const fim = item[campoFim];
-        return inicio && fim && inicio.trim() && fim.trim();
+        // Verificar se os valores existem e são válidos (string ou objeto Date)
+        const inicioValido = inicio && (typeof inicio === 'string' ? inicio.trim() : true);
+        const fimValido = fim && (typeof fim === 'string' ? fim.trim() : true);
+        return inicioValido && fimValido;
     });
     
     if (registrosComDatas.length === 0) return 0;

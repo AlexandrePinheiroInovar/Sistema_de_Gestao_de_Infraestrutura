@@ -3087,3 +3087,57 @@ window.FirebaseTableSystem = {
 };
 
 console.log('✅ [FIREBASE-TABLE] Sistema de tabela Firebase carregado');
+console.log('🧪 [FIREBASE-TABLE] Funções de debug disponíveis: testCharts(), forceCreateCharts()');
+
+// Verificar se as funções foram definidas corretamente
+setTimeout(() => {
+    console.log('🔍 [FIREBASE-TABLE] Verificação de funções globais:');
+    console.log('🔍 [FIREBASE-TABLE] - testCharts:', typeof window.testCharts);
+    console.log('🔍 [FIREBASE-TABLE] - forceCreateCharts:', typeof window.forceCreateCharts);
+    console.log('🔍 [FIREBASE-TABLE] - FirebaseTableSystem:', typeof window.FirebaseTableSystem);
+    
+    if (typeof window.testCharts === 'undefined') {
+        console.error('❌ [FIREBASE-TABLE] testCharts não foi definido corretamente!');
+    }
+    if (typeof window.forceCreateCharts === 'undefined') {
+        console.error('❌ [FIREBASE-TABLE] forceCreateCharts não foi definido corretamente!');
+    }
+}, 1000);
+
+// Função de backup para depuração
+window.debugFirebaseTable = function() {
+    console.log('🔧 [DEBUG-BACKUP] Estado do sistema:');
+    console.log('📊 firebaseTableData:', firebaseTableData?.length || 'undefined');
+    console.log('📊 Chart.js:', typeof Chart);
+    console.log('📊 Canvas projetosChart:', !!document.getElementById('projetosChart'));
+    console.log('📊 Canvas subProjetosChart:', !!document.getElementById('subProjetosChart'));
+    console.log('📊 Canvas cidadesChart:', !!document.getElementById('cidadesChart'));
+    console.log('📊 Canvas hpProjetosChart:', !!document.getElementById('hpProjetosChart'));
+    console.log('📊 Canvas recebimentosChart:', !!document.getElementById('recebimentosChart'));
+    console.log('📊 Canvas supervisorStatusChart:', !!document.getElementById('supervisorStatusChart'));
+    
+    // Tentar criar um gráfico simples de teste
+    if (typeof Chart !== 'undefined') {
+        const canvas = document.getElementById('projetosChart');
+        if (canvas) {
+            console.log('🧪 [DEBUG-BACKUP] Testando criação de gráfico simples...');
+            try {
+                new Chart(canvas.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Teste'],
+                        datasets: [{
+                            label: 'Teste',
+                            data: [1],
+                            backgroundColor: 'rgba(59, 130, 246, 0.6)'
+                        }]
+                    },
+                    options: { responsive: true }
+                });
+                console.log('✅ [DEBUG-BACKUP] Gráfico de teste criado com sucesso!');
+            } catch (e) {
+                console.error('❌ [DEBUG-BACKUP] Erro no gráfico de teste:', e);
+            }
+        }
+    }
+};
