@@ -224,8 +224,8 @@ async function loadFirebaseTableData() {
         // Obter referência do Firestore
         const firestore = firebaseManager.getFirestore();
         
-        // Buscar dados da collection 'enderecos'
-        const snapshot = await firestore.collection('enderecos').get();
+        // Buscar dados da collection 'enderecos_mdu' (UNIFICADA)
+        const snapshot = await firestore.collection('enderecos_mdu').get();
         const data = [];
         
         snapshot.forEach(doc => {
@@ -554,10 +554,20 @@ function sortTable(column) {
 function setupEventListeners() {
     console.log('🔧 [FIREBASE-TABLE] Configurando event listeners...');
     
-    // Event listener para upload de Excel
-    const excelUpload = document.getElementById('excelUpload');
+    // Event listener para upload de Excel (ID correto do HTML)
+    const excelUpload = document.getElementById('novoExcelUpload');
     if (excelUpload) {
+        console.log('📁 [FIREBASE-TABLE] Upload Excel encontrado');
         excelUpload.addEventListener('change', handleExcelUpload);
+    } else {
+        console.warn('⚠️ [FIREBASE-TABLE] Elemento novoExcelUpload não encontrado');
+    }
+    
+    // Event listener para formulário de novo endereço
+    const enderecoForm = document.getElementById('enderecoForm');
+    if (enderecoForm) {
+        console.log('📝 [FIREBASE-TABLE] Formulário de endereço encontrado');
+        enderecoForm.addEventListener('submit', handleNovoEndereco);
     }
 }
 
@@ -667,7 +677,7 @@ async function saveExcelDataToFirebase(data) {
         
         // Criar batch operation
         const batch = firestore.batch();
-        const collection = firestore.collection('enderecos');
+        const collection = firestore.collection('enderecos_mdu');
         let savedCount = 0;
         
         for (const row of data) {
@@ -1942,6 +1952,147 @@ function clearAllCharts() {
     
     console.log('🧹 [FIREBASE-TABLE] Todos os gráficos limpos');
 }
+
+// ============= INTEGRAÇÃO COM FORMULÁRIO NOVO ENDEREÇO =============
+async function handleNovoEndereco(event) {
+    event.preventDefault();
+    console.log('📝 [FIREBASE-TABLE] Processando novo endereço...');
+    
+    try {
+        await firebaseManager.ensureReady();
+        const firestore = firebaseManager.getFirestore();
+        const user = firebaseManager.getCurrentUser();
+        
+        if (!user) {
+            throw new Error('Usuário não autenticado');
+        }
+        
+        // Coletar dados do formulário
+        const formData = new FormData(event.target);
+        const enderecoData = {};
+        
+        // Mapear campos do formulário para campos do Firestore
+        for (let [key, value] of formData.entries()) {
+            enderecoData[key] = value;
+        }
+        
+        // Adicionar metadados
+        enderecoData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        enderecoData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+        enderecoData.createdBy = user.uid;
+        enderecoData.source = 'form_manual';
+        
+        // Salvar no Firestore
+        const docRef = await firestore.collection('enderecos_mdu').add(enderecoData);
+        
+        console.log('✅ [FIREBASE-TABLE] Endereço salvo com ID:', docRef.id);
+        
+        // Fechar modal
+        const modal = document.getElementById('crudModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        
+        // Recarregar dados
+        await loadFirebaseTableData();
+        
+        // Notificar sucesso
+        if (window.showCustomNotification) {
+            window.showCustomNotification('Sucesso!', 'Endereço adicionado com sucesso', 'success');
+        } else {
+            alert('✅ Endereço adicionado com sucesso!');
+        }
+        
+    } catch (error) {
+        console.error('❌ [FIREBASE-TABLE] Erro ao salvar endereço:', error);
+        alert('❌ Erro ao salvar endereço: ' + error.message);
+    }
+}
+
+// ============= FUNÇÃO PARA ABRIR MODAL (GLOBAL) =============
+window.abrirNovoEndereco = async function() {
+    console.log('📝 [FIREBASE-TABLE] Abrindo modal de novo endereço...');
+    
+    const modal = document.getElementById('crudModal');
+    if (modal) {
+        modal.style.display = 'block';
+        
+        // Popular dropdowns
+        await populateDropdowns();
+    }
+};
+
+// ============= POPULAR DROPDOWNS COM DADOS DA GESTÃO =============
+async function populateDropdowns() {
+    console.log('📋 [FIREBASE-TABLE] Populando dropdowns...');
+    
+    try {
+        const firestore = firebaseManager.getFirestore();
+        
+        // Mapear dropdowns para coleções
+        const dropdownConfig = {
+            'projeto': 'nova_gestao_projetos',
+            'subProjeto': 'nova_gestao_subprojetos', 
+            'tipoAcao': 'nova_gestao_tipos_acao',
+            'cidade': 'nova_gestao_cidades',
+            'supervisor': 'nova_gestao_supervisores',
+            'equipe': 'nova_gestao_equipes'
+        };
+        
+        // Popular cada dropdown
+        for (const [dropdownId, collection] of Object.entries(dropdownConfig)) {
+            const select = document.getElementById(dropdownId);
+            if (!select) continue;
+            
+            try {
+                const snapshot = await firestore.collection(collection).get();
+                
+                // Limpar opções existentes (exceto a primeira)
+                const firstOption = select.querySelector('option[value=""]');
+                select.innerHTML = '';
+                if (firstOption) {
+                    select.appendChild(firstOption);
+                }
+                
+                // Adicionar opções
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const option = document.createElement('option');
+                    option.value = data.nome || data.name || doc.id;
+                    option.textContent = data.nome || data.name || doc.id;
+                    select.appendChild(option);
+                });
+                
+                console.log(`✅ [FIREBASE-TABLE] Dropdown ${dropdownId} populado com ${snapshot.size} itens`);
+                
+            } catch (error) {
+                console.warn(`⚠️ [FIREBASE-TABLE] Erro ao popular ${dropdownId}:`, error);
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ [FIREBASE-TABLE] Erro ao popular dropdowns:', error);
+    }
+}
+
+// ============= FUNÇÕES GLOBAIS PARA COMPATIBILIDADE =============
+window.filterDynamicTable = function() {
+    const searchInput = document.getElementById('dynamicSearchInput');
+    if (searchInput) {
+        filterText = searchInput.value.trim();
+        console.log('🔍 [FIREBASE-TABLE] Aplicando filtro:', filterText);
+        
+        if (firebaseTableData.length > 0) {
+            const tbody = document.getElementById('enderecoTableBody');
+            renderTableBody(tbody, firebaseTableData);
+        }
+    }
+};
+
+window.reloadCompleteInterface = async function() {
+    console.log('🔄 [FIREBASE-TABLE] Recarregando interface completa...');
+    await loadFirebaseTableData();
+};
 
 // ============= EXPOSIÇÃO GLOBAL =============
 window.FirebaseTableSystem = {
