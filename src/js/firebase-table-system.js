@@ -256,7 +256,7 @@ async function loadFirebaseTableData() {
             try {
                 await updateDashboardCards();
                 await updateDashboardFilters();
-                // await updateDashboardCharts(); // DESABILITADO - usando dashboard-integration.js
+                await updateDashboardCharts(); // HABILITADO - gráficos integrados no firebase-table-system
                 console.log('✅ [FIREBASE-TABLE] Cards, filtros e gráficos atualizados');
             } catch (error) {
                 console.warn('⚠️ [FIREBASE-TABLE] Erro ao atualizar dashboard:', error);
@@ -1518,162 +1518,639 @@ function populateFilterSelect(selectId, values) {
 // ============= ATUALIZAÇÃO COMPLETA DE GRÁFICOS DO DASHBOARD =============
 // FUNÇÃO DESABILITADA - Os gráficos agora são gerenciados por dashboard-integration.js
 async function updateDashboardCharts() {
-    console.log('📈 [FIREBASE-TABLE] Função de gráficos DESABILITADA - usando dashboard-integration.js');
-    return true; // Retornar sucesso para não quebrar outras funções
+    console.log('📈 [FIREBASE-TABLE] Atualizando TODOS os gráficos do dashboard com layout azul...');
     
-    /* CÓDIGO DE GRÁFICOS COMENTADO - USANDO dashboard-integration.js
     try {
+        // Aguardar Chart.js estar disponível
+        if (typeof Chart === 'undefined') {
+            console.warn('⚠️ [FIREBASE-TABLE] Chart.js não carregado, reagendando...');
+            setTimeout(updateDashboardCharts, 500);
+            return false;
+        }
+        
+        // Verificar se temos dados
+        if (!firebaseTableData || firebaseTableData.length === 0) {
+            console.warn('⚠️ [FIREBASE-TABLE] Nenhum dado disponível para gráficos');
+            return false;
+        }
+        
+        console.log('📊 [FIREBASE-TABLE] Gerando gráficos com', firebaseTableData.length, 'registros');
+        
         const stats = await getFirebaseTableStatistics();
         
-        // ===== GRÁFICOS PRINCIPAIS IDENTIFICADOS =====
-        updateProjetosChart(stats.projetosDistintos, stats.topEquipes); // projetosChart
-        updateSubProjetosChart(stats); // subProjetosChart
-        updateCidadesChart(stats.topCidades); // cidadesChart
-        updateHpProjetosChart(stats); // hpProjetosChart
-        updateRecebimentosChart(stats.registrosPorMes); // recebimentosChart
-        updateSupervisorStatusChart(stats.topEquipes, stats.statusCounts); // supervisorStatusChart
+        // Criar todos os 6 gráficos do dashboard
+        createProjetosChart(stats);
+        createSubProjetosChart(stats);
+        createCidadesChart(stats);
+        createHpProjetosChart(stats);
+        createRecebimentosChart(stats);
+        createSupervisorStatusChart(stats);
         
-        // ===== GRÁFICOS GENÉRICOS (FALLBACK) =====
-        updateStatusChart(stats.statusCounts);
-        updateMonthlyChart(stats.registrosPorMes);
-        updateEquipesChart(stats.topEquipes);
-        
-        console.log('✅ [FIREBASE-TABLE] TODOS os gráficos atualizados');
+        console.log('✅ [FIREBASE-TABLE] Todos os 6 gráficos criados com sucesso');
         return true;
         
     } catch (error) {
         console.error('❌ [FIREBASE-TABLE] Erro ao atualizar gráficos:', error);
+        console.error('❌ [FIREBASE-TABLE] Stack trace:', error.stack);
         return false;
     }
-    */ // FIM DO CÓDIGO COMENTADO
 }
 
-function updateProjetosChart(projetosCount, topEquipes) {
-    const chartCanvas = document.getElementById('projetosChart');
+// ============= GRÁFICOS MODERNOS V4.0 - INTEGRADOS COM FIREBASE-TABLE =============
+
+// Objeto para armazenar referências dos gráficos
+const dashboardCharts = {};
+
+function createProjetosChart(stats) {
+    console.log('📊 [FIREBASE-TABLE] Criando Análise de Projetos (Barras + Linha)...');
     
-    if (!chartCanvas) {
-        return; // Silenciosamente se não encontrar
+    const canvas = document.getElementById('projetosChart');
+    if (!canvas) {
+        console.warn('⚠️ Canvas projetosChart não encontrado');
+        return;
     }
     
-    const ctx = chartCanvas.getContext('2d');
-    
-    // Usar dados das top equipes como projetos para o gráfico
-    const labels = topEquipes.map(item => item.name);
-    const data = topEquipes.map(item => item.count);
-    const colors = generateChartColors(labels.length);
-    
-    // Destruir gráfico existente se houver
-    if (chartCanvas.chart) {
-        chartCanvas.chart.destroy();
+    // Destruir gráfico existente
+    if (dashboardCharts.projetos) {
+        dashboardCharts.projetos.destroy();
     }
     
-    if (typeof Chart !== 'undefined') {
-        chartCanvas.chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Registros por Equipe',
+    // Processar dados dos projetos
+    const contadorProjetos = {};
+    firebaseTableData.forEach(item => {
+        const projeto = mapFieldValue(item, 'projeto') || 'Não especificado';
+        contadorProjetos[projeto] = (contadorProjetos[projeto] || 0) + 1;
+    });
+    
+    // Pegar top 10 projetos
+    const entries = Object.entries(contadorProjetos).sort(([,a], [,b]) => b - a).slice(0, 10);
+    const labels = entries.map(([nome]) => nome);
+    const data = entries.map(([,count]) => count);
+    const total = data.reduce((a, b) => a + b, 0);
+    const percentuais = data.map(val => Math.round((val / total) * 100));
+    
+    const ctx = canvas.getContext('2d');
+    dashboardCharts.projetos = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    type: 'bar',
+                    label: 'Quantidade',
                     data: data,
-                    backgroundColor: colors,
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+                    backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 2,
+                    yAxisID: 'y'
                 },
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Distribuição por Equipe'
-                    }
-                }
-            }
-        });
-    }
-}
-
-function updateSubProjetosChart(stats) {
-    const chartCanvas = document.getElementById('subProjetosChart');
-    
-    if (!chartCanvas) {
-        return; // Silenciosamente se não encontrar
-    }
-    
-    const ctx = chartCanvas.getContext('2d');
-    
-    // Usar dados de status como subprojetos para gráfico combinado
-    const labels = Object.keys(stats.statusCounts);
-    const data = Object.values(stats.statusCounts);
-    
-    // Destruir gráfico existente se houver
-    if (chartCanvas.chart) {
-        chartCanvas.chart.destroy();
-    }
-    
-    if (typeof Chart !== 'undefined') {
-        chartCanvas.chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Quantidade por Status',
-                    data: data,
-                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                    borderColor: '#36A2EB',
-                    borderWidth: 1,
-                    type: 'bar'
-                }, {
-                    label: 'Tendência',
-                    data: data,
-                    borderColor: '#FF6384',
-                    backgroundColor: 'transparent',
+                {
+                    type: 'line',
+                    label: 'Percentual (%)',
+                    data: percentuais,
+                    backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                    borderColor: 'rgba(37, 99, 235, 1)',
                     borderWidth: 3,
                     fill: false,
-                    tension: 0.4,
-                    type: 'line'
-                }]
+                    tension: 0.1,
+                    yAxisID: 'y1',
+                    pointBackgroundColor: 'rgba(37, 99, 235, 1)',
+                    pointBorderColor: 'rgba(37, 99, 235, 1)',
+                    pointRadius: 5
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Quantidade'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Status'
-                        }
-                    }
-                },
-                plugins: {
+            scales: {
+                x: {
+                    display: true,
                     title: {
                         display: true,
-                        text: 'Sub Projetos por Status'
-                    },
-                    legend: {
+                        text: 'Projetos'
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
                         display: true,
-                        position: 'top'
+                        text: 'Quantidade',
+                        color: 'rgba(59, 130, 246, 1)'
+                    },
+                    beginAtZero: true
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Percentual (%)',
+                        color: 'rgba(37, 99, 235, 1)'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                    beginAtZero: true,
+                    max: 100
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    display: true
+                },
+                title: {
+                    display: true,
+                    text: 'Análise de Projetos'
+                }
+            }
+        }
+    });
+    
+    console.log('✅ Gráfico de Projetos criado');
+}
+
+function createSubProjetosChart(stats) {
+    console.log('📊 [FIREBASE-TABLE] Criando Análise de Sub Projetos (Barras + Linha)...');
+    
+    const canvas = document.getElementById('subProjetosChart');
+    if (!canvas) {
+        console.warn('⚠️ Canvas subProjetosChart não encontrado');
+        return;
+    }
+    
+    // Destruir gráfico existente
+    if (dashboardCharts.subProjetos) {
+        dashboardCharts.subProjetos.destroy();
+    }
+    
+    // Processar dados dos sub projetos
+    const contadorSubProjetos = {};
+    firebaseTableData.forEach(item => {
+        const subProjeto = mapFieldValue(item, 'subProjeto') || 'Não especificado';
+        contadorSubProjetos[subProjeto] = (contadorSubProjetos[subProjeto] || 0) + 1;
+    });
+    
+    // Pegar top 10 sub projetos
+    const entries = Object.entries(contadorSubProjetos).sort(([,a], [,b]) => b - a).slice(0, 10);
+    const labels = entries.map(([nome]) => nome);
+    const data = entries.map(([,count]) => count);
+    const total = data.reduce((a, b) => a + b, 0);
+    const percentuais = data.map(val => Math.round((val / total) * 100));
+    
+    const ctx = canvas.getContext('2d');
+    dashboardCharts.subProjetos = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    type: 'bar',
+                    label: 'Quantidade',
+                    data: data,
+                    backgroundColor: 'rgba(30, 64, 175, 0.6)',
+                    borderColor: 'rgba(30, 64, 175, 1)',
+                    borderWidth: 2,
+                    yAxisID: 'y'
+                },
+                {
+                    type: 'line',
+                    label: 'Percentual (%)',
+                    data: percentuais,
+                    backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                    borderColor: 'rgba(37, 99, 235, 1)',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.1,
+                    yAxisID: 'y1',
+                    pointBackgroundColor: 'rgba(37, 99, 235, 1)',
+                    pointBorderColor: 'rgba(37, 99, 235, 1)',
+                    pointRadius: 5
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Sub-Projetos'
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Quantidade',
+                        color: 'rgba(30, 64, 175, 1)'
+                    },
+                    beginAtZero: true
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Percentual (%)',
+                        color: 'rgba(37, 99, 235, 1)'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                    beginAtZero: true,
+                    max: 100
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    display: true
+                },
+                title: {
+                    display: true,
+                    text: 'Análise de Sub Projetos'
+                }
+            }
+        }
+    });
+    
+    console.log('✅ Gráfico de Sub Projetos criado');
+}
+
+function createCidadesChart(stats) {
+    console.log('📊 [FIREBASE-TABLE] Criando Gráfico de Cidades (Pizza)...');
+    
+    const canvas = document.getElementById('cidadesChart');
+    if (!canvas) {
+        console.warn('⚠️ Canvas cidadesChart não encontrado');
+        return;
+    }
+    
+    // Destruir gráfico existente
+    if (dashboardCharts.cidades) {
+        dashboardCharts.cidades.destroy();
+    }
+    
+    // Processar dados das cidades
+    const contadorCidades = {};
+    firebaseTableData.forEach(item => {
+        const cidade = mapFieldValue(item, 'cidade') || 'Não especificado';
+        contadorCidades[cidade] = (contadorCidades[cidade] || 0) + 1;
+    });
+    
+    // Pegar top 8 cidades
+    const entries = Object.entries(contadorCidades).sort(([,a], [,b]) => b - a).slice(0, 8);
+    const labels = entries.map(([nome]) => nome);
+    const data = entries.map(([,count]) => count);
+    
+    // Cores azuis degradê
+    const colors = [
+        'rgba(59, 130, 246, 0.8)',
+        'rgba(30, 64, 175, 0.8)', 
+        'rgba(37, 99, 235, 0.8)',
+        'rgba(29, 78, 216, 0.8)',
+        'rgba(30, 58, 138, 0.8)',
+        'rgba(23, 37, 84, 0.8)',
+        'rgba(15, 23, 42, 0.8)',
+        'rgba(2, 6, 23, 0.8)'
+    ];
+    
+    const ctx = canvas.getContext('2d');
+    dashboardCharts.cidades = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors,
+                borderColor: colors.map(color => color.replace('0.8', '1')),
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    display: true
+                },
+                title: {
+                    display: true,
+                    text: 'Distribuição por Cidades'
+                }
+            }
+        }
+    });
+    
+    console.log('✅ Gráfico de Cidades criado');
+}
+
+function createHpProjetosChart(stats) {
+    console.log('📊 [FIREBASE-TABLE] Criando Gráfico de HP por Projetos (Barras Horizontais)...');
+    
+    const canvas = document.getElementById('hpProjetosChart');
+    if (!canvas) {
+        console.warn('⚠️ Canvas hpProjetosChart não encontrado');
+        return;
+    }
+    
+    // Destruir gráfico existente
+    if (dashboardCharts.hpProjetos) {
+        dashboardCharts.hpProjetos.destroy();
+    }
+    
+    // Processar dados de HP
+    const contadorHP = {};
+    firebaseTableData.forEach(item => {
+        const hp = mapFieldValue(item, 'hp') || 'Não especificado';
+        const projeto = mapFieldValue(item, 'projeto') || 'Não especificado';
+        const key = `${projeto} - ${hp}`;
+        contadorHP[key] = (contadorHP[key] || 0) + 1;
+    });
+    
+    // Pegar top 10 HP/Projetos
+    const entries = Object.entries(contadorHP).sort(([,a], [,b]) => b - a).slice(0, 10);
+    const labels = entries.map(([nome]) => nome.length > 30 ? nome.substring(0, 30) + '...' : nome);
+    const data = entries.map(([,count]) => count);
+    
+    const ctx = canvas.getContext('2d');
+    dashboardCharts.hpProjetos = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Quantidade de HP',
+                data: data,
+                backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            indexAxis: 'y',
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Quantidade'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Projetos/HP'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                title: {
+                    display: true,
+                    text: 'HP por Projetos'
+                }
+            }
+        }
+    });
+    
+    console.log('✅ Gráfico de HP por Projetos criado');
+}
+
+function createRecebimentosChart(stats) {
+    console.log('📊 [FIREBASE-TABLE] Criando Gráfico de Recebimentos vs Conclusões...');
+    
+    const canvas = document.getElementById('recebimentosChart');
+    if (!canvas) {
+        console.warn('⚠️ Canvas recebimentosChart não encontrado');
+        return;
+    }
+    
+    // Destruir gráfico existente
+    if (dashboardCharts.recebimentos) {
+        dashboardCharts.recebimentos.destroy();
+    }
+    
+    // Processar dados mensais
+    const dadosMensais = {};
+    firebaseTableData.forEach(item => {
+        const dataRecebimento = mapFieldValue(item, 'dataRecebimento');
+        const dataFinal = mapFieldValue(item, 'dataFinal');
+        
+        if (dataRecebimento) {
+            const mes = dataRecebimento.substring(0, 7); // YYYY-MM
+            if (!dadosMensais[mes]) {
+                dadosMensais[mes] = { recebidos: 0, concluidos: 0 };
+            }
+            dadosMensais[mes].recebidos++;
+        }
+        
+        if (dataFinal) {
+            const mes = dataFinal.substring(0, 7); // YYYY-MM
+            if (!dadosMensais[mes]) {
+                dadosMensais[mes] = { recebidos: 0, concluidos: 0 };
+            }
+            dadosMensais[mes].concluidos++;
+        }
+    });
+    
+    // Ordenar por mês e pegar últimos 12 meses
+    const mesesOrdenados = Object.keys(dadosMensais).sort().slice(-12);
+    const labels = mesesOrdenados.map(mes => {
+        const [ano, mesNum] = mes.split('-');
+        const nomesMeses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        return `${nomesMeses[parseInt(mesNum) - 1]}/${ano.slice(2)}`;
+    });
+    
+    const dadosRecebidos = mesesOrdenados.map(mes => dadosMensais[mes]?.recebidos || 0);
+    const dadosConcluidos = mesesOrdenados.map(mes => dadosMensais[mes]?.concluidos || 0);
+    
+    const ctx = canvas.getContext('2d');
+    dashboardCharts.recebimentos = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    type: 'bar',
+                    label: 'Recebidos',
+                    data: dadosRecebidos,
+                    backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 2
+                },
+                {
+                    type: 'line',
+                    label: 'Concluídos',
+                    data: dadosConcluidos,
+                    backgroundColor: 'rgba(30, 64, 175, 0.2)',
+                    borderColor: 'rgba(30, 64, 175, 1)',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Período'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Quantidade'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    display: true
+                },
+                title: {
+                    display: true,
+                    text: 'Recebimentos vs Conclusões'
+                }
+            }
+        }
+    });
+    
+    console.log('✅ Gráfico de Recebimentos criado');
+}
+
+function createSupervisorStatusChart(stats) {
+    console.log('📊 [FIREBASE-TABLE] Criando Gráfico de Supervisores por Status...');
+    
+    const canvas = document.getElementById('supervisorStatusChart');
+    if (!canvas) {
+        console.warn('⚠️ Canvas supervisorStatusChart não encontrado');
+        return;
+    }
+    
+    // Destruir gráfico existente
+    if (dashboardCharts.supervisorStatus) {
+        dashboardCharts.supervisorStatus.destroy();
+    }
+    
+    // Processar dados de supervisores por status
+    const supervisorData = {};
+    firebaseTableData.forEach(item => {
+        const supervisor = mapFieldValue(item, 'supervisor') || 'Não especificado';
+        const status = mapFieldValue(item, 'status') || 'Não especificado';
+        
+        if (!supervisorData[supervisor]) {
+            supervisorData[supervisor] = { PRODUTIVA: 0, IMPRODUTIVA: 0 };
+        }
+        
+        if (status.toUpperCase().includes('PRODUTIVA')) {
+            supervisorData[supervisor].PRODUTIVA++;
+        } else if (status.toUpperCase().includes('IMPRODUTIVA')) {
+            supervisorData[supervisor].IMPRODUTIVA++;
+        } else {
+            // Classificar por padrão como produtiva se não especificado
+            supervisorData[supervisor].PRODUTIVA++;
+        }
+    });
+    
+    // Pegar top 10 supervisores
+    const supervisores = Object.entries(supervisorData)
+        .map(([nome, stats]) => ({
+            nome,
+            produtiva: stats.PRODUTIVA,
+            improdutiva: stats.IMPRODUTIVA,
+            total: stats.PRODUTIVA + stats.IMPRODUTIVA
+        }))
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 10);
+    
+    const labels = supervisores.map(s => s.nome.length > 15 ? s.nome.substring(0, 15) + '...' : s.nome);
+    const dadosProdutiva = supervisores.map(s => s.produtiva);
+    const dadosImprodutiva = supervisores.map(s => s.improdutiva);
+    
+    const ctx = canvas.getContext('2d');
+    dashboardCharts.supervisorStatus = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Produtiva',
+                    data: dadosProdutiva,
+                    backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 2
+                },
+                {
+                    label: 'Improdutiva',
+                    data: dadosImprodutiva,
+                    backgroundColor: 'rgba(30, 64, 175, 0.6)',
+                    borderColor: 'rgba(30, 64, 175, 1)',
+                    borderWidth: 2
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    display: true
+                },
+                title: {
+                    display: true,
+                    text: 'Supervisores por Status'
+                }
+            },
+            scales: {
+                x: {
+                    stacked: false,
+                    title: {
+                        display: true,
+                        text: 'Supervisores'
+                    }
+                },
+                y: {
+                    stacked: false,
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Quantidade'
                     }
                 }
             }
-        });
-    }
+        }
+    });
+    
+    console.log('✅ Gráfico de Supervisores criado');
 }
 
 function updateHpProjetosChart(stats) {
@@ -2216,7 +2693,7 @@ function integrateWithExistingSystems() {
                 // Depois integrar nossos dados
                 await updateDashboardCards();
                 await updateDashboardFilters();
-                // await updateDashboardCharts(); // DESABILITADO - usando dashboard-integration.js
+                await updateDashboardCharts(); // HABILITADO - gráficos integrados no firebase-table-system
                 
                 console.log('✅ [FIREBASE-TABLE] Integração completa realizada');
             } catch (error) {
@@ -2232,7 +2709,7 @@ function integrateWithExistingSystems() {
                 console.log('🔄 [FIREBASE-TABLE] Executando atualização forçada...');
                 await updateDashboardCards();
                 await updateDashboardFilters();
-                // await updateDashboardCharts(); // DESABILITADO - usando dashboard-integration.js
+                await updateDashboardCharts(); // HABILITADO - gráficos integrados no firebase-table-system
             }
         } catch (error) {
             console.warn('⚠️ [FIREBASE-TABLE] Erro na atualização forçada:', error);
