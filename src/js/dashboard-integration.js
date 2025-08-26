@@ -36,20 +36,24 @@ async function inicializarDashboard() {
     try {
         console.log('🚀 [DASHBOARD-INTEGRATION] Carregando dados do dashboard...');
         
-        // Tentar usar dados do firebase-table-system primeiro
+        // PRIORIDADE 1: Usar dados do FirebaseTableSystem (dados reais da tabela)
         if (window.FirebaseTableSystem && window.FirebaseTableSystem.getData) {
             const firebaseData = window.FirebaseTableSystem.getData();
+            console.log('🔍 [DASHBOARD-INTEGRATION] Dados do FirebaseTableSystem:', firebaseData?.length || 0, 'registros');
+            
             if (firebaseData && firebaseData.length > 0) {
-                console.log('✅ [DASHBOARD-INTEGRATION] Usando dados do FirebaseTableSystem:', firebaseData.length, 'registros');
+                console.log('✅ [DASHBOARD-INTEGRATION] Usando dados reais da tabela:', firebaseData.length, 'registros');
                 dashboardData = firebaseData;
                 filteredData = [...dashboardData];
             } else {
-                // Se não há dados no FirebaseTableSystem, carregar diretamente
+                console.log('📥 [DASHBOARD-INTEGRATION] Tabela vazia, carregando dados diretamente do Firestore...');
                 const dadosCarregados = await carregarDadosEnderecos();
                 if (!dadosCarregados || dadosCarregados.length === 0) {
-                    console.warn('⚠️ [DASHBOARD-INTEGRATION] Nenhum dado encontrado na coleção enderecos_mdu');
+                    console.warn('⚠️ [DASHBOARD-INTEGRATION] Nenhum dado encontrado na coleção');
                     return;
                 }
+                dashboardData = dadosCarregados;
+                filteredData = [...dashboardData];
             }
         } else {
             // Fallback: carregar dados diretamente
@@ -231,10 +235,11 @@ function criarGraficoProjetosModerno() {
         return;
     }
     
-    // Contar projetos
+    // Contar projetos usando mapeamento correto dos campos
     const contadorProjetos = {};
     filteredData.forEach(item => {
-        const projeto = item['Projeto'] || 'Não especificado';
+        // Usar o mapeamento correto dos campos do Firestore
+        const projeto = item['Projeto'] || item['projeto'] || 'Não especificado';
         contadorProjetos[projeto] = (contadorProjetos[projeto] || 0) + 1;
     });
     
@@ -362,10 +367,11 @@ function criarGraficoSubProjetosModerno() {
         return;
     }
     
-    // Contar sub projetos
+    // Contar sub projetos usando mapeamento correto dos campos
     const contadorSubProjetos = {};
     filteredData.forEach(item => {
-        const subProjeto = item['Sub Projeto'] || 'Não especificado';
+        // Usar o mapeamento correto dos campos do Firestore
+        const subProjeto = item['Sub Projeto'] || item['subProjeto'] || 'Não especificado';
         contadorSubProjetos[subProjeto] = (contadorSubProjetos[subProjeto] || 0) + 1;
     });
     
@@ -493,10 +499,11 @@ function criarGraficoCidadesModerno() {
         return;
     }
     
-    // Contar cidades
+    // Contar cidades usando mapeamento correto dos campos
     const contadorCidades = {};
     filteredData.forEach(item => {
-        const cidade = item['Cidade'] || 'Não especificado';
+        // Usar o mapeamento correto dos campos do Firestore
+        const cidade = item['Cidade'] || item['cidade'] || 'Não especificado';
         contadorCidades[cidade] = (contadorCidades[cidade] || 0) + 1;
     });
     
@@ -596,11 +603,12 @@ function criarGraficoHPProjetosModerno() {
         return;
     }
     
-    // Somar HP por projeto
+    // Somar HP por projeto usando mapeamento correto dos campos
     const hpPorProjeto = {};
     filteredData.forEach(item => {
-        const projeto = item['Projeto'] || 'Não especificado';
-        const hp = parseInt(item['HP']) || 0;
+        // Usar o mapeamento correto dos campos do Firestore
+        const projeto = item['Projeto'] || item['projeto'] || 'Não especificado';
+        const hp = parseInt(item['HP'] || item['hp'] || 0) || 0;
         hpPorProjeto[projeto] = (hpPorProjeto[projeto] || 0) + hp;
     });
     
@@ -682,19 +690,35 @@ function criarGraficoRecebimentosModerno() {
     const conclusoesPorMes = {};
     
     filteredData.forEach(item => {
-        // Recebimentos
-        const dataRecebimento = item['DATA RECEBIMENTO'];
-        if (dataRecebimento && dataRecebimento.trim()) {
-            const mes = extrairMesAno(dataRecebimento);
+        // Recebimentos - usar mapeamento correto dos campos
+        const dataRecebimento = item['DATA RECEBIMENTO'] || item['dataRecebimento'];
+        if (dataRecebimento) {
+            let mes = null;
+            if (typeof dataRecebimento === 'number') {
+                // Converter número do Excel para data
+                const excelEpoch = new Date(1899, 11, 30);
+                const date = new Date(excelEpoch.getTime() + dataRecebimento * 24 * 60 * 60 * 1000);
+                mes = `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+            } else if (typeof dataRecebimento === 'string' && dataRecebimento.trim()) {
+                mes = extrairMesAno(dataRecebimento);
+            }
             if (mes) {
                 recebimentosPorMes[mes] = (recebimentosPorMes[mes] || 0) + 1;
             }
         }
         
-        // Conclusões
-        const dataFinal = item['DATA FINAL'];
-        if (dataFinal && dataFinal.trim()) {
-            const mes = extrairMesAno(dataFinal);
+        // Conclusões - usar mapeamento correto dos campos
+        const dataFinal = item['DATA FINAL'] || item['dataFinal'];
+        if (dataFinal) {
+            let mes = null;
+            if (typeof dataFinal === 'number') {
+                // Converter número do Excel para data
+                const excelEpoch = new Date(1899, 11, 30);
+                const date = new Date(excelEpoch.getTime() + dataFinal * 24 * 60 * 60 * 1000);
+                mes = `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+            } else if (typeof dataFinal === 'string' && dataFinal.trim()) {
+                mes = extrairMesAno(dataFinal);
+            }
             if (mes) {
                 conclusoesPorMes[mes] = (conclusoesPorMes[mes] || 0) + 1;
             }
@@ -789,8 +813,9 @@ function criarGraficoSupervisorModerno() {
     const supervisorStatus = {};
     
     filteredData.forEach(item => {
-        const supervisor = item['Supervisor'] || 'Não especificado';
-        const status = item['Status'] || 'Não especificado';
+        // Usar mapeamento correto dos campos do Firestore
+        const supervisor = item['Supervisor'] || item['supervisor'] || 'Não especificado';
+        const status = item['Status'] || item['status'] || 'Não especificado';
         
         if (!supervisorStatus[supervisor]) {
             supervisorStatus[supervisor] = { PRODUTIVA: 0, IMPRODUTIVA: 0 };

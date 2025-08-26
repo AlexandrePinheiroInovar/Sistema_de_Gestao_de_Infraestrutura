@@ -951,51 +951,248 @@ async function updateDashboardCards() {
     console.log('🎯 [FIREBASE-TABLE] Atualizando TODOS os cards do dashboard...');
     
     try {
-        const stats = await getFirebaseTableStatistics();
+        // Usar dados diretamente da tabela carregada
+        const data = firebaseTableData || [];
         
-        // ===== CARDS DA SEÇÃO DASHBOARD PRINCIPAL =====
+        if (data.length === 0) {
+            console.warn('⚠️ [FIREBASE-TABLE] Nenhum dado disponível para cards');
+            updateAllCardsWithEmptyData();
+            return;
+        }
+        
+        // Calcular estatísticas dos dados reais
+        const stats = calculateStatisticsFromTableData(data);
+        
+        console.log('📊 [FIREBASE-TABLE] Estatísticas calculadas:', stats);
+        
+        // ===== CARDS DA SEÇÃO CADASTRO DE ENDEREÇOS =====
         updateStatCard('statTotalRegistros', stats.totalRegistros);
         updateStatCard('statEnderecosDistintos', stats.enderecosDistintos);
         updateStatCard('statEquipesDistintas', stats.equipesDistintas);
         updateStatCard('statProdutividade', `${stats.produtividade}%`);
         
-        // ===== CARDS DA SEÇÃO INFRAESTRUTURA =====
+        // ===== CARDS DA SEÇÃO INFRAESTRUTURA (DASHBOARD) =====
         updateStatCard('infraStatTotalRegistros', stats.totalRegistros);
         updateStatCard('infraStatEnderecosDistintos', stats.enderecosDistintos);
         updateStatCard('infraStatEquipesDistintas', stats.equipesDistintas);
         updateStatCard('infraStatProdutividade', `${stats.produtividade}%`);
         
-        // ===== CARDS ESPECÍFICOS DE TEMPO (CALCULADOS) =====
-        const tempoStats = calculateTimeStatistics(stats);
-        updateStatCard('infraStatTempoMedio', `${tempoStats.tempoMedio} dias`);
-        updateStatCard('infraStatTempoSalaTecnica', `${tempoStats.tempoSalaTecnica} dias`);
-        updateStatCard('infraStatTempoTecnicos', `${tempoStats.tempoTecnicos} dias`);
+        // ===== CARDS ESPECÍFICOS DE TEMPO =====
+        updateStatCard('infraStatTempoMedio', `${stats.tempoMedio} dias`);
+        updateStatCard('infraStatTempoSalaTecnica', `${stats.tempoSalaTecnica} dias`);
+        updateStatCard('infraStatTempoTecnicos', `${stats.tempoTecnicos} dias`);
         
-        // ===== TOTAL STATUS GERAL (RANKING) =====
+        // ===== CARDS DE RANKINGS =====
         updateStatCard('totalStatusGeral', stats.totalRegistros);
+        updateStatCard('totalProdutiva', stats.totalProdutiva);
+        updateStatCard('totalImprodutiva', stats.totalImprodutiva);
+        updateStatCard('totalProdutividade', `${stats.produtividade}%`);
         
-        // ===== ATUALIZAR RANKING DE EQUIPES =====
-        updateEquipeStatusRanking(stats.topEquipes, stats.statusCounts);
+        // ===== ATUALIZAR TABELAS DE RANKING =====
+        if (stats.rankingEquipes) {
+            updateEquipeRankingTables(stats.rankingEquipes);
+        }
         
-        console.log('✅ [FIREBASE-TABLE] TODOS os cards do dashboard atualizados');
+        console.log('✅ [FIREBASE-TABLE] TODOS os cards atualizados com dados reais da tabela');
         return stats;
         
     } catch (error) {
         console.error('❌ [FIREBASE-TABLE] Erro ao atualizar cards:', error);
+        updateAllCardsWithEmptyData();
         return null;
     }
 }
 
-function calculateTimeStatistics(stats) {
-    // Calcular estatísticas de tempo baseadas nos dados disponíveis
-    // Este é um cálculo aproximado baseado nos dados existentes
-    const registrosComTempo = Object.values(stats.registrosPorMes).length;
-    const totalRegistros = stats.totalRegistros;
+// ============= CALCULAR ESTATÍSTICAS DOS DADOS DA TABELA =============
+function calculateStatisticsFromTableData(data) {
+    console.log('🧮 [FIREBASE-TABLE] Calculando estatísticas de', data.length, 'registros');
     
+    const stats = {
+        totalRegistros: data.length,
+        enderecosDistintos: 0,
+        equipesDistintas: 0,
+        cidadesDistintas: 0,
+        supervisoresDistintos: 0,
+        totalProdutiva: 0,
+        totalImprodutiva: 0,
+        produtividade: 0,
+        tempoMedio: 0,
+        tempoSalaTecnica: 0,
+        tempoTecnicos: 0,
+        rankingEquipes: []
+    };
+    
+    // Usar função mapFieldValue para acessar dados corretamente
+    const enderecosUnicos = new Set();
+    const equipesUnicas = new Set();
+    const cidadesUnicas = new Set();
+    const supervisoresUnicos = new Set();
+    let produtivos = 0;
+    let improdutivos = 0;
+    
+    // Arrays para calcular tempos médios
+    const temposExecucao = [];
+    const temposSalaTecnica = [];
+    const temposTecnicos = [];
+    
+    // Contador de equipes por tipo de ação e status
+    const equipesRanking = {};
+    
+    data.forEach(row => {
+        // Endereços únicos
+        const endereco = mapFieldValue(row, 'endereco');
+        if (endereco && endereco.trim()) {
+            enderecosUnicos.add(endereco.trim());
+        }
+        
+        // Equipes únicas
+        const equipe = mapFieldValue(row, 'equipe');
+        if (equipe && equipe.trim()) {
+            equipesUnicas.add(equipe.trim());
+            
+            // Inicializar ranking da equipe se não existir
+            if (!equipesRanking[equipe]) {
+                equipesRanking[equipe] = {
+                    nome: equipe,
+                    ATIVACAO: 0,
+                    CONSTRUCAO: 0,
+                    VISTORIA: 0,
+                    PRODUTIVA: 0,
+                    IMPRODUTIVA: 0,
+                    total: 0
+                };
+            }
+            equipesRanking[equipe].total++;
+        }
+        
+        // Cidades únicas
+        const cidade = mapFieldValue(row, 'cidade');
+        if (cidade && cidade.trim()) {
+            cidadesUnicas.add(cidade.trim());
+        }
+        
+        // Supervisores únicos
+        const supervisor = mapFieldValue(row, 'supervisor');
+        if (supervisor && supervisor.trim()) {
+            supervisoresUnicos.add(supervisor.trim());
+        }
+        
+        // Status de produtividade
+        const status = mapFieldValue(row, 'status');
+        if (status) {
+            const statusUpper = status.toString().toUpperCase();
+            if (statusUpper === 'PRODUTIVA') {
+                produtivos++;
+                if (equipe && equipesRanking[equipe]) {
+                    equipesRanking[equipe].PRODUTIVA++;
+                }
+            } else if (statusUpper === 'IMPRODUTIVA') {
+                improdutivos++;
+                if (equipe && equipesRanking[equipe]) {
+                    equipesRanking[equipe].IMPRODUTIVA++;
+                }
+            }
+        }
+        
+        // Tipo de ação para ranking
+        const tipoAcao = mapFieldValue(row, 'tipoAcao');
+        if (tipoAcao && equipe && equipesRanking[equipe]) {
+            const tipoUpper = tipoAcao.toString().toUpperCase();
+            if (tipoUpper.includes('ATIVAÇÃO') || tipoUpper.includes('ATIVACAO')) {
+                equipesRanking[equipe].ATIVACAO++;
+            } else if (tipoUpper.includes('CONSTRUÇÃO') || tipoUpper.includes('CONSTRUCAO')) {
+                equipesRanking[equipe].CONSTRUCAO++;
+            } else if (tipoUpper.includes('VISTORIA')) {
+                equipesRanking[equipe].VISTORIA++;
+            }
+        }
+        
+        // Cálculos de tempo (se as datas existirem como números)
+        const dataRecebimento = mapFieldValue(row, 'dataRecebimento');
+        const dataInicio = mapFieldValue(row, 'dataInicio');
+        const dataFinal = mapFieldValue(row, 'dataFinal');
+        
+        if (typeof dataRecebimento === 'number' && typeof dataFinal === 'number') {
+            temposExecucao.push(Math.abs(dataFinal - dataRecebimento));
+        }
+        
+        if (typeof dataRecebimento === 'number' && typeof dataInicio === 'number') {
+            temposSalaTecnica.push(Math.abs(dataInicio - dataRecebimento));
+        }
+        
+        if (typeof dataInicio === 'number' && typeof dataFinal === 'number') {
+            temposTecnicos.push(Math.abs(dataFinal - dataInicio));
+        }
+    });
+    
+    // Atualizar estatísticas
+    stats.enderecosDistintos = enderecosUnicos.size;
+    stats.equipesDistintas = equipesUnicas.size;
+    stats.cidadesDistintas = cidadesUnicas.size;
+    stats.supervisoresDistintos = supervisoresUnicos.size;
+    stats.totalProdutiva = produtivos;
+    stats.totalImprodutiva = improdutivos;
+    stats.produtividade = stats.totalRegistros > 0 ? Math.round((produtivos / stats.totalRegistros) * 100) : 0;
+    
+    // Calcular tempos médios
+    stats.tempoMedio = temposExecucao.length > 0 ? Math.round(temposExecucao.reduce((a, b) => a + b, 0) / temposExecucao.length) : 0;
+    stats.tempoSalaTecnica = temposSalaTecnica.length > 0 ? Math.round(temposSalaTecnica.reduce((a, b) => a + b, 0) / temposSalaTecnica.length) : 0;
+    stats.tempoTecnicos = temposTecnicos.length > 0 ? Math.round(temposTecnicos.reduce((a, b) => a + b, 0) / temposTecnicos.length) : 0;
+    
+    // Converter ranking de equipes para array ordenado
+    stats.rankingEquipes = Object.values(equipesRanking)
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 20); // Top 20 equipes
+    
+    return stats;
+}
+
+// ============= ATUALIZAR CARDS COM DADOS VAZIOS =============
+function updateAllCardsWithEmptyData() {
+    const cardIds = [
+        'statTotalRegistros', 'statEnderecosDistintos', 'statEquipesDistintas', 'statProdutividade',
+        'infraStatTotalRegistros', 'infraStatEnderecosDistintos', 'infraStatEquipesDistintas', 'infraStatProdutividade',
+        'infraStatTempoMedio', 'infraStatTempoSalaTecnica', 'infraStatTempoTecnicos',
+        'totalStatusGeral', 'totalProdutiva', 'totalImprodutiva', 'totalProdutividade'
+    ];
+    
+    cardIds.forEach(id => {
+        updateStatCard(id, id.includes('Produtividade') || id.includes('produtividade') ? '0%' : '0');
+    });
+}
+
+// ============= ATUALIZAR TABELAS DE RANKING =============
+function updateEquipeRankingTables(rankingEquipes) {
+    // Atualizar tabela principal de ranking
+    const tableBody = document.getElementById('equipeStatusRankingTableBody');
+    if (tableBody) {
+        tableBody.innerHTML = '';
+        
+        rankingEquipes.forEach((equipe, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${equipe.nome}</td>
+                <td>${equipe.total}</td>
+                <td>${equipe.PRODUTIVA}</td>
+                <td>${equipe.IMPRODUTIVA}</td>
+                <td>${equipe.total > 0 ? Math.round((equipe.PRODUTIVA / equipe.total) * 100) : 0}%</td>
+                <td>${equipe.ATIVACAO}</td>
+                <td>${equipe.CONSTRUCAO}</td>
+                <td>${equipe.VISTORIA}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+}
+
+function calculateTimeStatistics(stats) {
+    // Esta função mantida para compatibilidade, mas não é mais usada
+    // As estatísticas de tempo agora são calculadas em calculateStatisticsFromTableData
     return {
-        tempoMedio: registrosComTempo > 0 ? Math.round(totalRegistros / registrosComTempo) : 0,
-        tempoSalaTecnica: Math.round(Math.random() * 15 + 5), // Simulado - pode ser calculado com dados reais
-        tempoTecnicos: Math.round(Math.random() * 10 + 3) // Simulado - pode ser calculado com dados reais
+        tempoMedio: 0,
+        tempoSalaTecnica: 0,
+        tempoTecnicos: 0
     };
 }
 
