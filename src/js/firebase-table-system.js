@@ -1107,21 +1107,41 @@ function calculateStatisticsFromTableData(data) {
             }
         }
         
-        // Cálculos de tempo (se as datas existirem como números)
+        // Cálculos de tempo usando as datas do Excel (números seriais)
         const dataRecebimento = mapFieldValue(row, 'dataRecebimento');
         const dataInicio = mapFieldValue(row, 'dataInicio');
         const dataFinal = mapFieldValue(row, 'dataFinal');
         
+        // Debug para primeiros 3 registros
+        if (data.indexOf(row) < 3) {
+            console.log(`🕐 [TEMPO-DEBUG] Registro ${data.indexOf(row) + 1}:`, {
+                dataRecebimento: dataRecebimento,
+                dataInicio: dataInicio,
+                dataFinal: dataFinal,
+                tipos: {
+                    recebimento: typeof dataRecebimento,
+                    inicio: typeof dataInicio,
+                    final: typeof dataFinal
+                }
+            });
+        }
+        
+        // Tempo Médio de Execução (Recebimento → Final)
         if (typeof dataRecebimento === 'number' && typeof dataFinal === 'number') {
-            temposExecucao.push(Math.abs(dataFinal - dataRecebimento));
+            const diasExecucao = Math.abs(dataFinal - dataRecebimento);
+            temposExecucao.push(diasExecucao);
         }
         
+        // Tempo Médio Sala Técnica (Recebimento → Início)
         if (typeof dataRecebimento === 'number' && typeof dataInicio === 'number') {
-            temposSalaTecnica.push(Math.abs(dataInicio - dataRecebimento));
+            const diasSalaTecnica = Math.abs(dataInicio - dataRecebimento);
+            temposSalaTecnica.push(diasSalaTecnica);
         }
         
+        // Tempo Médio Técnicos (Início → Final)
         if (typeof dataInicio === 'number' && typeof dataFinal === 'number') {
-            temposTecnicos.push(Math.abs(dataFinal - dataInicio));
+            const diasTecnicos = Math.abs(dataFinal - dataInicio);
+            temposTecnicos.push(diasTecnicos);
         }
     });
     
@@ -1134,10 +1154,26 @@ function calculateStatisticsFromTableData(data) {
     stats.totalImprodutiva = improdutivos;
     stats.produtividade = stats.totalRegistros > 0 ? Math.round((produtivos / stats.totalRegistros) * 100) : 0;
     
-    // Calcular tempos médios
+    // Calcular tempos médios com logs detalhados
     stats.tempoMedio = temposExecucao.length > 0 ? Math.round(temposExecucao.reduce((a, b) => a + b, 0) / temposExecucao.length) : 0;
     stats.tempoSalaTecnica = temposSalaTecnica.length > 0 ? Math.round(temposSalaTecnica.reduce((a, b) => a + b, 0) / temposSalaTecnica.length) : 0;
     stats.tempoTecnicos = temposTecnicos.length > 0 ? Math.round(temposTecnicos.reduce((a, b) => a + b, 0) / temposTecnicos.length) : 0;
+    
+    // Logs detalhados dos cálculos de tempo
+    console.log('🕐 [FIREBASE-TABLE] Cálculos de tempo detalhados:');
+    console.log(`📊 Tempo Médio de Execução: ${stats.tempoMedio} dias (baseado em ${temposExecucao.length} registros)`);
+    console.log(`🧰 Tempo Médio Sala Técnica: ${stats.tempoSalaTecnica} dias (baseado em ${temposSalaTecnica.length} registros)`);
+    console.log(`👷 Tempo Médio Técnicos: ${stats.tempoTecnicos} dias (baseado em ${temposTecnicos.length} registros)`);
+    
+    if (temposExecucao.length > 0) {
+        console.log(`📈 Primeiros tempos de execução:`, temposExecucao.slice(0, 5));
+    }
+    if (temposSalaTecnica.length > 0) {
+        console.log(`📈 Primeiros tempos sala técnica:`, temposSalaTecnica.slice(0, 5));
+    }
+    if (temposTecnicos.length > 0) {
+        console.log(`📈 Primeiros tempos técnicos:`, temposTecnicos.slice(0, 5));
+    }
     
     // Converter ranking de equipes para array ordenado
     stats.rankingEquipes = Object.values(equipesRanking)
@@ -1150,9 +1186,15 @@ function calculateStatisticsFromTableData(data) {
 // ============= ATUALIZAR CARDS COM DADOS VAZIOS =============
 function updateAllCardsWithEmptyData() {
     const cardIds = [
+        // Cards da seção Cadastro de Endereços
         'statTotalRegistros', 'statEnderecosDistintos', 'statEquipesDistintas', 'statProdutividade',
+        'statTempoMedio', 'statTempoSalaTecnica', 'statTempoTecnicos',
+        
+        // Cards da seção Dashboard (Infraestrutura) 
         'infraStatTotalRegistros', 'infraStatEnderecosDistintos', 'infraStatEquipesDistintas', 'infraStatProdutividade',
         'infraStatTempoMedio', 'infraStatTempoSalaTecnica', 'infraStatTempoTecnicos',
+        
+        // Cards de rankings
         'totalStatusGeral', 'totalProdutiva', 'totalImprodutiva', 'totalProdutividade'
     ];
     
