@@ -1,5 +1,5 @@
-Cache bust timestamp: 2025-08-25 20:00:00
-Version: 7.0
+Cache bust timestamp: 2025-08-25 20:15:00
+Version: 7.1
 Dashboard - SOMENTE Gráficos Modernos - Código Limpo
 ✅ GRÁFICOS MODERNOS V4.0 - IMPLEMENTAÇÃO COMPLETA:
 - Projetos: Gráfico combinado (barras azuis quantidade + linha vermelha percentual) 

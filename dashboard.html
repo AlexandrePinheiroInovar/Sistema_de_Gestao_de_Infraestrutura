@@ -1642,8 +1642,8 @@
                 if (firebase && firebase.auth) {
                     firebase.auth().signOut().then(() => {
                         console.log('✅ [LOGOUT] Logout realizado com sucesso');
-                        // Redirecionar para página de login ou recarregar
-                        window.location.href = 'login.html';
+                        // Redirecionar para página de login
+                        window.location.href = 'index.html';
                     }).catch((error) => {
                         console.error('❌ [LOGOUT] Erro no logout:', error);
                         alert('Erro ao fazer logout. Tente novamente.');
@@ -1651,7 +1651,7 @@
                 } else {
                     // Fallback se Firebase não disponível
                     console.log('⚠️ [LOGOUT] Firebase não disponível, redirecionando...');
-                    window.location.href = 'login.html';
+                    window.location.href = 'index.html';
                 }
             }
         }

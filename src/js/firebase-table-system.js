@@ -2094,6 +2094,98 @@ window.reloadCompleteInterface = async function() {
     await loadFirebaseTableData();
 };
 
+// ============= SISTEMA DE INTERFACE DO USUÁRIO =============
+function updateUserInterface(user, userData) {
+    console.log('👤 [FIREBASE-TABLE] Atualizando interface do usuário...', user);
+    
+    if (!user) return;
+    
+    // Atualizar nome
+    const userNameElements = document.querySelectorAll('#userNameSimple, #dropdownUserName');
+    const displayName = user.displayName || user.email.split('@')[0];
+    
+    userNameElements.forEach(el => {
+        if (el) {
+            el.textContent = displayName;
+            console.log('✅ [FIREBASE-TABLE] Nome atualizado:', displayName);
+        }
+    });
+    
+    // Atualizar email
+    const emailElement = document.getElementById('dropdownUserEmail');
+    if (emailElement) {
+        emailElement.textContent = user.email;
+        console.log('✅ [FIREBASE-TABLE] Email atualizado:', user.email);
+    }
+    
+    // Atualizar role
+    const roleElement = document.getElementById('userRoleSimple');
+    if (roleElement && userData && userData.role) {
+        roleElement.textContent = userData.role;
+        console.log('✅ [FIREBASE-TABLE] Role atualizado:', userData.role);
+        
+        // Aplicar permissões baseadas no role
+        setTimeout(() => {
+            if (window.setupUserPermissions) {
+                window.setupUserPermissions();
+            }
+        }, 500);
+    } else {
+        console.warn('⚠️ [FIREBASE-TABLE] Role não encontrado, definindo como USER');
+        if (roleElement) {
+            roleElement.textContent = 'USER';
+        }
+    }
+    
+    // Atualizar avatar
+    const avatarElements = document.querySelectorAll('#userAvatarSimple, #userAvatarLarge');
+    const avatarUrl = `https://ui-avatars.com/api/?name=${displayName}&background=667eea&color=fff&size=40`;
+    
+    avatarElements.forEach(el => {
+        if (el) {
+            el.src = avatarUrl;
+        }
+    });
+}
+
+// ============= LISTENER DE AUTENTICAÇÃO =============
+function setupAuthStateListener() {
+    if (!firebase || !firebase.auth) return;
+    
+    firebase.auth().onAuthStateChanged(async (user) => {
+        if (user) {
+            console.log('👤 [FIREBASE-TABLE] Usuário autenticado:', user.email);
+            
+            try {
+                // Buscar dados do usuário no Firestore
+                const firestore = firebase.firestore();
+                const userDoc = await firestore.collection('users').doc(user.uid).get();
+                
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    console.log('📋 [FIREBASE-TABLE] Dados do usuário:', userData);
+                    updateUserInterface(user, userData);
+                } else {
+                    console.warn('⚠️ [FIREBASE-TABLE] Dados do usuário não encontrados no Firestore');
+                    updateUserInterface(user, { role: 'USER' });
+                }
+            } catch (error) {
+                console.error('❌ [FIREBASE-TABLE] Erro ao buscar dados do usuário:', error);
+                updateUserInterface(user, { role: 'USER' });
+            }
+        } else {
+            console.log('👤 [FIREBASE-TABLE] Usuário deslogado');
+        }
+    });
+}
+
+// Configurar listener quando o DOM carregar
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        setupAuthStateListener();
+    }, 2000);
+});
+
 // ============= EXPOSIÇÃO GLOBAL =============
 window.FirebaseTableSystem = {
     loadData: loadFirebaseTableData,
