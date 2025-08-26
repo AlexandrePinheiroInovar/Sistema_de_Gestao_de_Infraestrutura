@@ -224,8 +224,8 @@ async function loadFirebaseTableData() {
         // Obter referência do Firestore
         const firestore = firebaseManager.getFirestore();
         
-        // Buscar dados da collection 'enderecos_mdu' (UNIFICADA)
-        const snapshot = await firestore.collection('enderecos_mdu').get();
+        // Buscar dados da collection 'enderecos' (PADRONIZADA)
+        const snapshot = await firestore.collection('enderecos').get();
         const data = [];
         
         snapshot.forEach(doc => {
@@ -677,7 +677,7 @@ async function saveExcelDataToFirebase(data) {
         
         // Criar batch operation
         const batch = firestore.batch();
-        const collection = firestore.collection('enderecos_mdu');
+        const collection = firestore.collection('enderecos');
         let savedCount = 0;
         
         for (const row of data) {
@@ -1979,7 +1979,7 @@ async function handleNovoEndereco(event) {
         enderecoData.source = 'form_manual';
         
         // Salvar no Firestore
-        const docRef = await firestore.collection('enderecos_mdu').add(enderecoData);
+        const docRef = await firestore.collection('enderecos').add(enderecoData);
         
         console.log('✅ [FIREBASE-TABLE] Endereço salvo com ID:', docRef.id);
         

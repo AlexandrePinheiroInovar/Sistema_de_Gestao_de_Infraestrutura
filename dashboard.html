@@ -1618,6 +1618,22 @@
             };
             
             document.getElementById('section-title').textContent = titles[sectionName] || sectionName;
+            
+            // Carregar dados específicos da seção
+            if (sectionName === 'enderecos') {
+                console.log('📋 [SHOW-SECTION] Carregando dados da tabela de endereços...');
+                setTimeout(() => {
+                    if (window.FirebaseTableSystem && window.FirebaseTableSystem.loadData) {
+                        window.FirebaseTableSystem.loadData().then(() => {
+                            console.log('✅ [SHOW-SECTION] Dados da tabela carregados');
+                        }).catch((error) => {
+                            console.error('❌ [SHOW-SECTION] Erro ao carregar dados:', error);
+                        });
+                    } else {
+                        console.warn('⚠️ [SHOW-SECTION] FirebaseTableSystem não disponível');
+                    }
+                }, 500);
+            }
         }
         
         // Funções para modo colorblind e perfil de usuário (caso não existam)
@@ -1634,24 +1650,26 @@
             document.getElementById('userProfileScreen').style.display = 'none';
         }
         
+        // Usar a função de logout unificada do firebase-complete.js
         function confirmLogout() {
-            if (confirm('Deseja realmente sair do sistema?')) {
-                console.log('🚪 [LOGOUT] Realizando logout...');
-                
-                // Fazer logout do Firebase
-                if (firebase && firebase.auth) {
-                    firebase.auth().signOut().then(() => {
-                        console.log('✅ [LOGOUT] Logout realizado com sucesso');
-                        // Redirecionar para página de login
+            if (typeof window.confirmLogout === 'function') {
+                // Usar função unificada se disponível
+                window.confirmLogout();
+            } else {
+                // Fallback local
+                if (confirm('Deseja realmente sair do sistema?')) {
+                    console.log('🚪 [LOGOUT] Realizando logout...');
+                    if (firebase && firebase.auth) {
+                        firebase.auth().signOut().then(() => {
+                            console.log('✅ [LOGOUT] Logout realizado com sucesso');
+                            window.location.href = 'index.html';
+                        }).catch((error) => {
+                            console.error('❌ [LOGOUT] Erro no logout:', error);
+                            window.location.href = 'index.html'; // Forçar redirecionamento mesmo com erro
+                        });
+                    } else {
                         window.location.href = 'index.html';
-                    }).catch((error) => {
-                        console.error('❌ [LOGOUT] Erro no logout:', error);
-                        alert('Erro ao fazer logout. Tente novamente.');
-                    });
-                } else {
-                    // Fallback se Firebase não disponível
-                    console.log('⚠️ [LOGOUT] Firebase não disponível, redirecionando...');
-                    window.location.href = 'index.html';
+                    }
                 }
             }
         }

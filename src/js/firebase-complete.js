@@ -567,12 +567,77 @@ window.isAuthenticated = function() {
 
 window.confirmLogout = function() {
     console.log('🔐 [CONFIRM-LOGOUT] Solicitação de logout...');
-    if (confirm('Tem certeza que deseja sair?')) {
+    if (confirm('Deseja realmente sair do sistema?')) {
         console.log('🔐 [CONFIRM-LOGOUT] Confirmado, fazendo logout...');
-        window.signOut();
+        window.signOut().then((result) => {
+            if (result.success) {
+                console.log('✅ [LOGOUT] Logout realizado com sucesso, redirecionando...');
+                window.location.href = 'index.html';
+            } else {
+                console.error('❌ [LOGOUT] Erro no logout:', result.error);
+                // Mesmo com erro, redirecionar para evitar travamento
+                window.location.href = 'index.html';
+            }
+        }).catch((error) => {
+            console.error('❌ [LOGOUT] Erro crítico no logout:', error);
+            // Forçar redirecionamento
+            window.location.href = 'index.html';
+        });
     } else {
         console.log('🔐 [CONFIRM-LOGOUT] Cancelado pelo usuário');
     }
+};
+
+// ============= CONFIGURAÇÃO AUTOMÁTICA DO USUÁRIO ADMIN =============
+
+// Função para criar usuário admin automaticamente se não existir
+window.setupAdminUser = async function() {
+    const adminEmail = 'yan@test.com.br';
+    const adminPassword = 'test123';
+    
+    console.log('🔧 [ADMIN-SETUP] Verificando usuário admin...');
+    
+    try {
+        // Tentar fazer login primeiro para ver se já existe
+        const loginResult = await window.FirebaseAuthIsolated.login(adminEmail, adminPassword);
+        if (loginResult.success) {
+            console.log('✅ [ADMIN-SETUP] Usuário admin já existe e está funcional');
+            return true;
+        }
+    } catch (loginError) {
+        console.log('🔧 [ADMIN-SETUP] Usuário admin não existe ou senha incorreta, criando...');
+        
+        try {
+            // Criar usuário admin
+            const registerResult = await window.FirebaseAuthIsolated.register(adminEmail, adminPassword, 'Admin Test');
+            if (registerResult.success) {
+                console.log('✅ [ADMIN-SETUP] Usuário admin criado com sucesso');
+                
+                // Aguardar um pouco e definir role como ADMIN
+                setTimeout(async () => {
+                    try {
+                        const user = registerResult.user;
+                        const firestore = window.FirebaseAuthIsolated.firestore;
+                        if (firestore && user) {
+                            await firestore.collection('users').doc(user.uid).update({
+                                role: 'ADMIN'
+                            });
+                            console.log('✅ [ADMIN-SETUP] Role ADMIN definida com sucesso');
+                        }
+                    } catch (roleError) {
+                        console.error('❌ [ADMIN-SETUP] Erro ao definir role:', roleError);
+                    }
+                }, 1000);
+                
+                return true;
+            }
+        } catch (registerError) {
+            console.error('❌ [ADMIN-SETUP] Erro ao criar usuário admin:', registerError);
+            return false;
+        }
+    }
+    
+    return false;
 };
 
 // ============= INICIALIZAR AUTOMATICAMENTE =============
@@ -580,9 +645,17 @@ window.confirmLogout = function() {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
         window.FirebaseAuthIsolated.initialize();
+        // Setup do usuário admin após inicialização
+        setTimeout(() => {
+            window.setupAdminUser();
+        }, 2000);
     });
 } else {
     window.FirebaseAuthIsolated.initialize();
+    // Setup do usuário admin após inicialização
+    setTimeout(() => {
+        window.setupAdminUser();
+    }, 2000);
 }
 
 console.log('✅ [FIREBASE-ISOLATED] Sistema anti-loop isolado carregado');
