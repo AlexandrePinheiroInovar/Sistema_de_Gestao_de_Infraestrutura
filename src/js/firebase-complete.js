@@ -602,10 +602,13 @@ window.setupAdminUser = async function() {
         const loginResult = await window.FirebaseAuthIsolated.login(adminEmail, adminPassword);
         if (loginResult.success) {
             console.log('✅ [ADMIN-SETUP] Usuário admin já existe e está funcional');
+            // Fazer logout após verificar
+            await window.FirebaseAuthIsolated.logout();
             return true;
         }
     } catch (loginError) {
         console.log('🔧 [ADMIN-SETUP] Usuário admin não existe ou senha incorreta, criando...');
+        console.log('🔍 [ADMIN-SETUP] Erro detalhado:', loginError.message);
         
         try {
             // Criar usuário admin
@@ -661,3 +664,13 @@ if (document.readyState === 'loading') {
 console.log('✅ [FIREBASE-ISOLATED] Sistema anti-loop isolado carregado');
 console.log('🛡️ [FIREBASE-ISOLATED] Proteção máxima contra loops ativada');
 console.log('🔒 [FIREBASE-ISOLATED] Sistema completamente isolado de conflitos');
+console.log('');
+console.log('🔑 [LOGIN-INFO] Credenciais de teste:');
+console.log('   Email: yan@test.com.br');
+console.log('   Senha: test123');
+console.log('   O sistema criará este usuário automaticamente se não existir.');
+console.log('');
+console.log('💡 [TROUBLESHOOTING] Se houver problemas de login:');
+console.log('   1. Aguarde alguns segundos após carregar a página');
+console.log('   2. Verifique o console para logs de [ADMIN-SETUP]');
+console.log('   3. Recarregue a página se necessário');
