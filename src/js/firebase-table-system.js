@@ -350,14 +350,76 @@ function renderTableHeader(thead) {
     thead.appendChild(headerRow);
 }
 
+// Mapeamento flexível de campos - suporta diferentes estruturas de dados
+function mapFieldValue(row, column) {
+    // Tentar múltiplas variações do nome do campo
+    const fieldMappings = {
+        'projeto': ['projeto', 'Projeto', 'PROJETO'],
+        'subProjeto': ['subProjeto', 'Sub Projeto', 'subprojeto', 'SUB_PROJETO'],
+        'tipoAcao': ['tipoAcao', 'Tipo de Ação', 'tipoacao', 'TIPO_ACAO'],
+        'contrato': ['contrato', 'Contrato', 'CONTRATO'],
+        'condominio': ['condominio', 'Condominio', 'CONDOMINIO'],
+        'endereco': ['endereco', 'Endereco', 'ENDERECO', 'ENDEREÇO'],
+        'cidade': ['cidade', 'Cidade', 'CIDADE'],
+        'pep': ['pep', 'PEP'],
+        'codImovelGed': ['codImovelGed', 'COD IMOVEL GED', 'cod_imovel_ged'],
+        'nodeGerencial': ['nodeGerencial', 'NODE GERENCIAL', 'node_gerencial'],
+        'areaTecnica': ['areaTecnica', 'Área Técnica', 'area_tecnica'],
+        'hp': ['hp', 'HP'],
+        'andar': ['andar', 'Andar', 'ANDAR'],
+        'dataRecebimento': ['dataRecebimento', 'DATA RECEBIMENTO', 'data_recebimento'],
+        'dataInicio': ['dataInicio', 'DATA INICIO', 'data_inicio'],
+        'dataFinal': ['dataFinal', 'DATA FINAL', 'data_final'],
+        'equipe': ['equipe', 'Equipe', 'EQUIPE'],
+        'supervisor': ['supervisor', 'Supervisor', 'SUPERVISOR'],
+        'status': ['status', 'Status', 'STATUS'],
+        'rdo': ['rdo', 'RDO'],
+        'book': ['book', 'BOOK'],
+        'projeto2': ['projeto2', 'PROJETO', 'projeto_status'],
+        'justificativa': ['justificativa', 'Justificativa', 'JUSTIFICATIVA'],
+        'observacao1': ['observacao1', 'Observação', 'observacao', 'OBSERVACAO'],
+        'observacao2': ['observacao2', 'Observação 2', 'observacao2', 'OBSERVACAO2']
+    };
+    
+    const possibleFields = fieldMappings[column] || [column];
+    
+    for (const field of possibleFields) {
+        if (row[field] !== undefined && row[field] !== null && row[field] !== '') {
+            return row[field];
+        }
+    }
+    
+    // Se não encontrou nenhum campo, tentar busca genérica
+    const keys = Object.keys(row);
+    for (const key of keys) {
+        if (key.toLowerCase().includes(column.toLowerCase()) || 
+            column.toLowerCase().includes(key.toLowerCase())) {
+            const value = row[key];
+            if (value !== undefined && value !== null && value !== '') {
+                return value;
+            }
+        }
+    }
+    
+    return null;
+}
+
 function renderTableBody(tbody, data) {
     tbody.innerHTML = '';
+    
+    console.log('🎨 [FIREBASE-TABLE] Renderizando body com', data.length, 'registros');
+    
+    // Debug: Mostrar estrutura do primeiro registro
+    if (data.length > 0) {
+        console.log('📊 [FIREBASE-TABLE] Estrutura do primeiro registro:', Object.keys(data[0]));
+        console.log('📊 [FIREBASE-TABLE] Primeiro registro completo:', data[0]);
+    }
     
     // Aplicar filtro se houver
     const filteredData = filterText ? 
         data.filter(row => {
             return firebaseTableColumns.some(column => {
-                const value = row[column];
+                const value = mapFieldValue(row, column);
                 return value && value.toString().toLowerCase().includes(filterText.toLowerCase());
             });
         }) : data;
@@ -379,10 +441,20 @@ function renderTableBody(tbody, data) {
     filteredData.forEach((row, index) => {
         const tr = document.createElement('tr');
         
+        // Debug para primeiro registro
+        if (index === 0) {
+            console.log('🔍 [FIREBASE-TABLE] Renderizando primeira linha:', row);
+        }
+        
         // Adicionar células de dados
-        firebaseTableColumns.forEach(column => {
+        firebaseTableColumns.forEach((column, colIndex) => {
             const td = document.createElement('td');
-            const value = row[column];
+            const value = mapFieldValue(row, column);
+            
+            // Debug para primeiras colunas da primeira linha
+            if (index === 0 && colIndex < 5) {
+                console.log(`🔍 [FIREBASE-TABLE] Coluna ${column}:`, value);
+            }
             
             // Formatação baseada no tipo de valor
             if (value !== undefined && value !== null && value !== '') {
@@ -402,9 +474,11 @@ function renderTableBody(tbody, data) {
                         td.title = value.toString();
                     }
                 }
+                td.style.color = '#333';
             } else {
                 td.textContent = '-';
                 td.style.opacity = '0.5';
+                td.style.color = '#999';
             }
             
             tr.appendChild(td);
@@ -2077,6 +2151,60 @@ window.filterDynamicTable = function() {
 window.reloadCompleteInterface = async function() {
     console.log('🔄 [FIREBASE-TABLE] Recarregando interface completa...');
     await loadFirebaseTableData();
+};
+
+// ============= FUNÇÃO DE DEBUG PARA DIAGNOSTICAR PROBLEMA =============
+window.debugTableData = function() {
+    console.log('🔍 [DEBUG] Diagnosticando problema da tabela...');
+    
+    // 1. Verificar se dados existem
+    console.log('📊 [DEBUG] Dados carregados:', {
+        totalRegistros: firebaseTableData.length,
+        colunas: firebaseTableColumns.length,
+        primeirosRegistros: firebaseTableData.slice(0, 3)
+    });
+    
+    // 2. Verificar estrutura do primeiro registro
+    if (firebaseTableData.length > 0) {
+        const primeiro = firebaseTableData[0];
+        console.log('🔍 [DEBUG] Primeiro registro completo:', primeiro);
+        console.log('🔍 [DEBUG] Chaves do primeiro registro:', Object.keys(primeiro));
+        console.log('🔍 [DEBUG] Valores não vazios:', Object.entries(primeiro).filter(([k,v]) => v !== null && v !== undefined && v !== ''));
+    }
+    
+    // 3. Verificar mapeamento de campos
+    if (firebaseTableData.length > 0) {
+        const primeiro = firebaseTableData[0];
+        console.log('🔍 [DEBUG] Teste de mapeamento de campos:');
+        firebaseTableColumns.slice(0, 10).forEach(col => {
+            const valor = mapFieldValue(primeiro, col);
+            console.log(`  ${col}: "${valor}"`);
+        });
+    }
+    
+    // 4. Verificar elementos DOM
+    console.log('🔍 [DEBUG] Elementos DOM:', {
+        tabela: !!document.getElementById('enderecoMainTable'),
+        tbody: !!document.getElementById('enderecoTableBody'),
+        linhasNaTabela: document.getElementById('enderecoTableBody')?.children.length || 0
+    });
+    
+    // 5. Forçar re-renderização
+    const tbody = document.getElementById('enderecoTableBody');
+    if (tbody && firebaseTableData.length > 0) {
+        console.log('🔄 [DEBUG] Forçando re-renderização...');
+        renderTableBody(tbody, firebaseTableData);
+    }
+    
+    return {
+        dados: firebaseTableData.length,
+        colunas: firebaseTableColumns,
+        primeiro: firebaseTableData[0],
+        elementos: {
+            tabela: !!document.getElementById('enderecoMainTable'),
+            tbody: !!document.getElementById('enderecoTableBody')
+        }
+    };
 };
 
 // SISTEMA DE INTERFACE DE USUÁRIO REMOVIDO - Usando o do dashboard-minimal.js
