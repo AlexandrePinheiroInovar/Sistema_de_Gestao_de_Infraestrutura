@@ -196,6 +196,15 @@ function calcularTempoMedio(dados, campoInicio, campoFim) {
 // ============= GRÁFICOS =============
 function gerarGraficos() {
     console.log('📈 [DASHBOARD-INTEGRATION] Gerando gráficos modernos V3.0...');
+    console.log('📊 [DASHBOARD-INTEGRATION] Dados filtrados disponíveis:', filteredData?.length || 0);
+    console.log('📊 [DASHBOARD-INTEGRATION] Estado do Chart.js:', typeof Chart !== 'undefined' ? '✅ Carregado' : '❌ Não carregado');
+    
+    // DEBUG ADICIONAL: Verificar ambiente
+    console.log('🔍 [DEBUG] Verificações do ambiente:');
+    console.log('🔍 [DEBUG] - window.Chart:', typeof window.Chart);
+    console.log('🔍 [DEBUG] - Chart:', typeof Chart);
+    console.log('🔍 [DEBUG] - ChartDataLabels:', typeof ChartDataLabels);
+    console.log('🔍 [DEBUG] - DOM ready:', document.readyState);
     
     // Aguardar Chart.js carregar
     if (typeof Chart === 'undefined') {
@@ -204,25 +213,107 @@ function gerarGraficos() {
         return;
     }
     
+    // DEBUG: Verificar canvas elements antes de gerar gráficos
+    const canvasIds = ['projetosChart', 'subProjetosChart', 'cidadesChart', 'hpProjetosChart', 'recebimentosChart', 'supervisorStatusChart'];
+    console.log('🎨 [DEBUG] Verificando canvas elements:');
+    const canvasReport = {};
+    canvasIds.forEach(id => {
+        const canvas = document.getElementById(id);
+        canvasReport[id] = {
+            exists: !!canvas,
+            visible: canvas ? (canvas.offsetWidth > 0 && canvas.offsetHeight > 0) : false,
+            width: canvas ? canvas.width : 0,
+            height: canvas ? canvas.height : 0
+        };
+        console.log(`🎨 [DEBUG] Canvas ${id}:`, canvasReport[id]);
+    });
+    
+    // Verificar se temos dados
+    if (!filteredData || filteredData.length === 0) {
+        console.warn('⚠️ [DASHBOARD-INTEGRATION] Nenhum dado disponível para gráficos');
+        console.warn('📋 [DASHBOARD-INTEGRATION] dashboardData:', dashboardData?.length || 0);
+        console.warn('🔍 [DASHBOARD-INTEGRATION] Tentando recarregar dados...');
+        
+        // DEBUG: Verificar diferentes fontes de dados
+        console.log('🔍 [DEBUG] Verificando fontes de dados:');
+        console.log('🔍 [DEBUG] - window.FirebaseTableSystem:', !!window.FirebaseTableSystem);
+        console.log('🔍 [DEBUG] - FirebaseTableSystem.getData:', typeof window.FirebaseTableSystem?.getData);
+        
+        // Tentar recarregar dados se não existirem
+        if (window.FirebaseTableSystem && window.FirebaseTableSystem.getData) {
+            const tableData = window.FirebaseTableSystem.getData();
+            console.log('🔍 [DEBUG] Dados do FirebaseTableSystem:', tableData ? tableData.length : 'null');
+            if (tableData && tableData.length > 0) {
+                dashboardData = tableData;
+                filteredData = [...tableData];
+                console.log('✅ [DASHBOARD-INTEGRATION] Dados recarregados da tabela:', filteredData.length);
+                console.log('📊 [DEBUG] Exemplo de dados recarregados:', filteredData[0]);
+            }
+        }
+        
+        if (!filteredData || filteredData.length === 0) {
+            console.error('❌ [DASHBOARD-INTEGRATION] Impossível gerar gráficos sem dados');
+            console.error('❌ [DEBUG] Estado final: dashboardData =', dashboardData?.length, 'filteredData =', filteredData?.length);
+            return;
+        }
+    }
+    
+    // DEBUG: Verificar estrutura dos dados
+    if (filteredData && filteredData.length > 0) {
+        console.log('📊 [DEBUG] Estrutura dos dados:');
+        console.log('📊 [DEBUG] - Total de registros:', filteredData.length);
+        console.log('📊 [DEBUG] - Primeiro registro:', filteredData[0]);
+        console.log('📊 [DEBUG] - Campos disponíveis:', Object.keys(filteredData[0] || {}));
+        
+        // Verificar campos específicos necessários para os gráficos
+        const fieldsToCheck = ['Projeto', 'Sub Projeto', 'Cidade', 'HP', 'DATA RECEBIMENTO', 'Supervisor', 'Status'];
+        fieldsToCheck.forEach(field => {
+            const values = filteredData.filter(item => item[field]).length;
+            console.log(`📊 [DEBUG] Campo '${field}': ${values}/${filteredData.length} registros preenchidos`);
+        });
+    }
+    
     // Verificar se ChartDataLabels está disponível
     if (typeof ChartDataLabels === 'undefined') {
         console.warn('⚠️ ChartDataLabels não carregado, carregando graficos sem rótulos...');
     }
     
     // Destruir todos os gráficos existentes primeiro
-    Object.values(charts).forEach(chart => {
-        if (chart && typeof chart.destroy === 'function') {
-            chart.destroy();
+    console.log('🗑️ [DEBUG] Destruindo gráficos existentes...');
+    let chartsDestruidos = 0;
+    Object.keys(charts).forEach(key => {
+        if (charts[key] && typeof charts[key].destroy === 'function') {
+            console.log(`🗑️ [DEBUG] Destruindo gráfico: ${key}`);
+            charts[key].destroy();
+            chartsDestruidos++;
         }
     });
+    console.log(`🗑️ [DEBUG] ${chartsDestruidos} gráficos destruídos`);
     
-    // Recriar todos os gráficos modernos
-    criarGraficoProjetosModerno();
-    criarGraficoSubProjetosModerno();
-    criarGraficoCidadesModerno();
-    criarGraficoHPProjetosModerno();
-    criarGraficoRecebimentosModerno();
-    criarGraficoSupervisorModerno();
+    // Limpar referências
+    charts = {};
+    
+    // Aguardar um pouco para o DOM se atualizar
+    setTimeout(() => {
+        console.log('🔧 [DEBUG] Iniciando criação dos gráficos...');
+        
+        try {
+            // Recriar todos os gráficos modernos
+            criarGraficoProjetosModerno();
+            criarGraficoSubProjetosModerno();
+            criarGraficoCidadesModerno();
+            criarGraficoHPProjetosModerno();
+            criarGraficoRecebimentosModerno();
+            criarGraficoSupervisorModerno();
+            
+            console.log('✅ [DEBUG] Todos os gráficos foram processados');
+            console.log('📊 [DEBUG] Charts criados:', Object.keys(charts));
+            
+        } catch (error) {
+            console.error('❌ [DEBUG] Erro durante criação dos gráficos:', error);
+            console.error('❌ [DEBUG] Stack trace:', error.stack);
+        }
+    }, 100);
 }
 
 // ============= GRÁFICOS MODERNOS V3.0 =============
@@ -1422,4 +1513,174 @@ window.clearInfraFilters = clearInfraFilters;
 window.carregarDadosEnderecos = carregarDadosEnderecos;
 window.inicializarDashboard = inicializarDashboard;
 
+// ============= FUNÇÕES DE DEBUG =============
+window.debugDashboard = function() {
+    console.log('🔍 [DEBUG] Iniciando diagnóstico completo do dashboard...');
+    
+    // 1. Verificar se Chart.js está disponível
+    console.log('📊 [DEBUG] Chart.js disponível:', typeof Chart !== 'undefined');
+    if (typeof Chart !== 'undefined') {
+        console.log('📊 [DEBUG] Versão Chart.js:', Chart.version);
+        console.log('📊 [DEBUG] Charts registrados:', Object.keys(Chart.registry.controllers.items));
+    }
+    
+    // 2. Verificar canvas elements
+    const canvasIds = ['projetosChart', 'subProjetosChart', 'cidadesChart', 'hpProjetosChart', 'recebimentosChart', 'supervisorStatusChart'];
+    console.log('🎨 [DEBUG] Verificando canvas elements...');
+    canvasIds.forEach(id => {
+        const canvas = document.getElementById(id);
+        console.log(`🎨 [DEBUG] Canvas ${id}:`, {
+            exists: !!canvas,
+            visible: canvas ? canvas.offsetWidth > 0 && canvas.offsetHeight > 0 : false,
+            width: canvas ? canvas.width : 'N/A',
+            height: canvas ? canvas.height : 'N/A',
+            context: canvas ? !!canvas.getContext('2d') : false
+        });
+    });
+    
+    // 3. Verificar dados
+    console.log('📊 [DEBUG] Dados do dashboard:');
+    console.log('📊 [DEBUG] dashboardData:', dashboardData ? dashboardData.length : 'undefined', 'registros');
+    console.log('📊 [DEBUG] filteredData:', filteredData ? filteredData.length : 'undefined', 'registros');
+    console.log('📊 [DEBUG] Exemplo de dados:', dashboardData ? dashboardData[0] : 'N/A');
+    
+    // 4. Verificar charts existentes
+    console.log('📊 [DEBUG] Charts armazenados:', Object.keys(charts));
+    Object.keys(charts).forEach(key => {
+        const chart = charts[key];
+        if (chart) {
+            console.log(`📊 [DEBUG] Chart ${key}:`, {
+                type: chart.config.type,
+                data: chart.data,
+                destroyed: chart.destroyed || false,
+                canvas: chart.canvas ? chart.canvas.id : 'N/A'
+            });
+        }
+    });
+    
+    // 5. Tentar recarregar dados do FirebaseTableSystem
+    console.log('🔄 [DEBUG] Tentando recarregar dados...');
+    if (window.FirebaseTableSystem && typeof window.FirebaseTableSystem.getData === 'function') {
+        const data = window.FirebaseTableSystem.getData();
+        console.log('🔄 [DEBUG] Dados do FirebaseTableSystem:', data ? data.length : 'null', 'registros');
+        if (data && data.length > 0) {
+            dashboardData = data;
+            filteredData = [...data];
+            console.log('🔄 [DEBUG] Dados recarregados com sucesso!');
+            
+            // Tentar gerar gráficos novamente
+            setTimeout(() => {
+                console.log('🔄 [DEBUG] Tentando regenerar gráficos...');
+                gerarGraficos();
+            }, 1000);
+        }
+    }
+    
+    // 6. Verificar erros de console
+    console.log('⚠️ [DEBUG] Verifique o console para erros JavaScript');
+    console.log('⚠️ [DEBUG] Se houver erros de CORS ou 404, isso pode impedir o carregamento dos gráficos');
+    
+    return {
+        chartJs: typeof Chart !== 'undefined',
+        canvasElements: canvasIds.map(id => ({id, element: document.getElementById(id)})),
+        data: {dashboardData: dashboardData?.length, filteredData: filteredData?.length},
+        charts: Object.keys(charts)
+    };
+};
+
+window.forceUpdateCharts = function() {
+    console.log('🔄 [DEBUG] Forçando atualização completa dos gráficos...');
+    
+    // 1. Destruir todos os gráficos existentes
+    Object.keys(charts).forEach(key => {
+        if (charts[key]) {
+            console.log(`🗑️ [DEBUG] Destruindo gráfico ${key}`);
+            charts[key].destroy();
+            charts[key] = null;
+        }
+    });
+    
+    // 2. Limpar referências
+    charts = {};
+    
+    // 3. Aguardar um pouco para o DOM se atualizar
+    setTimeout(() => {
+        console.log('🔄 [DEBUG] Regenerando todos os gráficos...');
+        
+        // 4. Verificar dados antes de gerar
+        if (!dashboardData || dashboardData.length === 0) {
+            console.warn('⚠️ [DEBUG] Sem dados para gerar gráficos');
+            
+            // Tentar obter dados do FirebaseTableSystem
+            if (window.FirebaseTableSystem && typeof window.FirebaseTableSystem.getData === 'function') {
+                const data = window.FirebaseTableSystem.getData();
+                if (data && data.length > 0) {
+                    dashboardData = data;
+                    filteredData = [...data];
+                    console.log('✅ [DEBUG] Dados obtidos do FirebaseTableSystem:', data.length, 'registros');
+                } else {
+                    console.error('❌ [DEBUG] FirebaseTableSystem não retornou dados');
+                    return;
+                }
+            } else {
+                console.error('❌ [DEBUG] FirebaseTableSystem não disponível');
+                return;
+            }
+        }
+        
+        // 5. Gerar gráficos
+        try {
+            gerarGraficos();
+            console.log('✅ [DEBUG] Gráficos regenerados com sucesso!');
+        } catch (error) {
+            console.error('❌ [DEBUG] Erro ao gerar gráficos:', error);
+        }
+    }, 500);
+};
+
+// Função para testar um gráfico específico
+window.testSingleChart = function(chartId) {
+    console.log(`🧪 [DEBUG] Testando gráfico individual: ${chartId}`);
+    
+    const canvas = document.getElementById(chartId);
+    if (!canvas) {
+        console.error(`❌ [DEBUG] Canvas não encontrado: ${chartId}`);
+        return;
+    }
+    
+    // Destruir gráfico existente se houver
+    if (charts[chartId.replace('Chart', '')]) {
+        charts[chartId.replace('Chart', '')].destroy();
+    }
+    
+    // Criar gráfico de teste simples
+    const ctx = canvas.getContext('2d');
+    const testChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Teste 1', 'Teste 2', 'Teste 3'],
+            datasets: [{
+                label: 'Dados de Teste',
+                data: [12, 19, 3],
+                backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: `Teste do Gráfico ${chartId}`
+                }
+            }
+        }
+    });
+    
+    console.log(`✅ [DEBUG] Gráfico de teste criado para ${chartId}`);
+    return testChart;
+};
+
 console.log('✅ [DASHBOARD-INTEGRATION] Sistema de integração carregado');
+console.log('🔧 [DEBUG] Funções de debug disponíveis: debugDashboard(), forceUpdateCharts(), testSingleChart(id)');
