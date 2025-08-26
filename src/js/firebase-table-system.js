@@ -350,55 +350,58 @@ function renderTableHeader(thead) {
     thead.appendChild(headerRow);
 }
 
-// Mapeamento flexível de campos - suporta diferentes estruturas de dados
+// Mapeamento direto baseado nos campos EXATOS salvos no Firestore
 function mapFieldValue(row, column) {
-    // Tentar múltiplas variações do nome do campo
-    const fieldMappings = {
-        'projeto': ['projeto', 'Projeto', 'PROJETO'],
-        'subProjeto': ['subProjeto', 'Sub Projeto', 'subprojeto', 'SUB_PROJETO'],
-        'tipoAcao': ['tipoAcao', 'Tipo de Ação', 'tipoacao', 'TIPO_ACAO'],
-        'contrato': ['contrato', 'Contrato', 'CONTRATO'],
-        'condominio': ['condominio', 'Condominio', 'CONDOMINIO'],
-        'endereco': ['endereco', 'Endereco', 'ENDERECO', 'ENDEREÇO'],
-        'cidade': ['cidade', 'Cidade', 'CIDADE'],
-        'pep': ['pep', 'PEP'],
-        'codImovelGed': ['codImovelGed', 'COD IMOVEL GED', 'cod_imovel_ged'],
-        'nodeGerencial': ['nodeGerencial', 'NODE GERENCIAL', 'node_gerencial'],
-        'areaTecnica': ['areaTecnica', 'Área Técnica', 'area_tecnica'],
-        'hp': ['hp', 'HP'],
-        'andar': ['andar', 'Andar', 'ANDAR'],
-        'dataRecebimento': ['dataRecebimento', 'DATA RECEBIMENTO', 'data_recebimento'],
-        'dataInicio': ['dataInicio', 'DATA INICIO', 'data_inicio'],
-        'dataFinal': ['dataFinal', 'DATA FINAL', 'data_final'],
-        'equipe': ['equipe', 'Equipe', 'EQUIPE'],
-        'supervisor': ['supervisor', 'Supervisor', 'SUPERVISOR'],
-        'status': ['status', 'Status', 'STATUS'],
-        'rdo': ['rdo', 'RDO'],
-        'book': ['book', 'BOOK'],
-        'projeto2': ['projeto2', 'PROJETO', 'projeto_status'],
-        'justificativa': ['justificativa', 'Justificativa', 'JUSTIFICATIVA'],
-        'observacao1': ['observacao1', 'Observação', 'observacao', 'OBSERVACAO'],
-        'observacao2': ['observacao2', 'Observação 2', 'observacao2', 'OBSERVACAO2']
+    // Mapeamento direto: campo da tabela -> campo no Firestore (EXATOS como no exemplo)
+    const exactFieldMappings = {
+        'projeto': 'Projeto',
+        'subProjeto': 'Sub Projeto', 
+        'tipoAcao': 'Tipo de Ação',
+        'contrato': 'CONTRATO',
+        'condominio': 'Condominio',
+        'endereco': 'ENDEREÇO',
+        'cidade': 'Cidade',
+        'pep': 'PEP',
+        'codImovelGed': 'COD IMOVEL GED',
+        'nodeGerencial': 'NODE GERENCIAL',
+        'areaTecnica': 'Área Técnica',
+        'hp': 'HP',
+        'andar': 'ANDAR',
+        'dataRecebimento': 'DATA RECEBIMENTO',
+        'dataInicio': 'DATA INICIO',
+        'dataFinal': 'DATA FINAL',
+        'equipe': 'EQUIPE',
+        'supervisor': 'Supervisor',
+        'status': 'Status',
+        'rdo': 'RDO',
+        'book': 'BOOK',
+        'projeto2': 'Projeto', // Reutilizar mesmo campo "Projeto" 
+        'justificativa': 'JUSTIFICATIVA',
+        'observacao1': 'JUSTIFICATIVA', // Mapear para JUSTIFICATIVA se não houver Observação
+        'observacao2': 'JUSTIFICATIVA' // Mapear para JUSTIFICATIVA se não houver Observação 2
     };
     
-    const possibleFields = fieldMappings[column] || [column];
-    
-    for (const field of possibleFields) {
-        if (row[field] !== undefined && row[field] !== null && row[field] !== '') {
-            return row[field];
+    // Primeiro: tentar mapeamento direto
+    const firestoreFieldName = exactFieldMappings[column];
+    if (firestoreFieldName && row[firestoreFieldName] !== undefined) {
+        const value = row[firestoreFieldName];
+        
+        // Tratar campos de data (números do Excel)
+        if (firestoreFieldName.includes('DATA') && typeof value === 'number') {
+            // Converter número serial do Excel para data
+            const excelEpoch = new Date(1899, 11, 30); // 30 de dezembro de 1899
+            const date = new Date(excelEpoch.getTime() + value * 24 * 60 * 60 * 1000);
+            return date.toLocaleDateString('pt-BR');
+        }
+        
+        if (value !== null && value !== '') {
+            return value;
         }
     }
     
-    // Se não encontrou nenhum campo, tentar busca genérica
-    const keys = Object.keys(row);
-    for (const key of keys) {
-        if (key.toLowerCase().includes(column.toLowerCase()) || 
-            column.toLowerCase().includes(key.toLowerCase())) {
-            const value = row[key];
-            if (value !== undefined && value !== null && value !== '') {
-                return value;
-            }
-        }
+    // Fallback: buscar campo exato como está salvo
+    if (row[column] !== undefined && row[column] !== null && row[column] !== '') {
+        return row[column];
     }
     
     return null;
