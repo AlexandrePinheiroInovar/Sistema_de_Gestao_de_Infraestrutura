@@ -1518,12 +1518,19 @@ function populateFilterSelect(selectId, values) {
 // ============= ATUALIZAÇÃO COMPLETA DE GRÁFICOS DO DASHBOARD =============
 // FUNÇÃO DESABILITADA - Os gráficos agora são gerenciados por dashboard-integration.js
 async function updateDashboardCharts() {
+    console.log('📈 [FIREBASE-TABLE] === INICIANDO ATUALIZAÇÃO DOS GRÁFICOS ===');
     console.log('📈 [FIREBASE-TABLE] Atualizando TODOS os gráficos do dashboard com layout azul...');
     
     try {
+        // DEBUG: Verificar estado inicial
+        console.log('🔍 [DEBUG-CHARTS] Verificações iniciais:');
+        console.log('🔍 [DEBUG-CHARTS] - Chart.js disponível:', typeof Chart !== 'undefined');
+        console.log('🔍 [DEBUG-CHARTS] - firebaseTableData:', firebaseTableData ? firebaseTableData.length : 'undefined');
+        console.log('🔍 [DEBUG-CHARTS] - DOM ready:', document.readyState);
+        
         // Aguardar Chart.js estar disponível
         if (typeof Chart === 'undefined') {
-            console.warn('⚠️ [FIREBASE-TABLE] Chart.js não carregado, reagendando...');
+            console.warn('⚠️ [FIREBASE-TABLE] Chart.js não carregado, reagendando em 500ms...');
             setTimeout(updateDashboardCharts, 500);
             return false;
         }
@@ -1531,22 +1538,64 @@ async function updateDashboardCharts() {
         // Verificar se temos dados
         if (!firebaseTableData || firebaseTableData.length === 0) {
             console.warn('⚠️ [FIREBASE-TABLE] Nenhum dado disponível para gráficos');
+            console.warn('⚠️ [FIREBASE-TABLE] firebaseTableData estado:', firebaseTableData);
             return false;
         }
         
         console.log('📊 [FIREBASE-TABLE] Gerando gráficos com', firebaseTableData.length, 'registros');
+        console.log('📊 [DEBUG-CHARTS] Exemplo de dados:', firebaseTableData[0]);
+        
+        // Verificar se os canvas existem
+        const canvasIds = ['projetosChart', 'subProjetosChart', 'cidadesChart', 'hpProjetosChart', 'recebimentosChart', 'supervisorStatusChart'];
+        console.log('🎨 [DEBUG-CHARTS] Verificando canvas elements:');
+        canvasIds.forEach(id => {
+            const canvas = document.getElementById(id);
+            console.log(`🎨 [DEBUG-CHARTS] ${id}:`, {
+                exists: !!canvas,
+                visible: canvas ? (canvas.offsetWidth > 0 && canvas.offsetHeight > 0) : false,
+                parent: canvas ? canvas.parentElement?.tagName : 'N/A'
+            });
+        });
         
         const stats = await getFirebaseTableStatistics();
+        console.log('📊 [DEBUG-CHARTS] Estatísticas obtidas:', stats);
         
-        // Criar todos os 6 gráficos do dashboard
+        // Criar todos os 6 gráficos do dashboard com logging individual
+        console.log('📊 [DEBUG-CHARTS] Iniciando criação dos gráficos...');
+        
+        console.log('1️⃣ Criando gráfico de Projetos...');
         createProjetosChart(stats);
+        
+        console.log('2️⃣ Criando gráfico de Sub Projetos...');
         createSubProjetosChart(stats);
+        
+        console.log('3️⃣ Criando gráfico de Cidades...');
         createCidadesChart(stats);
+        
+        console.log('4️⃣ Criando gráfico de HP Projetos...');
         createHpProjetosChart(stats);
+        
+        console.log('5️⃣ Criando gráfico de Recebimentos...');
         createRecebimentosChart(stats);
+        
+        console.log('6️⃣ Criando gráfico de Supervisores...');
         createSupervisorStatusChart(stats);
         
-        console.log('✅ [FIREBASE-TABLE] Todos os 6 gráficos criados com sucesso');
+        console.log('✅ [FIREBASE-TABLE] Todos os 6 gráficos processados');
+        console.log('📊 [DEBUG-CHARTS] Gráficos em dashboardCharts:', Object.keys(dashboardCharts));
+        
+        // Aguardar um pouco e verificar se os gráficos foram criados
+        setTimeout(() => {
+            console.log('🔍 [DEBUG-CHARTS] Verificação pós-criação:');
+            canvasIds.forEach(id => {
+                const canvas = document.getElementById(id);
+                if (canvas) {
+                    const hasChart = !!canvas.chart || !!dashboardCharts[id.replace('Chart', '')];
+                    console.log(`📊 [DEBUG-CHARTS] ${id} tem gráfico:`, hasChart);
+                }
+            });
+        }, 1000);
+        
         return true;
         
     } catch (error) {
@@ -2927,6 +2976,100 @@ window.debugTableData = function() {
 };
 
 // SISTEMA DE INTERFACE DE USUÁRIO REMOVIDO - Usando o do dashboard-minimal.js
+
+// ============= FUNÇÕES GLOBAIS DE DEBUG PARA GRÁFICOS =============
+window.testCharts = async function() {
+    console.log('🧪 [TEST-CHARTS] Testando sistema de gráficos...');
+    
+    // 1. Verificar dados
+    console.log('📊 [TEST-CHARTS] Dados disponíveis:', firebaseTableData?.length || 0);
+    if (firebaseTableData && firebaseTableData.length > 0) {
+        console.log('📊 [TEST-CHARTS] Primeiro registro:', firebaseTableData[0]);
+    }
+    
+    // 2. Verificar Chart.js
+    console.log('📊 [TEST-CHARTS] Chart.js disponível:', typeof Chart !== 'undefined');
+    
+    // 3. Verificar canvas
+    const canvasIds = ['projetosChart', 'subProjetosChart', 'cidadesChart', 'hpProjetosChart', 'recebimentosChart', 'supervisorStatusChart'];
+    canvasIds.forEach(id => {
+        const canvas = document.getElementById(id);
+        console.log(`📊 [TEST-CHARTS] ${id}:`, !!canvas);
+    });
+    
+    // 4. Tentar criar gráficos
+    try {
+        await updateDashboardCharts();
+        console.log('✅ [TEST-CHARTS] updateDashboardCharts executado');
+    } catch (error) {
+        console.error('❌ [TEST-CHARTS] Erro:', error);
+    }
+};
+
+window.forceCreateCharts = async function() {
+    console.log('🔧 [FORCE-CHARTS] Forçando criação de gráficos...');
+    
+    if (!firebaseTableData || firebaseTableData.length === 0) {
+        console.error('❌ [FORCE-CHARTS] Nenhum dado disponível');
+        return;
+    }
+    
+    if (typeof Chart === 'undefined') {
+        console.error('❌ [FORCE-CHARTS] Chart.js não disponível');
+        return;
+    }
+    
+    try {
+        const stats = await getFirebaseTableStatistics();
+        console.log('📊 [FORCE-CHARTS] Stats obtidas:', stats);
+        
+        // Criar gráficos um por um com try-catch individual
+        try {
+            createProjetosChart(stats);
+            console.log('✅ Gráfico de Projetos criado');
+        } catch (e) {
+            console.error('❌ Erro no gráfico de Projetos:', e);
+        }
+        
+        try {
+            createSubProjetosChart(stats);
+            console.log('✅ Gráfico de Sub Projetos criado');
+        } catch (e) {
+            console.error('❌ Erro no gráfico de Sub Projetos:', e);
+        }
+        
+        try {
+            createCidadesChart(stats);
+            console.log('✅ Gráfico de Cidades criado');
+        } catch (e) {
+            console.error('❌ Erro no gráfico de Cidades:', e);
+        }
+        
+        try {
+            createHpProjetosChart(stats);
+            console.log('✅ Gráfico de HP criado');
+        } catch (e) {
+            console.error('❌ Erro no gráfico de HP:', e);
+        }
+        
+        try {
+            createRecebimentosChart(stats);
+            console.log('✅ Gráfico de Recebimentos criado');
+        } catch (e) {
+            console.error('❌ Erro no gráfico de Recebimentos:', e);
+        }
+        
+        try {
+            createSupervisorStatusChart(stats);
+            console.log('✅ Gráfico de Supervisores criado');
+        } catch (e) {
+            console.error('❌ Erro no gráfico de Supervisores:', e);
+        }
+        
+    } catch (error) {
+        console.error('❌ [FORCE-CHARTS] Erro geral:', error);
+    }
+};
 
 // ============= EXPOSIÇÃO GLOBAL =============
 window.FirebaseTableSystem = {
