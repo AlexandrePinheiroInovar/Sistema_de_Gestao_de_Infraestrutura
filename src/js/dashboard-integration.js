@@ -101,16 +101,16 @@ async function inicializarDashboard() {
         // Cards são atualizados pelo firebase-table-system.js
         console.log('📊 [DASHBOARD-INTEGRATION] Cards gerenciados pelo firebase-table-system.js');
         
-        // Gerar gráficos usando sistema V5
-        // Usar sistema integrado do firebase-table-system.js
-        if (typeof window.criarTodosGraficosIntegrados === 'function') {
-            console.log('🔄 [DASHBOARD-INTEGRATION] Inicializando gráficos integrados...');
-            window.criarTodosGraficosIntegrados(filteredData);
+        // Gerar gráficos usando dashboard-charts-v5.js diretamente
+        if (typeof window.criarTodosGraficos === 'function') {
+            console.log('🔄 [DASHBOARD-INTEGRATION] Inicializando gráficos V5...');
+            window.criarTodosGraficos(filteredData);
         } else {
-            console.warn('⚠️ [DASHBOARD-INTEGRATION] Aguardando sistema de gráficos integrado...');
+            console.warn('⚠️ [DASHBOARD-INTEGRATION] Aguardando dashboard-charts-v5...');
             setTimeout(() => {
-                if (typeof window.criarTodosGraficosIntegrados === 'function') {
-                    window.criarTodosGraficosIntegrados(filteredData);
+                if (typeof window.criarTodosGraficos === 'function') {
+                    console.log('🔄 [DASHBOARD-INTEGRATION] Inicializando gráficos V5 (retry)...');
+                    window.criarTodosGraficos(filteredData);
                 }
             }, 2000);
         }
@@ -1476,10 +1476,10 @@ function applyInfraFilters() {
     // Atualizar gráficos do dashboard-charts-v5.js com dados filtrados
     console.log('🔄 [DASHBOARD-INTEGRATION] Notificando filtros aplicados...');
     
-    // Método 1: Função direta
-    if (typeof window.criarTodosGraficosIntegrados === 'function') {
-        console.log('📊 [DASHBOARD-INTEGRATION] Atualizando gráficos integrados com dados filtrados...');
-        window.criarTodosGraficosIntegrados(filteredData);
+    // Método 1: Função direta - Usar dashboard-charts-v5
+    if (typeof window.criarTodosGraficos === 'function') {
+        console.log('📊 [DASHBOARD-INTEGRATION] Atualizando gráficos V5 com dados filtrados...');
+        window.criarTodosGraficos(filteredData);
     } else {
         console.warn('⚠️ [DASHBOARD-INTEGRATION] Função de atualização dos gráficos integrados não encontrada, tentando evento...');
     }
@@ -1531,10 +1531,10 @@ function clearInfraFilters() {
     // Atualizar gráficos do dashboard-charts-v5.js com todos os dados (sem filtro)
     console.log('🔄 [DASHBOARD-INTEGRATION] Notificando filtros limpos...');
     
-    // Método 1: Função direta
-    if (typeof window.criarTodosGraficosIntegrados === 'function') {
-        console.log('📊 [DASHBOARD-INTEGRATION] Atualizando gráficos integrados sem filtros...');
-        window.criarTodosGraficosIntegrados(filteredData);
+    // Método 1: Função direta - Usar dashboard-charts-v5
+    if (typeof window.criarTodosGraficos === 'function') {
+        console.log('📊 [DASHBOARD-INTEGRATION] Atualizando gráficos V5 sem filtros...');
+        window.criarTodosGraficos(filteredData);
     } else {
         console.warn('⚠️ [DASHBOARD-INTEGRATION] Função de atualização dos gráficos integrados não encontrada');
     }

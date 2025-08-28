@@ -301,31 +301,33 @@ window.createFirstAdmin = async function(email) {
     }
 };
 
-// Função para popular filtros da infraestrutura - versão minimalista
+// Função para popular filtros da infraestrutura - delegada para firebase-table-system.js
 window.populateInfraFilters = function() {
-    console.log('📋 [FILTERS] Populando filtros da infraestrutura...');
+    console.log('📋 [FILTERS] Delegando população de filtros para firebase-table-system.js...');
     
-    // Implementação mínima para evitar erros nos dropdowns
-    const filters = [
-        'infraFilterProjeto',
-        'infraFilterSubProjeto', 
-        'infraFilterEquipe',
-        'infraFilterStatus',
-        'infraFilterCidade',
-        'infraFilterSupervisor',
-        'infraFilterTipoAcao'
-    ];
-    
-    filters.forEach(filterId => {
-        const select = document.getElementById(filterId);
-        if (select) {
-            // Limpar opções existentes
-            select.innerHTML = '<option value="">Todos</option>';
-            console.log(`✅ [FILTERS] ${filterId} inicializado`);
-        }
-    });
-    
-    return Promise.resolve();
+    // Chamar a função do sistema Firebase se disponível
+    if (window.FirebaseTableSystem && typeof window.FirebaseTableSystem.updateFilters === 'function') {
+        return window.FirebaseTableSystem.updateFilters();
+    } else {
+        console.warn('⚠️ [FILTERS] Sistema Firebase não disponível, criando filtros vazios');
+        
+        // Fallback: criar filtros vazios
+        const filters = [
+            'infraFilterProjeto', 'infraFilterSubProjeto', 'infraFilterEquipe',
+            'infraFilterStatus', 'infraFilterCidade', 'infraFilterSupervisor',
+            'infraFilterTipoAcao', 'infraFilterCondominio'
+        ];
+        
+        filters.forEach(filterId => {
+            const select = document.getElementById(filterId);
+            if (select) {
+                select.innerHTML = '<option value="">Todos</option>';
+                console.log(`✅ [FILTERS] ${filterId} inicializado (vazio)`);
+            }
+        });
+        
+        return Promise.resolve();
+    }
 };
 
 // FUNÇÃO REMOVIDA - Conflitava com dashboard-integration.js

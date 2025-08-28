@@ -1535,7 +1535,7 @@
     <!-- <script src="src/js/checkbox-dropdown.js?v=1.3&t=2025081813"></script> --> <!-- Desabilitado - não necessário com sistema de ordem fixa -->
     <!-- <script src="src/js/novo-upload-excel.js?v=1.0&t=2025082121"></script> DESABILITADO - Conflitando com sistema integrado -->
     <script src="src/js/dashboard-integration.js?v=6.0&t=2025082520"></script> <!-- MANTIDO - Filtros e Cards (gráficos desabilitados) -->
-    <!-- <script src="src/js/dashboard-charts-v5.js?v=1.0&t=2025082630"></script> DESABILITADO - Gráficos migrados para firebase-table-system.js -->
+    <script src="src/js/dashboard-charts-v5.js?v=1.0&t=2025082630"></script> <!-- REABILITADO - Gráficos voltam para charts-v5 -->
     <script src="src/js/multi-select-dropdown.js?v=1.0&t=2025082121"></script> <!-- Sistema avançado de dropdowns -->
     <!-- <script src="src/js/permissions-system.js?v=1.0&t=2025082121"></script> --> <!-- Desabilitado - sistema simplificado -->
     <script src="src/js/force-init-dropdowns.js?v=1.3&t=2025081813"></script>
@@ -1546,6 +1546,31 @@
         // O script.js já tem o event listener DOMContentLoaded
         // Não precisamos duplicar aqui
         console.log('📄 Dashboard HTML carregado');
+        
+        // ============= CARREGAR DADOS AUTOMATICAMENTE =============
+        setTimeout(async () => {
+            console.log('🔄 [DASHBOARD] Carregando dados automaticamente...');
+            
+            // Tentar carregar dados via loadStatistics se disponível
+            if (typeof window.loadStatistics === 'function') {
+                try {
+                    await window.loadStatistics();
+                    console.log('✅ [DASHBOARD] Dados carregados via loadStatistics');
+                } catch (error) {
+                    console.warn('⚠️ [DASHBOARD] Erro ao carregar dados via loadStatistics:', error);
+                }
+            }
+            
+            // Tentar criar gráficos diretamente se disponível
+            if (typeof window.criarTodosGraficos === 'function') {
+                try {
+                    await window.criarTodosGraficos();
+                    console.log('✅ [DASHBOARD] Gráficos criados automaticamente');
+                } catch (error) {
+                    console.warn('⚠️ [DASHBOARD] Erro ao criar gráficos automaticamente:', error);
+                }
+            }
+        }, 5000); // Aguardar 5 segundos para todos os scripts carregarem
         
         // ============= CORRIGIR STATUS FIREBASE =============
         setTimeout(() => {
@@ -1620,7 +1645,7 @@
             
             document.getElementById('section-title').textContent = titles[sectionName] || sectionName;
             
-            // Carregar dados específicos da seção
+            // Carregar dados específicos da seção - SISTEMA SIMPLIFICADO
             if (sectionName === 'enderecos') {
                 console.log('📋 [SHOW-SECTION] Carregando dados da tabela de endereços...');
                 setTimeout(() => {
@@ -1632,6 +1657,25 @@
                         });
                     } else {
                         console.warn('⚠️ [SHOW-SECTION] FirebaseTableSystem não disponível');
+                    }
+                }, 500);
+            }
+            
+            // Para infraestrutura, forçar carregamento de dados e gráficos
+            if (sectionName === 'infraestrutura') {
+                console.log('📊 [SHOW-SECTION] Carregando infraestrutura...');
+                setTimeout(() => {
+                    // Primeiro carregar dados
+                    if (window.FirebaseTableSystem && window.FirebaseTableSystem.loadData) {
+                        window.FirebaseTableSystem.loadData().then(() => {
+                            console.log('✅ [SHOW-SECTION] Dados carregados, iniciando dashboard...');
+                            // Depois inicializar dashboard
+                            setTimeout(() => {
+                                if (window.inicializarDashboard) {
+                                    window.inicializarDashboard();
+                                }
+                            }, 1000);
+                        });
                     }
                 }, 500);
             }

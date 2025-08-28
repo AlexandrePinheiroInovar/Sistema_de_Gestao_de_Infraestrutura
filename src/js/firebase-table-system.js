@@ -1319,16 +1319,16 @@ async function updateDashboardFilters() {
             allData.push(doc.data());
         });
         
-        // Extrair valores únicos para TODOS os filtros
+        // Extrair valores únicos para TODOS os filtros (usando nomes corretos das colunas)
         const filterData = {
-            projetos: getUniqueValues(allData, 'projeto'),
-            subProjetos: getUniqueValues(allData, 'subProjeto'),
-            cidades: getUniqueValues(allData, 'cidade'),
-            equipes: getUniqueValues(allData, 'equipe'),
-            supervisores: getUniqueValues(allData, 'supervisor'),
-            status: getUniqueValues(allData, 'status'),
-            condominios: getUniqueValues(allData, 'condominio'),
-            tiposAcao: getUniqueValues(allData, 'tipoAcao')
+            projetos: getUniqueValues(allData, 'Projeto'),
+            subProjetos: getUniqueValues(allData, 'Sub Projeto'),
+            cidades: getUniqueValues(allData, 'Cidade'),
+            equipes: getUniqueValues(allData, 'EQUIPE'),
+            supervisores: getUniqueValues(allData, 'Supervisor'),
+            status: getUniqueValues(allData, 'Status'),
+            condominios: getUniqueValues(allData, 'Condominio'),
+            tiposAcao: getUniqueValues(allData, 'Tipo de Ação')
         };
         
         // ===== ATUALIZAR FILTROS DA SEÇÃO INFRAESTRUTURA =====
@@ -1339,6 +1339,7 @@ async function updateDashboardFilters() {
         populateFilterSelect('infraFilterCidade', filterData.cidades);
         populateFilterSelect('infraFilterSupervisor', filterData.supervisores);
         populateFilterSelect('infraFilterTipoAcao', filterData.tiposAcao);
+        populateFilterSelect('infraFilterCondominio', filterData.condominios);
         
         // ===== ATUALIZAR OUTROS FILTROS SE EXISTIREM =====
         populateFilterSelect('filterProjeto', filterData.projetos);
@@ -2713,7 +2714,14 @@ function integrateWithExistingSystems() {
         window.loadStatistics = async function() {
             try {
                 await updateDashboardCards();
-                console.log('✅ [FIREBASE-TABLE] Estatísticas atualizadas via hook');
+                
+                // Criar gráficos se disponível
+                if (typeof window.criarTodosGraficos === 'function') {
+                    await window.criarTodosGraficos();
+                    console.log('📊 [FIREBASE-TABLE] Gráficos criados após carregamento de dados');
+                }
+                
+                console.log('✅ [FIREBASE-TABLE] Estatísticas e gráficos atualizados via hook');
             } catch (error) {
                 console.warn('⚠️ Fallback para carregamento original:', error);
                 await originalLoadStats();
@@ -2745,7 +2753,14 @@ function integrateWithExistingSystems() {
         window.loadStatistics = async function() {
             try {
                 await updateDashboardCards();
-                console.log('✅ [FIREBASE-TABLE] Estatísticas atualizadas via hook');
+                
+                // Criar gráficos se disponível
+                if (typeof window.criarTodosGraficos === 'function') {
+                    await window.criarTodosGraficos();
+                    console.log('📊 [FIREBASE-TABLE] Gráficos criados após carregamento de dados');
+                }
+                
+                console.log('✅ [FIREBASE-TABLE] Estatísticas e gráficos atualizados via hook');
             } catch (error) {
                 console.warn('⚠️ Fallback para carregamento original:', error);
                 await originalLoadStats();
@@ -3189,13 +3204,8 @@ async function criarTodosGraficosIntegrados(dadosParaUsar = null) {
         // Criar cards estatísticos
         atualizarCardsEstatisticosIntegrado(dados);
         
-        // Criar gráficos na mesma ordem (barras + linhas para projetos)
-        criarGrafico1_AnaliseProjetosIntegrado(dados);      // Barras + Linhas
-        criarGrafico2_AnaliseSubProjetosIntegrado(dados);   // Barras + Linhas  
-        criarGrafico3_AnaliseCidadesIntegrado(dados);       // Barras
-        criarGrafico4_AnaliseHPProjetosIntegrado(dados);    // Barras
-        criarGrafico5_AnaliseRecebimentosIntegrado(dados);  // Barras Duplas
-        criarGrafico6_AnaliseEnderecosSupervisorIntegrado(dados); // Barras Agrupadas
+        // GRÁFICOS DESABILITADOS - Gerenciados pelo dashboard-integration.js
+        // Os gráficos são chamados pelo dashboard-integration.js para evitar conflitos
         
         // Criar tabelas de ranking
         criarRanking1_EquipesTipoAcaoIntegrado(dados);
@@ -3555,20 +3565,27 @@ function criarGrafico4_AnaliseHPProjetosIntegrado(dados) {
 // ============= GRÁFICO 5: ANÁLISE DE RECEBIMENTOS E CONCLUSÕES (BARRAS DUPLAS) =============
 function criarGrafico5_AnaliseRecebimentosIntegrado(dados) {
     console.log('📊 [FIREBASE-TABLE] Criando Análise de Recebimentos e Conclusões (Barras Duplas)...');
+    console.log('📊 [DEBUG-RECEBIMENTOS] Total de dados recebidos:', dados.length);
     
     const canvas = document.getElementById('recebimentosChart');
     if (!canvas) {
         console.warn('⚠️ Canvas recebimentosChart não encontrado');
         return;
     }
+    console.log('✅ [DEBUG-RECEBIMENTOS] Canvas encontrado:', canvas);
     
     // Contar recebimentos e conclusões por mês/ano
     const dadosPorMes = {};
     
-    dados.forEach(item => {
+    let datasRecebimentoEncontradas = 0;
+    let datasConclusaoEncontradas = 0;
+    
+    dados.forEach((item, index) => {
         // Data de recebimento
-        const dataRecebimento = obterCampo(item, 'data_recebimento');
+        const dataRecebimento = obterCampo(item, 'dataRecebimento');
+        if (index < 3) console.log(`📅 [DEBUG-RECEBIMENTOS] Item ${index} - dataRecebimento:`, dataRecebimento);
         if (dataRecebimento) {
+            datasRecebimentoEncontradas++;
             const mesAnoRecebimento = formatarMesAno(dataRecebimento);
             if (mesAnoRecebimento) {
                 if (!dadosPorMes[mesAnoRecebimento]) {
@@ -3579,8 +3596,10 @@ function criarGrafico5_AnaliseRecebimentosIntegrado(dados) {
         }
         
         // Data de conclusão
-        const dataConclusao = obterCampo(item, 'data_final');
+        const dataConclusao = obterCampo(item, 'dataFinal');
+        if (index < 3) console.log(`📅 [DEBUG-RECEBIMENTOS] Item ${index} - dataFinal:`, dataConclusao);
         if (dataConclusao) {
+            datasConclusaoEncontradas++;
             const mesAnoConclusao = formatarMesAno(dataConclusao);
             if (mesAnoConclusao) {
                 if (!dadosPorMes[mesAnoConclusao]) {
@@ -3590,6 +3609,10 @@ function criarGrafico5_AnaliseRecebimentosIntegrado(dados) {
             }
         }
     });
+    
+    console.log('📊 [DEBUG-RECEBIMENTOS] Datas de recebimento encontradas:', datasRecebimentoEncontradas);
+    console.log('📊 [DEBUG-RECEBIMENTOS] Datas de conclusão encontradas:', datasConclusaoEncontradas);
+    console.log('📊 [DEBUG-RECEBIMENTOS] Dados por mês:', dadosPorMes);
     
     // Função auxiliar para formatar mês/ano como "Jan/2025"
     function formatarMesAno(dataStr) {

@@ -1299,6 +1299,9 @@ window.forcarDebugCompleto = async function() {
 };
 window.dashboardChartsV5 = dashboardChartsV5;
 
+// Exportar função principal para uso externo
+window.criarTodosGraficos = criarTodosGraficos;
+
 // ============= INICIALIZAÇÃO AUTOMÁTICA =============
 // Aguardar DOM e dependências carregarem
 document.addEventListener('DOMContentLoaded', function() {
