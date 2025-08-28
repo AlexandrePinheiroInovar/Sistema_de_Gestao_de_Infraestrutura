@@ -98,8 +98,8 @@ async function inicializarDashboard() {
         // Configurar observador para recarregar filtros quando tabela mudar
         observarMudancasNaTabela();
         
-        // Cards são atualizados pelo firebase-table-system.js
-        console.log('📊 [DASHBOARD-INTEGRATION] Cards gerenciados pelo firebase-table-system.js');
+        // Atualizar cards estatísticos
+        atualizarCardsEstatisticos();
         
         // Gerar gráficos usando sistema V5
         // Usar sistema integrado do firebase-table-system.js
@@ -115,8 +115,8 @@ async function inicializarDashboard() {
             }, 2000);
         }
         
-        // Rankings são criados pelo firebase-table-system.js
-        console.log('🏆 [DASHBOARD-INTEGRATION] Rankings gerenciados pelo firebase-table-system.js');
+        // Gerar tabelas de ranking
+        gerarTabelasRanking();
         
         console.log('✅ [DASHBOARD-INTEGRATION] Dashboard inicializado com sucesso');
         
@@ -1470,8 +1470,8 @@ function applyInfraFilters() {
         return true;
     });
     
-    // Cards atualizados pelo firebase-table-system.js
-    console.log('📊 [DASHBOARD-INTEGRATION] Cards gerenciados pelo sistema integrado');
+    // Atualizar dashboard
+    atualizarCardsEstatisticos();
     
     // Atualizar gráficos do dashboard-charts-v5.js com dados filtrados
     console.log('🔄 [DASHBOARD-INTEGRATION] Notificando filtros aplicados...');
@@ -1493,8 +1493,7 @@ function applyInfraFilters() {
         } 
     }));
     
-    // Rankings criados pelo firebase-table-system.js
-    console.log('🏆 [DASHBOARD-INTEGRATION] Rankings gerenciados pelo sistema integrado');
+    gerarTabelasRanking();
     
     console.log('✅ [DASHBOARD-INTEGRATION] Filtros aplicados. Resultados:', filteredData.length);
 }
@@ -1525,8 +1524,8 @@ function clearInfraFilters() {
     // Resetar dados filtrados
     filteredData = [...dashboardData];
     
-    // Cards atualizados pelo firebase-table-system.js
-    console.log('📊 [DASHBOARD-INTEGRATION] Cards gerenciados pelo sistema integrado');
+    // Atualizar dashboard
+    atualizarCardsEstatisticos();
     
     // Atualizar gráficos do dashboard-charts-v5.js com todos os dados (sem filtro)
     console.log('🔄 [DASHBOARD-INTEGRATION] Notificando filtros limpos...');
@@ -1547,8 +1546,7 @@ function clearInfraFilters() {
         } 
     }));
     
-    // Rankings criados pelo firebase-table-system.js
-    console.log('🏆 [DASHBOARD-INTEGRATION] Rankings gerenciados pelo sistema integrado');
+    gerarTabelasRanking();
 }
 
 // ============= FUNÇÕES AUXILIARES =============

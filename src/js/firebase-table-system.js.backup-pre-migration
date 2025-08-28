@@ -3235,17 +3235,18 @@ function atualizarCardsEstatisticosIntegrado(dados) {
     const elemento4 = document.getElementById('infraStatProdutividade');
     if (elemento4) elemento4.textContent = `${produtividade}%`;
     
-    // Tempo médio de execução (Recebimento → Final)
+    // Tempos médios
     const tempoMedioExecucao = calcularTempoMedioIntegrado(dados, 'DATA RECEBIMENTO', 'DATA FINAL');
-    document.getElementById('infraStatTempoMedio').textContent = `${tempoMedioExecucao} dias`;
+    const elemento5 = document.getElementById('infraStatTempoMedio');
+    if (elemento5) elemento5.textContent = `${tempoMedioExecucao} dias`;
     
-    // Tempo médio Sala Técnica (Recebimento → Início)
     const tempoMedioSalaTecnica = calcularTempoMedioIntegrado(dados, 'DATA RECEBIMENTO', 'DATA INICIO');
-    document.getElementById('infraStatTempoSalaTecnica').textContent = `${tempoMedioSalaTecnica} dias`;
+    const elemento6 = document.getElementById('infraStatTempoSalaTecnica');
+    if (elemento6) elemento6.textContent = `${tempoMedioSalaTecnica} dias`;
     
-    // Tempo médio Técnicos (Início → Final)
     const tempoMedioTecnicos = calcularTempoMedioIntegrado(dados, 'DATA INICIO', 'DATA FINAL');
-    document.getElementById('infraStatTempoTecnicos').textContent = `${tempoMedioTecnicos} dias`;
+    const elemento7 = document.getElementById('infraStatTempoTecnicos');
+    if (elemento7) elemento7.textContent = `${tempoMedioTecnicos} dias`;
     
     console.log('✅ [FIREBASE-TABLE] Cards atualizados');
 }
@@ -3254,33 +3255,21 @@ function calcularTempoMedioIntegrado(dados, campoInicio, campoFim) {
     const registrosComDatas = dados.filter(item => {
         const inicio = item[campoInicio];
         const fim = item[campoFim];
-        // Verificar se os valores existem e são válidos (string ou objeto Date)
-        const inicioValido = inicio && (typeof inicio === 'string' ? inicio.trim() : true);
-        const fimValido = fim && (typeof fim === 'string' ? fim.trim() : true);
-        return inicioValido && fimValido;
+        return inicio && fim;
     });
     
     if (registrosComDatas.length === 0) return 0;
     
     const tempos = registrosComDatas.map(item => {
-        try {
-            const inicio = new Date(item[campoInicio]);
-            const fim = new Date(item[campoFim]);
-            
-            if (isNaN(inicio.getTime()) || isNaN(fim.getTime())) return 0;
-            
-            const diffTime = Math.abs(fim - inicio);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            return diffDays;
-        } catch (error) {
-            return 0;
-        }
-    });
+        const dataInicio = new Date(item[campoInicio]);
+        const dataFim = new Date(item[campoFim]);
+        const diffTime = Math.abs(dataFim - dataInicio);
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }).filter(tempo => !isNaN(tempo) && tempo >= 0);
     
-    const temposValidos = tempos.filter(t => t > 0);
-    if (temposValidos.length === 0) return 0;
+    if (tempos.length === 0) return 0;
     
-    const media = temposValidos.reduce((sum, t) => sum + t, 0) / temposValidos.length;
+    const media = tempos.reduce((sum, t) => sum + t, 0) / tempos.length;
     return Math.round(media);
 }
 
@@ -3740,140 +3729,148 @@ function criarGrafico6_AnaliseEnderecosSupervisorIntegrado(dados) {
 
 // ============= RANKING 1: EQUIPES POR TIPO DE AÇÃO =============
 function criarRanking1_EquipesTipoAcaoIntegrado(dados) {
-    console.log('🏆 [FIREBASE-TABLE] Gerando ranking por tipo de ação...');
+    console.log('📊 [FIREBASE-TABLE] Criando Ranking de Equipes por Tipo de Ação...');
     
-    const tbody = document.getElementById('equipeRankingTableBody');
-    if (!tbody) return;
+    const tabela = document.getElementById('rankingEquipesTipoAcao');
+    if (!tabela) {
+        console.warn('⚠️ Tabela rankingEquipesTipoAcao não encontrada');
+        return;
+    }
     
-    // Agrupar por equipe e tipo de ação
-    const equipeStats = {};
+    // Contar ações por equipe e tipo
+    const dadosPorEquipe = {};
     
     dados.forEach(item => {
-        const equipe = item['EQUIPE'] || 'Não especificado';
-        const tipoAcao = item['Tipo de Ação'] || 'Não especificado';
+        const equipe = obterCampo(item, 'equipe') || 'Não especificada';
+        const tipoAcao = obterCampo(item, 'tipo_acao') || obterCampo(item, 'acao') || 'Não especificado';
         
-        if (!equipeStats[equipe]) {
-            equipeStats[equipe] = { ATIVAÇÃO: 0, CONSTRUÇÃO: 0, VISTORIA: 0 };
+        if (!dadosPorEquipe[equipe]) {
+            dadosPorEquipe[equipe] = {};
         }
         
-        const tipo = tipoAcao.toUpperCase();
-        if (equipeStats[equipe][tipo] !== undefined) {
-            equipeStats[equipe][tipo]++;
-        }
+        dadosPorEquipe[equipe][tipoAcao] = (dadosPorEquipe[equipe][tipoAcao] || 0) + 1;
     });
     
-    // Calcular totais e ranquear
-    const rankings = Object.entries(equipeStats).map(([equipe, stats]) => ({
-        equipe,
-        ativacao: stats.ATIVAÇÃO,
-        construcao: stats.CONSTRUÇÃO,
-        vistoria: stats.VISTORIA,
-        total: stats.ATIVAÇÃO + stats.CONSTRUÇÃO + stats.VISTORIA
-    })).sort((a, b) => b.total - a.total);
+    // Converter para array e calcular totais
+    const rankingEquipes = Object.entries(dadosPorEquipe).map(([equipe, acoes]) => {
+        const total = Object.values(acoes).reduce((sum, count) => sum + count, 0);
+        const tiposAcao = Object.entries(acoes)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, 3)
+            .map(([tipo, count]) => `${tipo}: ${count}`)
+            .join(', ');
+            
+        return { equipe, total, tiposAcao };
+    }).sort((a, b) => b.total - a.total).slice(0, 10);
     
-    // Limitar a 50 equipes principais para evitar sobrecarga
-    const topRankings = rankings.slice(0, 50);
+    // Criar HTML da tabela
+    let html = `
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Equipe</th>
+                <th>Total</th>
+                <th>Principais Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
     
-    // Adicionar nota se há mais dados
-    const moreDataNote = rankings.length > 50 ? 
-        `<tr class="info-row"><td colspan="6" style="text-align: center; font-style: italic; color: #666; padding: 10px;">
-            📊 Mostrando top 50 de ${rankings.length} equipes
-        </td></tr>` : '';
+    rankingEquipes.forEach((item, index) => {
+        html += `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${item.equipe}</td>
+                <td><strong>${item.total}</strong></td>
+                <td><small>${item.tiposAcao}</small></td>
+            </tr>
+        `;
+    });
     
-    // Gerar HTML
-    tbody.innerHTML = topRankings.map((item, index) => `
-        <tr>
-            <td>${index + 1}</td>
-            <td>${item.equipe}</td>
-            <td>${item.ativacao}</td>
-            <td>${item.construcao}</td>
-            <td>${item.vistoria}</td>
-            <td><strong>${item.total}</strong></td>
-        </tr>
-    `).join('') + moreDataNote;
+    html += '</tbody>';
+    tabela.innerHTML = html;
     
-    // Atualizar totais
-    const totalAtivacao = rankings.reduce((sum, item) => sum + item.ativacao, 0);
-    const totalConstrucao = rankings.reduce((sum, item) => sum + item.construcao, 0);
-    const totalVistoria = rankings.reduce((sum, item) => sum + item.vistoria, 0);
-    const totalGeral = totalAtivacao + totalConstrucao + totalVistoria;
-    
-    document.getElementById('totalAtivacao').textContent = totalAtivacao;
-    document.getElementById('totalConstrucao').textContent = totalConstrucao;
-    document.getElementById('totalVistoria').textContent = totalVistoria;
-    document.getElementById('totalGeral').textContent = totalGeral;
+    console.log('✅ [FIREBASE-TABLE] Ranking de Equipes por Tipo de Ação criado');
 }
 
 // ============= RANKING 2: EQUIPES POR STATUS =============
 function criarRanking2_EquipesStatusIntegrado(dados) {
-    console.log('🏆 [FIREBASE-TABLE] Gerando ranking por status...');
+    console.log('📊 [FIREBASE-TABLE] Criando Ranking de Equipes por Status...');
     
-    const tbody = document.getElementById('equipeStatusRankingTableBody');
-    if (!tbody) return;
+    const tabela = document.getElementById('rankingEquipesStatus');
+    if (!tabela) {
+        console.warn('⚠️ Tabela rankingEquipesStatus não encontrada');
+        return;
+    }
     
-    // Agrupar por equipe e status
-    const equipeStats = {};
+    // Contar status por equipe
+    const dadosPorEquipe = {};
     
     dados.forEach(item => {
-        const equipe = item['EQUIPE'] || 'Não especificado';
-        const status = item['Status'] || 'Não especificado';
+        const equipe = obterCampo(item, 'equipe') || 'Não especificada';
+        const status = (obterCampo(item, 'status') || '').toUpperCase();
         
-        if (!equipeStats[equipe]) {
-            equipeStats[equipe] = { PRODUTIVA: 0, IMPRODUTIVA: 0 };
+        if (!dadosPorEquipe[equipe]) {
+            dadosPorEquipe[equipe] = { PRODUTIVA: 0, IMPRODUTIVA: 0, OUTROS: 0, total: 0 };
         }
         
-        if (status.toUpperCase() === 'PRODUTIVA') {
-            equipeStats[equipe].PRODUTIVA++;
-        } else if (status.toUpperCase() === 'IMPRODUTIVA') {
-            equipeStats[equipe].IMPRODUTIVA++;
+        if (status === 'PRODUTIVA' || status.includes('PRODUTIVA')) {
+            dadosPorEquipe[equipe].PRODUTIVA++;
+        } else if (status === 'IMPRODUTIVA' || status.includes('IMPRODUTIVA')) {
+            dadosPorEquipe[equipe].IMPRODUTIVA++;
+        } else {
+            dadosPorEquipe[equipe].OUTROS++;
         }
+        
+        dadosPorEquipe[equipe].total++;
     });
     
-    // Calcular totais e produtividade
-    const rankings = Object.entries(equipeStats).map(([equipe, stats]) => {
-        const total = stats.PRODUTIVA + stats.IMPRODUTIVA;
-        const produtividade = total > 0 ? Math.round((stats.PRODUTIVA / total) * 100) : 0;
+    // Converter para array e calcular produtividade
+    const rankingEquipes = Object.entries(dadosPorEquipe).map(([equipe, status]) => {
+        const produtividade = status.total > 0 ? Math.round((status.PRODUTIVA / status.total) * 100) : 0;
         
-        return {
-            equipe,
-            produtiva: stats.PRODUTIVA,
-            improdutiva: stats.IMPRODUTIVA,
-            total,
-            produtividade
+        return { 
+            equipe, 
+            total: status.total,
+            produtiva: status.PRODUTIVA,
+            improdutiva: status.IMPRODUTIVA,
+            outros: status.OUTROS,
+            produtividade 
         };
-    }).sort((a, b) => b.produtividade - a.produtividade);
+    }).sort((a, b) => b.produtividade - a.produtividade).slice(0, 10);
     
-    // Limitar a 50 equipes principais para evitar sobrecarga
-    const topRankings = rankings.slice(0, 50);
+    // Criar HTML da tabela
+    let html = `
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Equipe</th>
+                <th>Total</th>
+                <th>Produtiva</th>
+                <th>Improdutiva</th>
+                <th>Produtividade</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
     
-    // Adicionar nota se há mais dados
-    const moreDataNote = rankings.length > 50 ? 
-        `<tr class="info-row"><td colspan="6" style="text-align: center; font-style: italic; color: #666; padding: 10px;">
-            📊 Mostrando top 50 de ${rankings.length} equipes
-        </td></tr>` : '';
+    rankingEquipes.forEach((item, index) => {
+        html += `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${item.equipe}</td>
+                <td>${item.total}</td>
+                <td class="text-success">${item.produtiva}</td>
+                <td class="text-danger">${item.improdutiva}</td>
+                <td><strong>${item.produtividade}%</strong></td>
+            </tr>
+        `;
+    });
     
-    // Gerar HTML
-    tbody.innerHTML = topRankings.map((item, index) => `
-        <tr>
-            <td>${index + 1}</td>
-            <td>${item.equipe}</td>
-            <td>${item.produtiva}</td>
-            <td>${item.improdutiva}</td>
-            <td><strong>${item.total}</strong></td>
-            <td><strong>${item.produtividade}%</strong></td>
-        </tr>
-    `).join('') + moreDataNote;
+    html += '</tbody>';
+    tabela.innerHTML = html;
     
-    // Atualizar totais
-    const totalProdutiva = rankings.reduce((sum, item) => sum + item.produtiva, 0);
-    const totalImprodutiva = rankings.reduce((sum, item) => sum + item.improdutiva, 0);
-    const totalStatusGeral = totalProdutiva + totalImprodutiva;
-    const produtividadeGeral = totalStatusGeral > 0 ? Math.round((totalProdutiva / totalStatusGeral) * 100) : 0;
-    
-    document.getElementById('totalProdutiva').textContent = totalProdutiva;
-    document.getElementById('totalImprodutiva').textContent = totalImprodutiva;
-    document.getElementById('totalStatusGeral').textContent = totalStatusGeral;
-    document.getElementById('totalProdutividade').textContent = `${produtividadeGeral}%`;
+    console.log('✅ [FIREBASE-TABLE] Ranking de Equipes por Status criado');
 }
 
 console.log('✅ [FIREBASE-TABLE] Sistema de tabela Firebase carregado');

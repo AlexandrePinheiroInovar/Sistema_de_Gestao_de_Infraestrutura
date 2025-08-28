@@ -2,6 +2,12 @@
 // ARQUIVO INDEPENDENTE - NÃO MODIFICA OUTROS MÓDULOS
 console.log('📊 [DASHBOARD-CHARTS-V5] Inicializando sistema de gráficos do dashboard...');
 
+// ============= FUNÇÃO DE INICIALIZAÇÃO MANUAL =============
+window.debugGraficos = function() {
+    console.log('🐛 [DEBUG] Iniciando debug manual dos gráficos...');
+    criarTodosGraficos();
+};
+
 // ============= OBJETO PARA ARMAZENAR GRÁFICOS =============
 const dashboardChartsV5 = {};
 
@@ -30,19 +36,27 @@ async function aguardarDadosTabela() {
 }
 
 // ============= FUNÇÃO PRINCIPAL PARA CRIAR TODOS OS GRÁFICOS =============
-async function criarTodosGraficos() {
+async function criarTodosGraficos(dadosExternos = null) {
     console.log('🎨 [DASHBOARD-CHARTS-V5] === CRIANDO TODOS OS GRÁFICOS ===');
     
     try {
         // Aguardar Chart.js
         if (typeof Chart === 'undefined') {
             console.warn('⚠️ [DASHBOARD-CHARTS-V5] Aguardando Chart.js...');
-            setTimeout(criarTodosGraficos, 500);
+            setTimeout(() => criarTodosGraficos(dadosExternos), 500);
             return;
         }
         
-        // Obter dados da tabela
-        const dados = await aguardarDadosTabela();
+        // Usar dados externos se fornecidos, senão buscar dados da tabela
+        let dados;
+        if (dadosExternos && dadosExternos.length > 0) {
+            dados = dadosExternos;
+            console.log('📊 [DASHBOARD-CHARTS-V5] Usando dados filtrados:', dados.length, 'registros');
+        } else {
+            dados = await aguardarDadosTabela();
+            console.log('📊 [DASHBOARD-CHARTS-V5] Dados carregados da tabela:', dados ? dados.length : 0, 'registros');
+        }
+        
         if (!dados || dados.length === 0) {
             console.warn('⚠️ [DASHBOARD-CHARTS-V5] Nenhum dado disponível');
             return;
@@ -50,6 +64,32 @@ async function criarTodosGraficos() {
         
         console.log('📊 [DASHBOARD-CHARTS-V5] Criando gráficos com', dados.length, 'registros');
         console.log('📊 [DASHBOARD-CHARTS-V5] Exemplo de registro:', dados[0]);
+        console.log('📊 [DASHBOARD-CHARTS-V5] Campos disponíveis:', Object.keys(dados[0] || {}));
+        
+        // Debug específico para datas e status
+        const primeiroRegistro = dados[0];
+        if (primeiroRegistro) {
+            console.log('📅 [DEBUG-DATAS] Campos de data no primeiro registro:', {
+                'DATA RECEBIMENTO': primeiroRegistro['DATA RECEBIMENTO'],
+                'DATA INICIO': primeiroRegistro['DATA INICIO'], 
+                'DATA FINAL': primeiroRegistro['DATA FINAL'],
+                'dataRecebimento': primeiroRegistro['dataRecebimento'],
+                'dataInicio': primeiroRegistro['dataInicio'],
+                'dataFinal': primeiroRegistro['dataFinal']
+            });
+            
+            console.log('📊 [DEBUG-STATUS] Campos de status e supervisor:', {
+                'Status': primeiroRegistro['Status'],
+                'status': primeiroRegistro['status'],
+                'Supervisor': primeiroRegistro['Supervisor'],
+                'supervisor': primeiroRegistro['supervisor'],
+                'EQUIPE': primeiroRegistro['EQUIPE'],
+                'equipe': primeiroRegistro['equipe']
+            });
+            
+            console.log('🔍 [DEBUG-FULL] Todos os campos disponíveis:', Object.keys(primeiroRegistro));
+            console.log('🔍 [DEBUG-SAMPLE] 3 primeiros registros completos:', dados.slice(0, 3));
+        }
         
         // Limpar gráficos existentes
         Object.values(dashboardChartsV5).forEach(chart => {
@@ -75,6 +115,20 @@ async function criarTodosGraficos() {
     }
 }
 
+// ============= AUTO INICIALIZAÇÃO =============
+// Tentar criar gráficos quando a página carregar
+// INICIALIZAÇÃO REMOVIDA - Usando sistema de eventos na linha 1191
+
+// Também tentar quando o usuário navegar para a seção infraestrutura
+document.addEventListener('click', function(event) {
+    if (event.target.textContent && event.target.textContent.includes('Dashboard')) {
+        console.log('📊 [DASHBOARD-CHARTS-V5] Navegação para Dashboard detectada...');
+        setTimeout(() => {
+            criarTodosGraficos();
+        }, 1000);
+    }
+});
+
 // ============= UTILITÁRIOS PARA MAPEAR CAMPOS =============
 function obterCampo(item, campo) {
     // Mapear nomes de campos da tabela
@@ -83,11 +137,12 @@ function obterCampo(item, campo) {
         'subProjeto': item['Sub Projeto'] || item['subProjeto'] || '',
         'cidade': item['Cidade'] || item['cidade'] || '',
         'hp': item['HP'] || item['hp'] || '',
-        'dataRecebimento': item['DATA RECEBIMENTO'] || item['dataRecebimento'] || '',
-        'dataFinal': item['DATA FINAL'] || item['dataFinal'] || '',
+        'dataRecebimento': item['DATA RECEBIMENTO'] || item['dataRecebimento'] || item['Data Recebimento'] || item['Data de Recebimento'] || '',
+        'dataInicio': item['DATA INICIO'] || item['dataInicio'] || item['Data Início'] || item['Data de Início'] || item['DATA INÍCIO'] || '',
+        'dataFinal': item['DATA FINAL'] || item['dataFinal'] || item['Data Final'] || item['Data de Conclusão'] || item['DATA CONCLUSÃO'] || '',
         'supervisor': item['Supervisor'] || item['supervisor'] || '',
         'equipe': item['EQUIPE'] || item['equipe'] || '',
-        'status': item['Status'] || item['status'] || '',
+        'status': item['Status'] || item['status'] || item['STATUS'] || item['Status da Atividade'] || item['statusAtividade'] || '',
         'tipoAcao': item['Tipo de Ação'] || item['tipoAcao'] || ''
     };
     
@@ -374,10 +429,11 @@ function criarGrafico3_AnaliseCidadesV5(dados) {
     // Criar gráfico
     const ctx = canvas.getContext('2d');
     dashboardChartsV5.cidades = new Chart(ctx, {
-        type: 'doughnut',
+        type: 'bar',
         data: {
             labels: labels,
             datasets: [{
+                label: 'Quantidade por Cidade',
                 data: data,
                 backgroundColor: coresAzuis.gradiente,
                 borderColor: coresAzuis.gradiente.map(color => color.replace('0.8', '1')),
@@ -386,9 +442,24 @@ function criarGrafico3_AnaliseCidadesV5(dados) {
         },
         options: {
             responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Quantidade de Registros'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Cidades'
+                    }
+                }
+            },
             plugins: {
                 legend: {
-                    position: 'right',
+                    position: 'top',
                     display: true
                 },
                 title: {
@@ -412,22 +483,27 @@ function criarGrafico4_AnaliseHPProjetosV5(dados) {
         return;
     }
     
-    // Processar dados
-    const contadorHP = {};
+    // Processar dados - Somar HP por projeto
+    const somaHPPorProjeto = {};
     dados.forEach(item => {
-        const projeto = obterCampo(item, 'projeto') || 'Não especificado';
-        const hp = obterCampo(item, 'hp') || 'Não especificado';
-        const key = `${projeto} - ${hp}`;
-        contadorHP[key] = (contadorHP[key] || 0) + 1;
+        let projeto = obterCampo(item, 'projeto') || 'Não especificado';
+        
+        // Agrupar todas variações de MDU-TOA em um só
+        if (projeto.toLowerCase().includes('mdu-toa') || projeto.toLowerCase().includes('mdu toa')) {
+            projeto = 'MDU-TOA';
+        }
+        
+        const hp = parseInt(obterCampo(item, 'hp')) || 0;
+        somaHPPorProjeto[projeto] = (somaHPPorProjeto[projeto] || 0) + hp;
     });
     
-    // Top 10 HP/Projetos
-    const entries = Object.entries(contadorHP)
+    // Ordenar por soma de HP (maior para menor) e pegar top 10
+    const entries = Object.entries(somaHPPorProjeto)
         .sort(([,a], [,b]) => b - a)
         .slice(0, 10);
     
-    const labels = entries.map(([nome]) => nome.length > 30 ? nome.substring(0, 30) + '...' : nome);
-    const data = entries.map(([,count]) => count);
+    const labels = entries.map(([nome]) => nome);
+    const data = entries.map(([,soma]) => soma);
     
     // Criar gráfico
     const ctx = canvas.getContext('2d');
@@ -436,34 +512,34 @@ function criarGrafico4_AnaliseHPProjetosV5(dados) {
         data: {
             labels: labels,
             datasets: [{
-                label: 'Quantidade de HP',
+                label: 'Soma de HP Ativados',
                 data: data,
-                backgroundColor: coresAzuis.escura,
-                borderColor: coresAzuis.borda,
+                backgroundColor: coresAzuis.gradiente,
+                borderColor: coresAzuis.gradiente.map(color => color.replace('0.8', '1')),
                 borderWidth: 2
             }]
         },
         options: {
             responsive: true,
-            indexAxis: 'y', // Barras horizontais
             scales: {
-                x: {
+                y: {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Quantidade'
+                        text: 'Soma de HP Ativados'
                     }
                 },
-                y: {
+                x: {
                     title: {
                         display: true,
-                        text: 'Projetos/HP'
+                        text: 'Projetos'
                     }
                 }
             },
             plugins: {
                 legend: {
-                    display: false
+                    position: 'top',
+                    display: true
                 },
                 title: {
                     display: true,
@@ -479,6 +555,7 @@ function criarGrafico4_AnaliseHPProjetosV5(dados) {
 // ============= 5. ANÁLISE DE RECEBIMENTOS E CONCLUSÕES (Barras + Linha) =============
 function criarGrafico5_AnaliseRecebimentosV5(dados) {
     console.log('📊 [GRÁFICO-5] Criando Análise de Recebimentos e Conclusões...');
+    console.log('📊 [GRÁFICO-5] Exemplo de dados recebidos:', dados.slice(0, 2));
     
     const canvas = document.getElementById('recebimentosChart');
     if (!canvas) {
@@ -488,37 +565,124 @@ function criarGrafico5_AnaliseRecebimentosV5(dados) {
     
     // Processar dados mensais
     const dadosMensais = {};
-    dados.forEach(item => {
+    dados.forEach((item, index) => {
         const dataRecebimento = obterCampo(item, 'dataRecebimento');
         const dataFinal = obterCampo(item, 'dataFinal');
         
-        if (dataRecebimento) {
-            const mes = dataRecebimento.substring(0, 7); // YYYY-MM
-            if (!dadosMensais[mes]) {
-                dadosMensais[mes] = { recebidos: 0, concluidos: 0 };
-            }
-            dadosMensais[mes].recebidos++;
+        // Debug para os primeiros registros
+        if (index < 3) {
+            console.log(`📅 [DEBUG] Registro ${index}:`, {
+                dataRecebimento,
+                dataFinal,
+                itemCompleto: item
+            });
         }
         
-        if (dataFinal) {
-            const mes = dataFinal.substring(0, 7); // YYYY-MM
-            if (!dadosMensais[mes]) {
-                dadosMensais[mes] = { recebidos: 0, concluidos: 0 };
+        if (dataRecebimento && dataRecebimento.length >= 7) {
+            let mes = null;
+            // Tentar diferentes formatos de data
+            if (dataRecebimento.includes('-')) {
+                // Formato YYYY-MM-DD
+                const partesMes = dataRecebimento.substring(0, 7);
+                if (partesMes.match(/^\d{4}-\d{2}$/)) {
+                    mes = partesMes;
+                }
+            } else if (dataRecebimento.includes('/')) {
+                // DD/MM/YYYY -> YYYY-MM
+                const partes = dataRecebimento.split('/');
+                if (partes.length === 3 && partes[2].length === 4) {
+                    const ano = partes[2];
+                    const mesNum = partes[1].padStart(2, '0');
+                    if (ano && mesNum && !isNaN(ano) && !isNaN(mesNum)) {
+                        mes = `${ano}-${mesNum}`;
+                    }
+                }
             }
-            dadosMensais[mes].concluidos++;
+            
+            if (mes && mes !== 'undefined-undefined') {
+                if (!dadosMensais[mes]) {
+                    dadosMensais[mes] = { recebidos: 0, concluidos: 0 };
+                }
+                dadosMensais[mes].recebidos++;
+                console.log(`📅 [DEBUG] Recebimento processado: ${dataRecebimento} -> ${mes}`);
+            } else {
+                console.warn(`⚠️ [DEBUG] Data de recebimento inválida ignorada: "${dataRecebimento}"`);
+            }
+        }
+        
+        if (dataFinal && dataFinal.length >= 7) {
+            let mes = null;
+            // Tentar diferentes formatos de data
+            if (dataFinal.includes('-')) {
+                // Formato YYYY-MM-DD
+                const partesMes = dataFinal.substring(0, 7);
+                if (partesMes.match(/^\d{4}-\d{2}$/)) {
+                    mes = partesMes;
+                }
+            } else if (dataFinal.includes('/')) {
+                // DD/MM/YYYY -> YYYY-MM
+                const partes = dataFinal.split('/');
+                if (partes.length === 3 && partes[2].length === 4) {
+                    const ano = partes[2];
+                    const mesNum = partes[1].padStart(2, '0');
+                    if (ano && mesNum && !isNaN(ano) && !isNaN(mesNum)) {
+                        mes = `${ano}-${mesNum}`;
+                    }
+                }
+            }
+            
+            if (mes && mes !== 'undefined-undefined') {
+                if (!dadosMensais[mes]) {
+                    dadosMensais[mes] = { recebidos: 0, concluidos: 0 };
+                }
+                dadosMensais[mes].concluidos++;
+                console.log(`📅 [DEBUG] Conclusão processada: ${dataFinal} -> ${mes}`);
+            } else {
+                console.warn(`⚠️ [DEBUG] Data final inválida ignorada: "${dataFinal}"`);
+            }
         }
     });
+    
+    console.log('📊 [GRÁFICO-5] Dados mensais processados:', dadosMensais);
     
     // Últimos 12 meses
     const mesesOrdenados = Object.keys(dadosMensais).sort().slice(-12);
+    console.log('📊 [GRÁFICO-5] Meses processados:', mesesOrdenados);
+    
     const labels = mesesOrdenados.map(mes => {
         const [ano, mesNum] = mes.split('-');
+        
+        // Validar se ano e mesNum são válidos
+        if (!ano || !mesNum || isNaN(parseInt(ano)) || isNaN(parseInt(mesNum))) {
+            console.warn(`⚠️ [DEBUG-LABEL] Mês inválido ignorado: ${mes}`);
+            return null;
+        }
+        
         const nomesMeses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-        return `${nomesMeses[parseInt(mesNum) - 1]}/${ano.slice(2)}`;
+        const mesNumInt = parseInt(mesNum);
+        
+        // Validar se o mês está dentro do range válido
+        if (mesNumInt < 1 || mesNumInt > 12) {
+            console.warn(`⚠️ [DEBUG-LABEL] Número do mês inválido: ${mesNumInt}`);
+            return null;
+        }
+        
+        const nomesMes = nomesMeses[mesNumInt - 1];
+        const labelFinal = `${nomesMes}/${ano}`;
+        
+        console.log(`📅 [DEBUG-LABEL] ${mes} -> ${labelFinal} (mesNum: ${mesNum}, ano: ${ano})`);
+        return labelFinal;
+    }).filter(label => label !== null);
+    
+    // Filtrar também os dados para corresponder aos labels válidos
+    const mesesValidos = mesesOrdenados.filter(mes => {
+        const [ano, mesNum] = mes.split('-');
+        return ano && mesNum && !isNaN(parseInt(ano)) && !isNaN(parseInt(mesNum)) && 
+               parseInt(mesNum) >= 1 && parseInt(mesNum) <= 12;
     });
     
-    const dadosRecebidos = mesesOrdenados.map(mes => dadosMensais[mes]?.recebidos || 0);
-    const dadosConcluidos = mesesOrdenados.map(mes => dadosMensais[mes]?.concluidos || 0);
+    const dadosRecebidos = mesesValidos.map(mes => dadosMensais[mes]?.recebidos || 0);
+    const dadosConcluidos = mesesValidos.map(mes => dadosMensais[mes]?.concluidos || 0);
     
     // Criar gráfico
     const ctx = canvas.getContext('2d');
@@ -528,7 +692,6 @@ function criarGrafico5_AnaliseRecebimentosV5(dados) {
             labels: labels,
             datasets: [
                 {
-                    type: 'bar',
                     label: 'Recebidos',
                     data: dadosRecebidos,
                     backgroundColor: coresAzuis.principal,
@@ -536,17 +699,11 @@ function criarGrafico5_AnaliseRecebimentosV5(dados) {
                     borderWidth: 2
                 },
                 {
-                    type: 'line',
                     label: 'Concluídos',
                     data: dadosConcluidos,
-                    backgroundColor: coresAzuis.clara,
-                    borderColor: coresAzuis.linha,
-                    borderWidth: 3,
-                    fill: false,
-                    tension: 0.1,
-                    pointBackgroundColor: coresAzuis.linha,
-                    pointBorderColor: coresAzuis.linha,
-                    pointRadius: 4
+                    backgroundColor: coresAzuis.secundaria,
+                    borderColor: coresAzuis.escura,
+                    borderWidth: 2
                 }
             ]
         },
@@ -600,22 +757,113 @@ function criarGrafico6_AnaliseEnderecosSupervisorV5(dados) {
     
     // Processar dados de supervisores por status
     const supervisorData = {};
-    dados.forEach(item => {
+    let totalProdutivas = 0;
+    let totalImprodutivas = 0;
+    let statusEncontrados = new Set();
+    
+    dados.forEach((item, index) => {
         const supervisor = obterCampo(item, 'supervisor') || 'Não especificado';
-        const status = obterCampo(item, 'status') || 'Não especificado';
+        
+        // Tentar TODAS as variações possíveis de Status
+        let status = null;
+        const possiveisNomesStatus = [
+            'Status', 'status', 'STATUS', 
+            'Status da Atividade', 'statusAtividade',
+            'Status do Projeto', 'statusProjeto',
+            'Status Atual', 'statusAtual',
+            'Situação', 'situacao', 'SITUACAO'
+        ];
+        
+        for (const nomeStatus of possiveisNomesStatus) {
+            if (item[nomeStatus] && item[nomeStatus].toString().trim() !== '') {
+                status = item[nomeStatus];
+                break;
+            }
+        }
+        
+        // Se ainda não encontrou, tentar buscar por campos que contenham "status"
+        if (!status) {
+            const camposComStatus = Object.keys(item).filter(key => 
+                key.toLowerCase().includes('status') || 
+                key.toLowerCase().includes('situac')
+            );
+            
+            for (const campo of camposComStatus) {
+                if (item[campo] && item[campo].toString().trim() !== '') {
+                    status = item[campo];
+                    break;
+                }
+            }
+        }
+        
+        status = status || 'Não especificado';
+        
+        // Debug detalhado para os primeiros registros
+        if (index < 5) {
+            console.log(`📊 [DEBUG-SUPERVISOR] Registro ${index}:`, {
+                supervisor,
+                status,
+                statusEncontradoEm: possiveisNomesStatus.find(nome => item[nome]) || 'Nenhum',
+                todosOsStatusDisponiveis: possiveisNomesStatus.reduce((acc, nome) => {
+                    if (item[nome]) acc[nome] = item[nome];
+                    return acc;
+                }, {}),
+                camposDisponiveis: Object.keys(item).slice(0, 10) // Primeiros 10 campos
+            });
+        }
+        
+        statusEncontrados.add(status.toUpperCase());
         
         if (!supervisorData[supervisor]) {
             supervisorData[supervisor] = { PRODUTIVA: 0, IMPRODUTIVA: 0 };
         }
         
-        if (status.toUpperCase().includes('PRODUTIVA')) {
+        // Melhor detecção de status (mais flexível e abrangente)
+        const statusUpper = status.toUpperCase().trim();
+        
+        // Verificar múltiplas variações
+        const ehProdutiva = statusUpper === 'PRODUTIVA' || 
+                           statusUpper.includes('PRODUTIVA') ||
+                           statusUpper === 'PRODUTIVO' ||
+                           statusUpper.includes('PRODUTIVO') ||
+                           statusUpper === 'ATIVO' ||
+                           statusUpper === 'CONCLUÍDO' ||
+                           statusUpper === 'CONCLUIDO';
+                           
+        const ehImprodutiva = statusUpper === 'IMPRODUTIVA' || 
+                             statusUpper.includes('IMPRODUTIVA') ||
+                             statusUpper === 'IMPRODUTIVO' ||
+                             statusUpper.includes('IMPRODUTIVO') ||
+                             statusUpper === 'INATIVO' ||
+                             statusUpper === 'PENDENTE' ||
+                             statusUpper === 'CANCELADO';
+        
+        if (ehProdutiva) {
             supervisorData[supervisor].PRODUTIVA++;
-        } else if (status.toUpperCase().includes('IMPRODUTIVA')) {
+            totalProdutivas++;
+            if (index < 5) console.log(`✅ [DEBUG-SUPERVISOR] PRODUTIVA detectada: "${status}"`);
+        } else if (ehImprodutiva) {
             supervisorData[supervisor].IMPRODUTIVA++;
+            totalImprodutivas++;
+            if (index < 5) console.log(`❌ [DEBUG-SUPERVISOR] IMPRODUTIVA detectada: "${status}"`);
         } else {
-            // Classificar como produtiva por padrão
-            supervisorData[supervisor].PRODUTIVA++;
+            // Log status não reconhecidos
+            if (index < 10) {
+                console.log(`⚠️ [DEBUG-SUPERVISOR] Status não reconhecido: "${status}" (registro ${index})`);
+            }
+            // Para campos vazios ou não reconhecidos, não classificar como produtiva automaticamente
+            if (status && status.trim() !== '' && status !== 'Não especificado') {
+                supervisorData[supervisor].PRODUTIVA++;
+                totalProdutivas++;
+            }
         }
+    });
+    
+    console.log('📊 [GRÁFICO-6] Estatísticas de status:', {
+        totalProdutivas,
+        totalImprodutivas,
+        statusEncontrados: Array.from(statusEncontrados),
+        supervisorData
     });
     
     // Top 10 supervisores
@@ -833,21 +1081,271 @@ function criarRanking2_EquipesStatusV5(dados) {
     document.getElementById('totalProdutividade').textContent = `${produtividadeGeral}%`;
     
     console.log('✅ [RANKING-2] Ranking das Equipes por Status criado');
+    console.log('🏆 [RANKING-2] Top 3 equipes:', topRankings.slice(0, 3));
 }
 
-// ============= FUNÇÃO GLOBAL PARA TESTE =============
+// ============= FUNÇÕES GLOBAIS PARA INTEGRAÇÃO =============
 window.criarGraficosV5 = criarTodosGraficos;
+
+// Função para integração com o sistema de filtros
+window.atualizarGraficosComFiltros = async function(dadosFiltrados) {
+    console.log('🔄 [DASHBOARD-CHARTS-V5] === ATUALIZANDO COM DADOS FILTRADOS ===');
+    console.log('📊 [DASHBOARD-CHARTS-V5] Dados filtrados recebidos:', dadosFiltrados ? dadosFiltrados.length : 0, 'registros');
+    
+    try {
+        if (dadosFiltrados && dadosFiltrados.length > 0) {
+            await criarTodosGraficos(dadosFiltrados);
+            console.log('✅ [DASHBOARD-CHARTS-V5] Gráficos atualizados com dados filtrados');
+        } else {
+            console.warn('⚠️ [DASHBOARD-CHARTS-V5] Nenhum dado filtrado fornecido, usando dados originais');
+            await criarTodosGraficos();
+        }
+    } catch (error) {
+        console.error('❌ [DASHBOARD-CHARTS-V5] Erro ao atualizar gráficos:', error);
+    }
+};
+
+// Função de inicialização que pode ser chamada pelo dashboard-integration
+window.inicializarGraficosV5 = async function() {
+    console.log('🚀 [DASHBOARD-CHARTS-V5] === INICIALIZAÇÃO SOLICITADA ===');
+    
+    // Aguardar um pouco para garantir que todos os sistemas estejam carregados
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    try {
+        await criarTodosGraficos();
+        console.log('✅ [DASHBOARD-CHARTS-V5] Inicialização completa');
+    } catch (error) {
+        console.error('❌ [DASHBOARD-CHARTS-V5] Erro na inicialização:', error);
+    }
+};
+
+// Função específica para debug do gráfico de supervisor
+window.debugGraficoSupervisor = function() {
+    console.clear();
+    console.log('🔍 [DEBUG-SUPERVISOR] === ANÁLISE ESPECÍFICA DO GRÁFICO DE SUPERVISOR ===');
+    
+    if (window.FirebaseTableSystem && typeof window.FirebaseTableSystem.getData === 'function') {
+        const dados = window.FirebaseTableSystem.getData();
+        console.log('📊 [DEBUG-SUPERVISOR] Total de registros:', dados.length);
+        
+        if (dados.length > 0) {
+            // 1. Mostrar campos disponíveis
+            console.log('📋 [DEBUG-SUPERVISOR] Campos disponíveis:', Object.keys(dados[0]));
+            
+            // 2. Buscar campos que contenham "status" ou "Status"
+            const camposStatus = Object.keys(dados[0]).filter(key => 
+                key.toLowerCase().includes('status')
+            );
+            console.log('📊 [DEBUG-SUPERVISOR] Campos com "status":', camposStatus);
+            
+            // 3. Buscar campos que contenham "supervisor" 
+            const camposSupervisor = Object.keys(dados[0]).filter(key => 
+                key.toLowerCase().includes('supervisor')
+            );
+            console.log('👥 [DEBUG-SUPERVISOR] Campos com "supervisor":', camposSupervisor);
+            
+            // 4. Mostrar valores únicos do campo Status
+            if (camposStatus.length > 0) {
+                camposStatus.forEach(campo => {
+                    const valoresUnicos = [...new Set(dados.map(item => item[campo]))].filter(v => v);
+                    console.log(`📊 [DEBUG-SUPERVISOR] Valores únicos em "${campo}":`, valoresUnicos);
+                });
+            }
+            
+            // 5. Mostrar valores únicos dos supervisores
+            if (camposSupervisor.length > 0) {
+                camposSupervisor.forEach(campo => {
+                    const valoresUnicos = [...new Set(dados.map(item => item[campo]))].filter(v => v);
+                    console.log(`👥 [DEBUG-SUPERVISOR] Supervisores únicos em "${campo}":`, valoresUnicos.slice(0, 10));
+                });
+            }
+            
+            // 6. Análise detalhada de campos possíveis para Status
+            console.log('📋 [DEBUG-SUPERVISOR] === ANÁLISE DETALHADA DE CAMPOS ===');
+            const primeiroItem = dados[0];
+            const todosCampos = Object.keys(primeiroItem);
+            
+            // Buscar TODOS os campos possíveis relacionados a status/produtividade
+            const camposSuspeitos = todosCampos.filter(campo => {
+                const campoLower = campo.toLowerCase();
+                return campoLower.includes('status') || 
+                       campoLower.includes('produt') ||
+                       campoLower.includes('situac') ||
+                       campoLower.includes('ativo') ||
+                       campoLower.includes('conclu');
+            });
+            
+            console.log('🎯 [DEBUG-SUPERVISOR] Campos suspeitos para Status:', camposSuspeitos);
+            
+            // Mostrar valores desses campos nos primeiros registros
+            camposSuspeitos.forEach(campo => {
+                const valores = dados.slice(0, 10).map(item => item[campo]).filter(v => v);
+                console.log(`📊 [DEBUG-SUPERVISOR] Valores no campo "${campo}":`, [...new Set(valores)]);
+            });
+            
+            // 7. Mostrar exemplo de 3 registros completos FOCANDO nos campos importantes
+            console.log('📋 [DEBUG-SUPERVISOR] Primeiros 3 registros (campos importantes):');
+            dados.slice(0, 3).forEach((item, index) => {
+                const camposImportantes = {};
+                todosCampos.forEach(campo => {
+                    const campoLower = campo.toLowerCase();
+                    if (campoLower.includes('supervisor') || 
+                        campoLower.includes('status') ||
+                        campoLower.includes('produt') ||
+                        campoLower.includes('situac')) {
+                        camposImportantes[campo] = item[campo];
+                    }
+                });
+                
+                console.log(`📊 [REGISTRO-${index}] Campos importantes:`, camposImportantes);
+            });
+        }
+    } else {
+        console.error('❌ [DEBUG-SUPERVISOR] FirebaseTableSystem não disponível');
+    }
+};
+
+// Função para recarregar todos os dados e gráficos
+window.forcarDebugCompleto = async function() {
+    console.clear();
+    console.log('🚀 [FORCE-DEBUG] Iniciando debug completo...');
+    
+    // Verificar se os dados estão disponíveis
+    if (window.FirebaseTableSystem && typeof window.FirebaseTableSystem.getData === 'function') {
+        const dados = window.FirebaseTableSystem.getData();
+        console.log('📊 [FORCE-DEBUG] Dados encontrados:', dados.length, 'registros');
+        
+        if (dados.length > 0) {
+            console.log('🔍 [FORCE-DEBUG] Primeiro registro completo:', dados[0]);
+            console.log('🔍 [FORCE-DEBUG] Campos disponíveis:', Object.keys(dados[0]));
+            
+            // Debug específico para STATUS
+            console.log('📊 [FORCE-DEBUG] === ANÁLISE DE STATUS ===');
+            const statusCounts = { PRODUTIVA: 0, IMPRODUTIVA: 0, OUTROS: 0 };
+            const statusExemplos = new Map();
+            
+            dados.slice(0, 10).forEach((item, index) => {
+                // Buscar TODOS os campos que contenham "status" (case insensitive)
+                const camposStatus = {};
+                Object.keys(item).forEach(key => {
+                    if (key.toLowerCase().includes('status')) {
+                        camposStatus[key] = item[key];
+                    }
+                });
+                
+                const statusRaw = item['Status'] || item['status'] || item['STATUS'] || 'N/A';
+                const statusProcessado = obterCampo(item, 'status');
+                const statusUpper = statusProcessado.toUpperCase().trim();
+                
+                console.log(`📊 [DEBUG-STATUS-${index}]:`, {
+                    raw: statusRaw,
+                    processado: statusProcessado,
+                    upper: statusUpper,
+                    supervisor: item['Supervisor'] || item['supervisor'] || 'N/A',
+                    todosOsCamposStatus: camposStatus
+                });
+                
+                if (statusUpper.includes('PRODUTIVA')) {
+                    statusCounts.PRODUTIVA++;
+                    statusExemplos.set('PRODUTIVA', statusRaw);
+                } else if (statusUpper.includes('IMPRODUTIVA')) {
+                    statusCounts.IMPRODUTIVA++;
+                    statusExemplos.set('IMPRODUTIVA', statusRaw);
+                } else {
+                    statusCounts.OUTROS++;
+                    statusExemplos.set('OUTROS', statusRaw);
+                }
+            });
+            
+            console.log('📊 [FORCE-DEBUG] Status counts (primeiros 10):', statusCounts);
+            console.log('📊 [FORCE-DEBUG] Status exemplos:', Object.fromEntries(statusExemplos));
+            
+            // Verificar se há colunas específicas para PRODUTIVA/IMPRODUTIVA
+            console.log('📊 [FORCE-DEBUG] === BUSCA POR COLUNAS PRODUTIVA/IMPRODUTIVA ===');
+            const primeiroRegistro = dados[0];
+            const colunasProdutiva = Object.keys(primeiroRegistro).filter(key => 
+                key.toLowerCase().includes('produtiva') || key.toLowerCase().includes('improdutiva')
+            );
+            console.log('📊 [FORCE-DEBUG] Colunas com PRODUTIVA/IMPRODUTIVA:', colunasProdutiva);
+            
+            if (colunasProdutiva.length > 0) {
+                colunasProdutiva.forEach(coluna => {
+                    console.log(`📊 [FORCE-DEBUG] Valores da coluna "${coluna}":`, 
+                        dados.slice(0, 5).map(item => item[coluna])
+                    );
+                });
+            }
+            
+            // Verificar colunas de DATA
+            console.log('📊 [FORCE-DEBUG] === BUSCA POR COLUNAS DE DATA ===');
+            const colunasData = Object.keys(primeiroRegistro).filter(key => 
+                key.toLowerCase().includes('data') || key.toLowerCase().includes('recebimento') || key.toLowerCase().includes('conclus')
+            );
+            console.log('📊 [FORCE-DEBUG] Colunas de DATA encontradas:', colunasData);
+            
+            colunasData.forEach(coluna => {
+                console.log(`📊 [FORCE-DEBUG] Valores da coluna "${coluna}":`, 
+                    dados.slice(0, 3).map(item => item[coluna])
+                );
+            });
+        }
+        
+        // Forçar criação dos gráficos
+        await criarTodosGraficos();
+    } else {
+        console.error('❌ [FORCE-DEBUG] FirebaseTableSystem não disponível');
+    }
+};
 window.dashboardChartsV5 = dashboardChartsV5;
 
 // ============= INICIALIZAÇÃO AUTOMÁTICA =============
 // Aguardar DOM e dependências carregarem
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('📊 [DASHBOARD-CHARTS-V5] DOM carregado, aguardando dependências...');
+    console.log('📊 [DASHBOARD-CHARTS-V5] DOM carregado, configurando evento de sincronização...');
     
-    // Aguardar um pouco e tentar criar os gráficos
+    // Escutar quando os dados do firebase-table-system estiverem prontos
+    window.addEventListener('firebaseTableDataLoaded', function(event) {
+        console.log('📢 [DASHBOARD-CHARTS-V5] Recebido evento de dados carregados:', event.detail.length, 'registros');
+        
+        // Aguardar um pouco para outros sistemas se estabilizarem
+        setTimeout(() => {
+            console.log('🚀 [DASHBOARD-CHARTS-V5] Inicializando gráficos com dados carregados...');
+            criarTodosGraficos(event.detail.data);
+        }, 1500);
+    });
+    
+    // Escutar quando filtros são aplicados no dashboard
+    window.addEventListener('dashboardFiltersApplied', function(event) {
+        console.log('🔍 [DASHBOARD-CHARTS-V5] Recebido evento de filtros aplicados:', event.detail.filterCount, 'de', event.detail.originalCount, 'registros');
+        
+        // Atualizar gráficos com dados filtrados imediatamente
+        setTimeout(() => {
+            console.log('🔄 [DASHBOARD-CHARTS-V5] Atualizando gráficos com dados filtrados...');
+            criarTodosGraficos(event.detail.filteredData);
+        }, 200);
+    });
+    
+    // Escutar quando filtros são limpos no dashboard
+    window.addEventListener('dashboardFiltersCleared', function(event) {
+        console.log('🧹 [DASHBOARD-CHARTS-V5] Recebido evento de filtros limpos:', event.detail.count, 'registros');
+        
+        // Atualizar gráficos com todos os dados
+        setTimeout(() => {
+            console.log('🔄 [DASHBOARD-CHARTS-V5] Atualizando gráficos com todos os dados...');
+            criarTodosGraficos(event.detail.data);
+        }, 200);
+    });
+    
+    // Método de fallback (caso o evento não seja disparado)
     setTimeout(() => {
-        criarTodosGraficos();
-    }, 2000);
+        if (window.FirebaseTableSystem?.getData()?.length > 0) {
+            console.log('🔄 [DASHBOARD-CHARTS-V5] Fallback - dados já disponíveis, criando gráficos...');
+            criarTodosGraficos();
+        } else {
+            console.log('⏳ [DASHBOARD-CHARTS-V5] Fallback - aguardando dados ficarem disponíveis...');
+        }
+    }, 4000);
 });
 
 // Também tentar quando a página carregar completamente

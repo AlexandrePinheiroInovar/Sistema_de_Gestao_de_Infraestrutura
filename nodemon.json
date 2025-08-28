@@ -1,0 +1,25 @@
+{
+  "watch": ["server.js", "src/", "*.html", "*.json"],
+  "ext": "js,html,css,json",
+  "ignore": [
+    "node_modules/",
+    "dist/",
+    "backup/",
+    "logs/",
+    ".git/",
+    "*.log",
+    "*.tmp"
+  ],
+  "delay": 1000,
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "verbose": false,
+  "restartable": "rs",
+  "events": {
+    "restart": "echo '🔄 Servidor reiniciado devido a mudanças nos arquivos'",
+    "crash": "echo '💥 Servidor crashed - aguardando mudanças para reiniciar'",
+    "start": "echo '🚀 Servidor iniciado com Nodemon'"
+  },
+  "colours": true
+}

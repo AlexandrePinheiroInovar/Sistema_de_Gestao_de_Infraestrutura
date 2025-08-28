@@ -328,33 +328,11 @@ window.populateInfraFilters = function() {
     return Promise.resolve();
 };
 
-// Função para aplicar filtros da infraestrutura - versão minimalista  
-window.applyInfraFilters = function() {
-    console.log('🔍 [FILTERS] Aplicando filtros...');
-    // Implementação mínima - apenas log
-};
+// FUNÇÃO REMOVIDA - Conflitava com dashboard-integration.js
+// A função applyInfraFilters está implementada no dashboard-integration.js
 
-// Função para limpar filtros da infraestrutura
-window.clearInfraFilters = function() {
-    console.log('🧹 [FILTERS] Limpando filtros...');
-    
-    const filters = [
-        'infraFilterProjeto',
-        'infraFilterSubProjeto', 
-        'infraFilterEquipe',
-        'infraFilterStatus',
-        'infraFilterCidade',
-        'infraFilterSupervisor',
-        'infraFilterTipoAcao'
-    ];
-    
-    filters.forEach(filterId => {
-        const select = document.getElementById(filterId);
-        if (select) {
-            select.selectedIndex = 0;
-        }
-    });
-};
+// FUNÇÃO REMOVIDA - Conflitava com dashboard-integration.js
+// A função clearInfraFilters está implementada no dashboard-integration.js
 
 // Função para alternar seções
 window.showSection = function(sectionId, event) {
