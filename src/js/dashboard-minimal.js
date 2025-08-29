@@ -393,56 +393,21 @@ window.showSection = function(sectionId, event) {
 // ============= DROPDOWN DO USUÁRIO =============
 
 // Função para alternar dropdown do usuário
+// window.toggleNewDropdown - DESABILITADO - SUBSTITUÍDO POR user-dropdown-system.js
+/*
 window.toggleNewDropdown = function() {
     console.log('👤 [DROPDOWN] Alternando dropdown do usuário...');
-    const dropdownContainer = document.getElementById('newUserDropdown');
-    const dropdown = document.getElementById('dropdownMenu');
-    const arrow = document.getElementById('dropdownArrow');
-    
-    if (dropdownContainer && dropdown) {
-        // Usar a classe 'active' conforme o CSS
-        const isActive = dropdownContainer.classList.contains('active');
-        
-        if (isActive) {
-            dropdownContainer.classList.remove('active');
-            dropdown.style.display = 'none';
-            dropdown.style.visibility = 'hidden';
-            dropdown.style.opacity = '0';
-        } else {
-            dropdownContainer.classList.add('active');
-            dropdown.style.display = 'block';
-            dropdown.style.visibility = 'visible';
-            dropdown.style.opacity = '1';
-        }
-        
-        if (arrow) {
-            arrow.style.transform = isActive ? '' : 'rotate(180deg)';
-        }
-        
-        console.log('👤 [DROPDOWN] Estado alterado:', isActive ? 'fechado' : 'aberto');
-    } else {
-        console.error('❌ [DROPDOWN] Elementos do dropdown não encontrados');
-        console.log('Elementos encontrados:', {
-            dropdownContainer: !!dropdownContainer,
-            dropdown: !!dropdown
-        });
-    }
+    // FUNÇÃO DESABILITADA - USANDO NOVO SISTEMA DE DROPDOWN
 };
+*/
 
-// Função para abrir perfil do usuário
+// window.openUserProfile - DESABILITADO - SUBSTITUÍDO POR user-dropdown-system.js
+/*
 window.openUserProfile = function() {
     console.log('👤 [PROFILE] Abrindo perfil do usuário...');
-    const profileScreen = document.getElementById('userProfileScreen');
-    if (profileScreen) {
-        profileScreen.style.display = 'block';
-    }
-    
-    // Fechar dropdown
-    const dropdown = document.getElementById('dropdownMenu');
-    if (dropdown) {
-        dropdown.style.display = 'none';
-    }
+    // FUNÇÃO DESABILITADA - USANDO NOVO SISTEMA DE DROPDOWN
 };
+*/
 
 // Função para fechar tela de perfil
 window.closeUserProfileScreen = function() {
@@ -454,21 +419,13 @@ window.closeUserProfileScreen = function() {
 };
 
 // Função para alternar modo daltônico
+// window.toggleColorblindMode - DESABILITADO - SUBSTITUÍDO POR user-dropdown-system.js
+/*
 window.toggleColorblindMode = function() {
     console.log('🎨 [ACCESSIBILITY] Alternando modo daltônico...');
-    const body = document.body;
-    const toggleText = document.getElementById('colorblindToggleText');
-    
-    if (body.classList.contains('colorblind-mode')) {
-        body.classList.remove('colorblind-mode');
-        if (toggleText) toggleText.textContent = 'Modo Daltônico';
-        localStorage.setItem('colorblindMode', 'false');
-    } else {
-        body.classList.add('colorblind-mode');
-        if (toggleText) toggleText.textContent = 'Modo Normal';
-        localStorage.setItem('colorblindMode', 'true');
-    }
+    // FUNÇÃO DESABILITADA - USANDO NOVO SISTEMA DE DROPDOWN
 };
+*/
 
 // Função para atualizar informações do usuário no dropdown
 function updateUserInfo() {
