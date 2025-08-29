@@ -545,13 +545,11 @@ ChartsDashboard.criarGraficoSupervisores = function() {
             },
             scales: {
                 x: { 
-                    title: { display: true, text: 'Supervisores' },
-                    stacked: true
+                    title: { display: true, text: 'Supervisores' }
                 },
                 y: { 
                     title: { display: true, text: 'Quantidade' },
-                    beginAtZero: true,
-                    stacked: true
+                    beginAtZero: true
                 }
             }
         }
