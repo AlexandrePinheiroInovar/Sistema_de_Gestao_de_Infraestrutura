@@ -2,19 +2,62 @@
 // ARQUIVO INDEPENDENTE - NÃO MODIFICA OUTROS MÓDULOS
 console.log('📊 [DASHBOARD-CHARTS-V5] Inicializando sistema de gráficos do dashboard...');
 
-// ============= FUNÇÃO DE INICIALIZAÇÃO MANUAL =============
+// ============= FUNÇÕES DE TESTE E DEBUG =============
 window.debugGraficos = function() {
     console.log('🐛 [DEBUG] Iniciando debug manual dos gráficos...');
     criarTodosGraficos();
 };
 
+window.testarGraficosComDadosMock = function() {
+    console.log('🧪 [TEST] Testando gráficos com dados mock...');
+    const dadosMock = obterDadosMock();
+    criarTodosGraficos(dadosMock);
+};
+
+window.forcarCriacaoGraficos = function() {
+    console.log('🚀 [FORCE] Forçando criação dos gráficos...');
+    setTimeout(() => criarTodosGraficos(), 100);
+};
+
 // ============= OBJETO PARA ARMAZENAR GRÁFICOS =============
 const dashboardChartsV5 = {};
+
+// ============= DADOS MOCK PARA TESTE =============
+function obterDadosMock() {
+    console.log('🧪 [DASHBOARD-CHARTS-V5] Usando dados mock para teste');
+    return [
+        {
+            'Projeto': 'CLARO FIBRA', 'Sub Projeto': 'Residencial', 'Tipo de Ação': 'VISTORIA',
+            'Cidade': 'São Paulo', 'HP': '24', 'EQUIPE': 'Equipe A', 'Supervisor': 'João Silva',
+            'Status': 'PRODUTIVA', 'DATA RECEBIMENTO': '2025-01-15', 'DATA INICIO': '2025-01-20', 'DATA FINAL': '2025-01-25'
+        },
+        {
+            'Projeto': 'VIVO FIBER', 'Sub Projeto': 'Empresarial', 'Tipo de Ação': 'CONSTRUÇÃO',
+            'Cidade': 'Rio de Janeiro', 'HP': '48', 'EQUIPE': 'Equipe B', 'Supervisor': 'Maria Santos',
+            'Status': 'PRODUTIVA', 'DATA RECEBIMENTO': '2025-01-16', 'DATA INICIO': '2025-01-21', 'DATA FINAL': '2025-01-28'
+        },
+        {
+            'Projeto': 'CLARO FIBRA', 'Sub Projeto': 'Residencial', 'Tipo de Ação': 'ATIVAÇÃO',
+            'Cidade': 'Belo Horizonte', 'HP': '12', 'EQUIPE': 'Equipe C', 'Supervisor': 'Carlos Lima',
+            'Status': 'IMPRODUTIVA', 'DATA RECEBIMENTO': '2025-01-17', 'DATA INICIO': '2025-01-22', 'DATA FINAL': ''
+        },
+        {
+            'Projeto': 'TIM ULTRA', 'Sub Projeto': 'Comercial', 'Tipo de Ação': 'VISTORIA',
+            'Cidade': 'Salvador', 'HP': '36', 'EQUIPE': 'Equipe A', 'Supervisor': 'João Silva',
+            'Status': 'PRODUTIVA', 'DATA RECEBIMENTO': '2025-01-18', 'DATA INICIO': '2025-01-23', 'DATA FINAL': '2025-01-30'
+        },
+        {
+            'Projeto': 'VIVO FIBER', 'Sub Projeto': 'Residencial', 'Tipo de Ação': 'CONSTRUÇÃO',
+            'Cidade': 'Brasília', 'HP': '60', 'EQUIPE': 'Equipe D', 'Supervisor': 'Ana Costa',
+            'Status': 'PRODUTIVA', 'DATA RECEBIMENTO': '2025-01-19', 'DATA INICIO': '2025-01-24', 'DATA FINAL': '2025-02-02'
+        }
+    ];
+}
 
 // ============= AGUARDAR DADOS DA TABELA =============
 async function aguardarDadosTabela() {
     let tentativas = 0;
-    const maxTentativas = 50; // 25 segundos
+    const maxTentativas = 20; // 10 segundos apenas
     
     while (tentativas < maxTentativas) {
         // Verificar se o sistema Firebase Table está carregado e tem dados
@@ -22,7 +65,7 @@ async function aguardarDadosTabela() {
             typeof window.FirebaseTableSystem.getData === 'function') {
             const dados = window.FirebaseTableSystem.getData();
             if (dados && dados.length > 0) {
-                console.log('✅ [DASHBOARD-CHARTS-V5] Dados encontrados:', dados.length, 'registros');
+                console.log('✅ [DASHBOARD-CHARTS-V5] Dados reais encontrados:', dados.length, 'registros');
                 return dados;
             }
         }
@@ -31,21 +74,26 @@ async function aguardarDadosTabela() {
         tentativas++;
     }
     
-    console.warn('⚠️ [DASHBOARD-CHARTS-V5] Timeout aguardando dados');
-    return [];
+    console.warn('⚠️ [DASHBOARD-CHARTS-V5] Timeout aguardando dados reais, usando dados mock');
+    return obterDadosMock();
 }
+
+// ============= EXPOSIÇÃO GLOBAL DA FUNÇÃO =============
+window.criarTodosGraficos = criarTodosGraficos;
 
 // ============= FUNÇÃO PRINCIPAL PARA CRIAR TODOS OS GRÁFICOS =============
 async function criarTodosGraficos(dadosExternos = null) {
     console.log('🎨 [DASHBOARD-CHARTS-V5] === CRIANDO TODOS OS GRÁFICOS ===');
     
     try {
-        // Aguardar Chart.js
-        if (typeof Chart === 'undefined') {
-            console.warn('⚠️ [DASHBOARD-CHARTS-V5] Aguardando Chart.js...');
-            setTimeout(() => criarTodosGraficos(dadosExternos), 500);
+        // Aguardar Chart.js estar completamente carregado
+        if (typeof Chart === 'undefined' || !Chart.register) {
+            console.warn('⚠️ [DASHBOARD-CHARTS-V5] Chart.js não carregado, aguardando...', typeof Chart);
+            setTimeout(() => criarTodosGraficos(dadosExternos), 1000);
             return;
         }
+        
+        console.log('✅ [DASHBOARD-CHARTS-V5] Chart.js disponível:', Chart.version || 'versão não detectada');
         
         // Usar dados externos se fornecidos, senão buscar dados da tabela
         let dados;
@@ -65,6 +113,22 @@ async function criarTodosGraficos(dadosExternos = null) {
         console.log('📊 [DASHBOARD-CHARTS-V5] Criando gráficos com', dados.length, 'registros');
         console.log('📊 [DASHBOARD-CHARTS-V5] Exemplo de registro:', dados[0]);
         console.log('📊 [DASHBOARD-CHARTS-V5] Campos disponíveis:', Object.keys(dados[0] || {}));
+        
+        // Debug detalhado dos canvas elements
+        const canvasIds = ['projetosChart', 'subProjetosChart', 'cidadesChart', 'hpProjetosChart', 'recebimentosChart', 'supervisorStatusChart'];
+        console.log('🎨 [DASHBOARD-CHARTS-V5] === VERIFICANDO CANVAS ELEMENTS ===');
+        let canvasEncontrados = 0;
+        canvasIds.forEach(id => {
+            const canvas = document.getElementById(id);
+            const encontrado = !!canvas;
+            if (encontrado) canvasEncontrados++;
+            console.log(`🎨 [CANVAS-${id}]: ${encontrado ? '✅ ENCONTRADO' : '❌ NÃO ENCONTRADO'}`);
+            if (canvas) {
+                console.log(`   - Dimensões: ${canvas.width}x${canvas.height}`);
+                console.log(`   - Visível: ${canvas.offsetWidth > 0 && canvas.offsetHeight > 0}`);
+            }
+        });
+        console.log(`🎨 [DASHBOARD-CHARTS-V5] Canvas encontrados: ${canvasEncontrados}/${canvasIds.length}`);
         
         // Debug específico para datas e status
         const primeiroRegistro = dados[0];
@@ -1361,4 +1425,30 @@ window.addEventListener('load', function() {
 });
 
 console.log('✅ [DASHBOARD-CHARTS-V5] Sistema de gráficos V5 carregado');
-console.log('🧪 [DASHBOARD-CHARTS-V5] Para testar manualmente: criarGraficosV5()');
+console.log('🧪 [DASHBOARD-CHARTS-V5] Funções disponíveis:');
+console.log('   - testarGraficosComDadosMock() - Testar com dados mock');
+console.log('   - forcarCriacaoGraficos() - Forçar criação dos gráficos');
+console.log('   - debugGraficos() - Debug manual');
+
+// ============= INICIALIZAÇÃO AUTOMÁTICA PARA TESTE (MÚLTIPLAS TENTATIVAS) =============
+const tentarGraficos = (tentativa = 1) => {
+    console.log(`🚀 [DASHBOARD-CHARTS-V5] Auto-teste tentativa ${tentativa}: Verificando condições...`);
+    
+    // Verificar Chart.js
+    const chartDisponivel = typeof Chart !== 'undefined' && Chart.register;
+    console.log(`📊 [AUTO-TEST] Chart.js disponível: ${chartDisponivel}`);
+    
+    if (chartDisponivel) {
+        console.log('🧪 [AUTO-TEST] Executando teste com dados mock...');
+        testarGraficosComDadosMock();
+    } else if (tentativa < 10) {
+        setTimeout(() => tentarGraficos(tentativa + 1), 1000);
+    } else {
+        console.error('❌ [AUTO-TEST] Chart.js não carregou após 10 tentativas');
+    }
+};
+
+// Iniciar tentativas
+setTimeout(() => tentarGraficos(), 1000);
+setTimeout(() => tentarGraficos(), 3000);
+setTimeout(() => tentarGraficos(), 5000);

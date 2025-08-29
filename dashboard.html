@@ -378,163 +378,11 @@
                         </div>
                     </div>
                     
-                    <!-- Caixa de Análise de Projetos -->
-                    <div class="analysis-section">
-                        <div class="analysis-header">
-                            <h3>📊 Análise de Projetos</h3>
-                            <p>Quantidade de Projetos e seus Percentuais</p>
-                        </div>
-                        <div class="analysis-content">
-                            <div class="chart-container">
-                                <canvas id="projetosChart" width="400" height="200"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Caixa de Análise de Sub Projetos -->
-                    <div class="analysis-section">
-                        <div class="analysis-header">
-                            <h3>📊 Análise de Sub Projetos</h3>
-                            <p>Quantidade de Sub Projetos e seus Percentuais</p>
-                        </div>
-                        <div class="analysis-content">
-                            <div class="chart-container">
-                                <canvas id="subProjetosChart" width="400" height="200"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Caixa de Análise de Cidades -->
-                    <div class="analysis-section">
-                        <div class="analysis-header">
-                            <h3>📊 Análise de Cidades</h3>
-                            <p>Quantidade por Cidade e seus Percentuais</p>
-                        </div>
-                        <div class="analysis-content">
-                            <div class="chart-container">
-                                <canvas id="cidadesChart" width="400" height="200"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Caixa de Análise de HP por Projeto -->
-                    <div class="analysis-section">
-                        <div class="analysis-header">
-                            <h3>📊 Análise de HP por Projeto</h3>
-                            <p>Soma de HP Ativados por Projeto</p>
-                        </div>
-                        <div class="analysis-content">
-                            <div class="chart-container">
-                                <canvas id="hpProjetosChart" width="400" height="200"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Caixa de Análise de Recebimentos por Mês -->
-                    <div class="analysis-section">
-                        <div class="analysis-header">
-                            <h3>📅 Análise de Recebimentos e Conclusões</h3>
-                            <p>Registros Recebidos vs Concluídos por Mês</p>
-                        </div>
-                        <div class="analysis-content">
-                            <div class="chart-container">
-                                <canvas id="recebimentosChart" width="400" height="200"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Caixa de Análise de Endereços por Supervisor -->
-                    <div class="analysis-section">
-                        <div class="analysis-header">
-                            <h3>📊 Análise de Endereços por Supervisor</h3>
-                            <p>Quantidade por Status (Produtiva/Improdutiva)</p>
-                        </div>
-                        <div class="analysis-content">
-                            <div class="chart-container">
-                                <canvas id="supervisorStatusChart" width="400" height="200"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Container para as duas tabelas de ranking lado a lado -->
-                    <div class="analysis-section">
-                        <div class="analysis-header">
-                            <h3>🏆 Rankings das Equipes</h3>
-                            <p>Análise por Tipo de Ação e Status</p>
-                            <div class="export-controls">
-                                <button class="btn btn-secondary" onclick="exportAllRankings()">
-                                    <i class="fas fa-download"></i> Exportar Rankings (XLSX)
-                                </button>
-                            </div>
-                        </div>
-                        <div class="analysis-content">
-                            <div class="rankings-grid">
-                                <!-- Tabela de Ranking das Equipes por Tipo de Ação -->
-                                <div class="ranking-table-container">
-                                    <div class="table-header">
-                                        <h4>📊 Por Tipo de Ação</h4>
-                                    </div>
-                                    <div class="table-responsive">
-                                        <table id="equipeRankingTable" class="ranking-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Rank</th>
-                                                    <th>Equipe</th>
-                                                    <th>ATIVAÇÃO</th>
-                                                    <th>CONSTRUÇÃO</th>
-                                                    <th>VISTORIA</th>
-                                                    <th>Total</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="equipeRankingTableBody">
-                                                <!-- Dados serão inseridos dinamicamente -->
-                                            </tbody>
-                                            <tfoot>
-                                                <tr class="total-row">
-                                                    <td colspan="2"><strong>Total Geral</strong></td>
-                                                    <td id="totalAtivacao">0</td>
-                                                    <td id="totalConstrucao">0</td>
-                                                    <td id="totalVistoria">0</td>
-                                                    <td id="totalGeral">0</td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
-                                </div>
-
-                                <!-- Tabela de Ranking das Equipes por Status -->
-                                <div class="ranking-table-container">
-                                    <div class="table-header">
-                                        <h4>📈 Por Status</h4>
-                                    </div>
-                                    <div class="table-responsive">
-                                        <table id="equipeStatusRankingTable" class="ranking-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Rank</th>
-                                                    <th>Equipe</th>
-                                                    <th>PRODUTIVA</th>
-                                                    <th>IMPRODUTIVA</th>
-                                                    <th>Total</th>
-                                                    <th>Produtividade</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="equipeStatusRankingTableBody">
-                                                <!-- Dados serão inseridos dinamicamente -->
-                                            </tbody>
-                                            <tfoot>
-                                                <tr class="total-row">
-                                                    <td colspan="2"><strong>Total Geral</strong></td>
-                                                    <td id="totalProdutiva">0</td>
-                                                    <td id="totalImprodutiva">0</td>
-                                                    <td id="totalStatusGeral">0</td>
-                                                    <td id="totalProdutividade">0%</td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
+                    <!-- ============= ÁREA DE GRÁFICOS E RANKINGS - SISTEMA NOVO ============= -->
+                    <div id="charts-rankings-container">
+                        <!-- Conteúdo será inserido dinamicamente pelo novo sistema -->
+                        <div class="loading-charts">
+                            <p>📊 Carregando gráficos e rankings...</p>
                         </div>
                     </div>
 
@@ -1535,7 +1383,9 @@
     <!-- <script src="src/js/checkbox-dropdown.js?v=1.3&t=2025081813"></script> --> <!-- Desabilitado - não necessário com sistema de ordem fixa -->
     <!-- <script src="src/js/novo-upload-excel.js?v=1.0&t=2025082121"></script> DESABILITADO - Conflitando com sistema integrado -->
     <script src="src/js/dashboard-integration.js?v=6.0&t=2025082520"></script> <!-- MANTIDO - Filtros e Cards (gráficos desabilitados) -->
-    <script src="src/js/dashboard-charts-v5.js?v=1.0&t=2025082630"></script> <!-- REABILITADO - Gráficos voltam para charts-v5 -->
+    <!-- SISTEMA DE GRÁFICOS NOVO - IMPLEMENTAÇÃO LIMPA -->
+    <script src="src/js/dashboard-charts-novo.js?v=1.0"></script>
+    <script src="src/js/dashboard-charts-implementacao.js?v=1.0"></script>
     <script src="src/js/multi-select-dropdown.js?v=1.0&t=2025082121"></script> <!-- Sistema avançado de dropdowns -->
     <!-- <script src="src/js/permissions-system.js?v=1.0&t=2025082121"></script> --> <!-- Desabilitado - sistema simplificado -->
     <script src="src/js/force-init-dropdowns.js?v=1.3&t=2025081813"></script>
@@ -1546,6 +1396,48 @@
         // O script.js já tem o event listener DOMContentLoaded
         // Não precisamos duplicar aqui
         console.log('📄 Dashboard HTML carregado');
+        
+        // ============= INICIALIZAÇÃO DO SISTEMA DE GRÁFICOS NOVO =============
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 [DASHBOARD] Inicializando sistema de gráficos novo...');
+            
+            // Aguardar Chart.js e FirebaseTableSystem estarem prontos
+            function inicializarGraficos() {
+                if (typeof Chart !== 'undefined' && 
+                    typeof ChartsDashboard !== 'undefined' && 
+                    ChartsDashboard.inicializar) {
+                    
+                    console.log('📊 [DASHBOARD] Condições atendidas, iniciando gráficos...');
+                    
+                    // Tentar obter dados do FirebaseTableSystem
+                    let dados = null;
+                    if (window.FirebaseTableSystem && window.FirebaseTableSystem.getData) {
+                        dados = window.FirebaseTableSystem.getData();
+                        if (dados && dados.length > 0) {
+                            console.log('📊 [DASHBOARD] Dados do Firebase encontrados:', dados.length, 'registros');
+                        }
+                    }
+                    
+                    // Inicializar sistema
+                    ChartsDashboard.inicializar(dados);
+                    
+                } else {
+                    console.log('⏳ [DASHBOARD] Aguardando dependências...');
+                    setTimeout(inicializarGraficos, 1000);
+                }
+            }
+            
+            // Iniciar processo
+            setTimeout(inicializarGraficos, 1000);
+            
+            // Escutar eventos do FirebaseTableSystem
+            window.addEventListener('firebaseTableDataLoaded', function(event) {
+                console.log('📢 [DASHBOARD] Recebidos dados do Firebase, atualizando gráficos...');
+                if (ChartsDashboard && ChartsDashboard.atualizar) {
+                    ChartsDashboard.atualizar(event.detail.data);
+                }
+            });
+        });
         
         // ============= CARREGAR DADOS AUTOMATICAMENTE =============
         setTimeout(async () => {

@@ -6,6 +6,29 @@ let dashboardData = [];
 let filteredData = [];
 let charts = {};
 
+// ============= INICIALIZAÇÃO GLOBAL =============
+// Escutar sistema Firebase estar pronto globalmente
+window.addEventListener('firebaseSystemReady', function(event) {
+    console.log('🔧 [DASHBOARD-INTEGRATION] Sistema Firebase pronto globalmente:', event.detail);
+    
+    // Auto-inicializar se há dados
+    if (event.detail.dataLength > 0) {
+        setTimeout(async () => {
+            console.log('🚀 [DASHBOARD-INTEGRATION] Auto-inicializando com dados globais...');
+            
+            if (window.FirebaseTableSystem && window.FirebaseTableSystem.getData) {
+                const dados = window.FirebaseTableSystem.getData();
+                if (dados && dados.length > 0) {
+                    dashboardData = dados;
+                    filteredData = [...dados];
+                    await inicializarDashboard();
+                    console.log('✅ [DASHBOARD-INTEGRATION] Dashboard inicializado globalmente com', dados.length, 'registros');
+                }
+            }
+        }, 1000);
+    }
+});
+
 // ============= INICIALIZAÇÃO =============
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🔧 [DASHBOARD-INTEGRATION] Configurando sistema...');
@@ -1470,6 +1493,28 @@ function applyInfraFilters() {
         return true;
     });
     
+    // ATUALIZAR CARDS DO DASHBOARD COM DADOS FILTRADOS
+    atualizarCardsEstatisticos();
+    
+    // CHAMAR SISTEMA FIREBASE PARA ATUALIZAR TABELA E CARDS
+    if (typeof window.applyFirebaseFilters === 'function') {
+        console.log('🔄 [DASHBOARD-INTEGRATION] Sincronizando com firebase-table-system...');
+        // Transformar filtros para formato esperado pelo firebase
+        const firebaseFilters = {
+            projeto: filtros.projeto,
+            subProjeto: filtros.subProjeto,
+            equipe: filtros.equipe,
+            status: filtros.status,
+            cidade: filtros.cidade,
+            supervisor: filtros.supervisor,
+            tipoAcao: filtros.tipoAcao,
+            condominio: filtros.condominio
+        };
+        window.applyFirebaseFilters(firebaseFilters);
+    } else {
+        console.warn('⚠️ [DASHBOARD-INTEGRATION] applyFirebaseFilters não encontrada');
+    }
+    
     // Cards atualizados pelo firebase-table-system.js
     console.log('📊 [DASHBOARD-INTEGRATION] Cards gerenciados pelo sistema integrado');
     
@@ -1524,6 +1569,28 @@ function clearInfraFilters() {
     
     // Resetar dados filtrados
     filteredData = [...dashboardData];
+    
+    // ATUALIZAR CARDS DO DASHBOARD SEM FILTROS
+    atualizarCardsEstatisticos();
+    
+    // CHAMAR SISTEMA FIREBASE PARA LIMPAR FILTROS NA TABELA E CARDS
+    if (typeof window.applyFirebaseFilters === 'function') {
+        console.log('🔄 [DASHBOARD-INTEGRATION] Limpando filtros no firebase-table-system...');
+        // Enviar filtros vazios para limpar
+        const emptyFilters = {
+            projeto: [],
+            subProjeto: [],
+            equipe: [],
+            status: [],
+            cidade: [],
+            supervisor: [],
+            tipoAcao: [],
+            condominio: []
+        };
+        window.applyFirebaseFilters(emptyFilters);
+    } else {
+        console.warn('⚠️ [DASHBOARD-INTEGRATION] applyFirebaseFilters não encontrada');
+    }
     
     // Cards atualizados pelo firebase-table-system.js
     console.log('📊 [DASHBOARD-INTEGRATION] Cards gerenciados pelo sistema integrado');

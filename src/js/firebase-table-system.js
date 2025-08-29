@@ -182,11 +182,34 @@ let firebaseTableData = [];
 let firebaseTableColumns = [];
 let filterText = '';
 
-// ============= INICIALIZAÇÃO =============
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('📄 [FIREBASE-TABLE] DOM carregado, configurando sistema...');
-    initializeFirebaseTableSystem();
-});
+// ============= INICIALIZAÇÃO GLOBAL =============
+// Inicialização imediata para carregar dados em qualquer página
+(function() {
+    console.log('🚀 [FIREBASE-TABLE] Inicialização global ativada...');
+    
+    // Se DOM já carregou, inicializar imediatamente
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeGlobal);
+    } else {
+        // DOM já carregou, inicializar após breve delay
+        setTimeout(initializeGlobal, 100);
+    }
+    
+    async function initializeGlobal() {
+        console.log('📄 [FIREBASE-TABLE] DOM carregado, configurando sistema GLOBALMENTE...');
+        
+        // Sempre inicializar o sistema, independente da página
+        await initializeFirebaseTableSystem();
+        
+        // Emitir evento global para outros sistemas
+        window.dispatchEvent(new CustomEvent('firebaseSystemReady', {
+            detail: { 
+                system: 'firebase-table-system',
+                dataLength: firebaseTableData?.length || 0
+            }
+        }));
+    }
+})();
 
 async function initializeFirebaseTableSystem() {
     console.log('🔧 [FIREBASE-TABLE] Inicializando sistema completo...');
@@ -1401,6 +1424,36 @@ async function applyFirebaseFilters(customFilters = null) {
         const filteredStats = calculateFilteredStatistics(filteredData);
         updateFilteredCards(filteredStats);
         
+        // EMITIR EVENTO PARA O SISTEMA DE GRÁFICOS
+        const hasActiveFilters = Object.values(filters).some(filterArray => 
+            Array.isArray(filterArray) && filterArray.length > 0
+        );
+        
+        if (hasActiveFilters) {
+            // Filtros ativos - enviar dados filtrados
+            const filterEvent = new CustomEvent('dashboardFiltersApplied', {
+                detail: {
+                    filteredData: filteredData,
+                    originalData: firebaseTableData,
+                    filterCount: filteredData.length,
+                    originalCount: firebaseTableData.length,
+                    appliedFilters: filters
+                }
+            });
+            window.dispatchEvent(filterEvent);
+            console.log('📤 [FIREBASE-TABLE] Evento dashboardFiltersApplied enviado:', filteredData.length, 'registros');
+        } else {
+            // Sem filtros - limpar filtros
+            const clearEvent = new CustomEvent('dashboardFiltersCleared', {
+                detail: {
+                    originalData: firebaseTableData,
+                    totalCount: firebaseTableData.length
+                }
+            });
+            window.dispatchEvent(clearEvent);
+            console.log('📤 [FIREBASE-TABLE] Evento dashboardFiltersCleared enviado:', firebaseTableData.length, 'registros');
+        }
+        
         console.log('✅ [FIREBASE-TABLE] Filtros aplicados:', filters);
         
     } catch (error) {
@@ -1538,9 +1591,9 @@ function populateFilterSelect(selectId, values) {
 // ============= ATUALIZAÇÃO COMPLETA DE GRÁFICOS DO DASHBOARD =============
 // FUNÇÃO DESABILITADA - Os gráficos agora são gerenciados por dashboard-integration.js
 async function updateDashboardCharts() {
-    console.log('📈 [FIREBASE-TABLE] === FUNÇÃO DESABILITADA - USANDO DASHBOARD-CHARTS-V5.JS ===');
-    console.log('📈 [FIREBASE-TABLE] Gráficos agora são gerenciados pelo dashboard-charts-v5.js');
-    return true; // Retornar sucesso sem fazer nada
+    console.log('📈 [FIREBASE-TABLE] === SISTEMA DE GRÁFICOS REMOVIDO ===');
+    console.log('📈 [FIREBASE-TABLE] Aguardando implementação do novo sistema');
+    return true;
     
     /* CÓDIGO DESABILITADO - USANDO DASHBOARD-CHARTS-V5.JS
     try {
