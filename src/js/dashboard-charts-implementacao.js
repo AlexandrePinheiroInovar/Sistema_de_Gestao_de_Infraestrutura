@@ -43,7 +43,16 @@ ChartsDashboard.criarGraficoProjetos = function() {
                     backgroundColor: this.colors.principal,
                     borderColor: this.colors.borda,
                     borderWidth: 2,
-                    yAxisID: 'y'
+                    yAxisID: 'y',
+                    datalabels: {
+                        display: true,
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 4,
+                        color: '#374151',
+                        font: { weight: 'bold', size: 11 },
+                        formatter: (value) => value
+                    }
                 },
                 {
                     type: 'line',
@@ -53,15 +62,33 @@ ChartsDashboard.criarGraficoProjetos = function() {
                     borderColor: this.colors.linha,
                     borderWidth: 3,
                     fill: false,
-                    yAxisID: 'y1'
+                    yAxisID: 'y1',
+                    datalabels: {
+                        display: true,
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 25,
+                        color: '#1f2937',
+                        font: { weight: 'bold', size: 10 },
+                        formatter: (value) => value + '%',
+                        backgroundColor: 'rgba(255,255,255,0.8)',
+                        borderColor: this.colors.linha,
+                        borderWidth: 1,
+                        borderRadius: 3,
+                        padding: 2
+                    }
                 }
             ]
         },
+        plugins: [ChartDataLabels],
         options: {
             responsive: true,
             plugins: {
                 title: { display: true, text: 'Análise de Projetos' },
-                legend: { display: true }
+                legend: { display: true },
+                datalabels: {
+                    display: false // Configuração individual por dataset
+                }
             },
             scales: {
                 y: {
@@ -117,14 +144,30 @@ ChartsDashboard.criarGraficoSubProjetos = function() {
                 data: data,
                 backgroundColor: this.colors.gradiente,
                 borderColor: this.colors.borda,
-                borderWidth: 2
+                borderWidth: 2,
+                datalabels: {
+                    display: true,
+                    color: '#fff',
+                    font: { weight: 'bold', size: 12 },
+                    formatter: (value, context) => {
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = Math.round((value / total) * 100);
+                        return percentage > 5 ? percentage + '%' : ''; // Só mostra se > 5%
+                    },
+                    textStrokeColor: '#000',
+                    textStrokeWidth: 1
+                }
             }]
         },
+        plugins: [ChartDataLabels],
         options: {
             responsive: true,
             plugins: {
                 title: { display: true, text: 'Análise de Sub Projetos' },
-                legend: { position: 'right' }
+                legend: { position: 'right' },
+                datalabels: {
+                    display: false // Configuração individual por dataset
+                }
             }
         }
     });
@@ -166,15 +209,28 @@ ChartsDashboard.criarGraficoCidades = function() {
                 data: data,
                 backgroundColor: this.colors.principal,
                 borderColor: this.colors.borda,
-                borderWidth: 2
+                borderWidth: 2,
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'top',
+                    offset: 4,
+                    color: '#374151',
+                    font: { weight: 'bold', size: 12 },
+                    formatter: (value) => value
+                }
             }]
         },
+        plugins: [ChartDataLabels],
         options: {
             responsive: true,
             indexAxis: 'y', // Barras horizontais
             plugins: {
                 title: { display: true, text: 'Análise de Cidades' },
-                legend: { display: false }
+                legend: { display: false },
+                datalabels: {
+                    display: false // Configuração individual por dataset
+                }
             },
             scales: {
                 x: { title: { display: true, text: 'Quantidade' } },
@@ -221,14 +277,27 @@ ChartsDashboard.criarGraficoHP = function() {
                 data: data,
                 backgroundColor: this.colors.secundaria,
                 borderColor: this.colors.borda,
-                borderWidth: 2
+                borderWidth: 2,
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'top',
+                    offset: 4,
+                    color: '#374151',
+                    font: { weight: 'bold', size: 12 },
+                    formatter: (value) => value.toLocaleString()
+                }
             }]
         },
+        plugins: [ChartDataLabels],
         options: {
             responsive: true,
             plugins: {
                 title: { display: true, text: 'Soma de HP por Projeto' },
-                legend: { display: false }
+                legend: { display: false },
+                datalabels: {
+                    display: false // Configuração individual por dataset
+                }
             },
             scales: {
                 y: { 
@@ -298,7 +367,21 @@ ChartsDashboard.criarGraficoRecebimentos = function() {
                 borderWidth: 3,
                 fill: false,
                 tension: 0.2,
-                pointRadius: 6
+                pointRadius: 6,
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'top',
+                    offset: 8,
+                    color: '#1e40af',
+                    font: { weight: 'bold', size: 11 },
+                    formatter: (value) => value,
+                    backgroundColor: 'rgba(255,255,255,0.8)',
+                    borderColor: '#3b82f6',
+                    borderWidth: 1,
+                    borderRadius: 3,
+                    padding: 2
+                }
             }, {
                 label: 'Concluídos',
                 data: concluidos,
@@ -307,9 +390,24 @@ ChartsDashboard.criarGraficoRecebimentos = function() {
                 borderWidth: 3,
                 fill: false,
                 tension: 0.2,
-                pointRadius: 6
+                pointRadius: 6,
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'bottom',
+                    offset: 8,
+                    color: '#047857',
+                    font: { weight: 'bold', size: 11 },
+                    formatter: (value) => value,
+                    backgroundColor: 'rgba(255,255,255,0.8)',
+                    borderColor: '#10b981',
+                    borderWidth: 1,
+                    borderRadius: 3,
+                    padding: 2
+                }
             }]
         },
+        plugins: [ChartDataLabels],
         options: {
             responsive: true,
             maintainAspectRatio: false,
@@ -319,7 +417,10 @@ ChartsDashboard.criarGraficoRecebimentos = function() {
                     text: 'Análise de Recebimentos e Conclusões',
                     font: { size: 16, weight: 'bold' }
                 },
-                legend: { display: true, position: 'top' }
+                legend: { display: true, position: 'top' },
+                datalabels: {
+                    display: false // Configuração individual por dataset
+                }
             },
             scales: {
                 y: { 
@@ -418,15 +519,32 @@ ChartsDashboard.criarGraficoSupervisores = function() {
                 data: dadosProdutiva,
                 backgroundColor: '#10b981',
                 borderColor: '#059669',
-                borderWidth: 1
+                borderWidth: 1,
+                datalabels: {
+                    display: true,
+                    anchor: 'center',
+                    align: 'center',
+                    color: '#fff',
+                    font: { weight: 'bold', size: 11 },
+                    formatter: (value) => value > 0 ? value : ''
+                }
             }, {
                 label: 'IMPRODUTIVA',
                 data: dadosImprodutiva,
                 backgroundColor: '#ef4444',
                 borderColor: '#dc2626',
-                borderWidth: 1
+                borderWidth: 1,
+                datalabels: {
+                    display: true,
+                    anchor: 'center',
+                    align: 'center',
+                    color: '#fff',
+                    font: { weight: 'bold', size: 11 },
+                    formatter: (value) => value > 0 ? value : ''
+                }
             }]
         },
+        plugins: [ChartDataLabels],
         options: {
             responsive: true,
             maintainAspectRatio: false,
@@ -436,7 +554,10 @@ ChartsDashboard.criarGraficoSupervisores = function() {
                     text: 'Análise de Endereços por Supervisor',
                     font: { size: 16, weight: 'bold' }
                 },
-                legend: { display: true, position: 'top' }
+                legend: { display: true, position: 'top' },
+                datalabels: {
+                    display: false // Configuração individual por dataset
+                }
             },
             scales: {
                 x: { 
