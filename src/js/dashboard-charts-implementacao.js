@@ -356,54 +356,38 @@ ChartsDashboard.criarGraficoRecebimentos = function() {
     // Criar gráfico
     const ctx = canvas.getContext('2d');
     this.instances.recebimentos = new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         data: {
             labels: meses,
             datasets: [{
                 label: 'Recebidos',
                 data: recebidos,
+                backgroundColor: 'rgba(59, 130, 246, 0.8)',
                 borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                borderWidth: 3,
-                fill: false,
-                tension: 0.2,
-                pointRadius: 6,
+                borderWidth: 2,
                 datalabels: {
                     display: true,
                     anchor: 'end',
                     align: 'top',
-                    offset: 8,
+                    offset: 4,
                     color: '#1e40af',
                     font: { weight: 'bold', size: 11 },
-                    formatter: (value) => value,
-                    backgroundColor: 'rgba(255,255,255,0.8)',
-                    borderColor: '#3b82f6',
-                    borderWidth: 1,
-                    borderRadius: 3,
-                    padding: 2
+                    formatter: (value) => value
                 }
             }, {
                 label: 'Concluídos',
                 data: concluidos,
+                backgroundColor: 'rgba(16, 185, 129, 0.8)',
                 borderColor: '#10b981',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                borderWidth: 3,
-                fill: false,
-                tension: 0.2,
-                pointRadius: 6,
+                borderWidth: 2,
                 datalabels: {
                     display: true,
                     anchor: 'end',
-                    align: 'bottom',
-                    offset: 8,
+                    align: 'top',
+                    offset: 4,
                     color: '#047857',
                     font: { weight: 'bold', size: 11 },
-                    formatter: (value) => value,
-                    backgroundColor: 'rgba(255,255,255,0.8)',
-                    borderColor: '#10b981',
-                    borderWidth: 1,
-                    borderRadius: 3,
-                    padding: 2
+                    formatter: (value) => value
                 }
             }]
         },
