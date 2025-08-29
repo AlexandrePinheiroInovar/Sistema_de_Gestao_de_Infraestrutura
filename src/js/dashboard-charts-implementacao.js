@@ -508,7 +508,7 @@ ChartsDashboard.criarGraficoSupervisores = function() {
                     display: true,
                     anchor: 'center',
                     align: 'center',
-                    color: '#fff',
+                    color: '#000',
                     font: { weight: 'bold', size: 11 },
                     formatter: (value) => value > 0 ? value : ''
                 }
@@ -522,7 +522,7 @@ ChartsDashboard.criarGraficoSupervisores = function() {
                     display: true,
                     anchor: 'center',
                     align: 'center',
-                    color: '#fff',
+                    color: '#000',
                     font: { weight: 'bold', size: 11 },
                     formatter: (value) => value > 0 ? value : ''
                 }
