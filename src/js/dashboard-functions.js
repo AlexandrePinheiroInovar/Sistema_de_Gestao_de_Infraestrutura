@@ -2,38 +2,7 @@
 console.log('🔧 [DASHBOARD-FUNCTIONS] Inicializando funções auxiliares...');
 
 // ============= FUNÇÕES DE MODAL =============
-function abrirNovoEndereco() {
-    console.log('➕ Abrindo modal para novo endereço');
-    
-    // Reset do formulário
-    const form = document.getElementById('enderecoForm');
-    if (form) {
-        form.reset();
-    }
-    
-    // Reset da variável de edição
-    if (window.currentEditingId !== undefined) {
-        window.currentEditingId = null;
-    }
-    
-    // Atualizar título do modal
-    const modalTitle = document.getElementById('modalTitle');
-    if (modalTitle) {
-        modalTitle.textContent = 'Novo Endereço';
-    }
-    
-    // Atualizar botão de submit
-    const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) {
-        submitBtn.textContent = 'Salvar';
-    }
-    
-    // Mostrar modal
-    const modal = document.getElementById('crudModal');
-    if (modal) {
-        modal.style.display = 'block';
-    }
-}
+// FUNÇÃO REMOVIDA - Agora usando novo-endereco-limpo.js
 
 function closeModal() {
     const modal = document.getElementById('crudModal');
@@ -521,7 +490,7 @@ function showMessage(message, type = 'info') {
 }
 
 // ============= TORNAR FUNÇÕES GLOBAIS =============
-window.abrirNovoEndereco = abrirNovoEndereco;
+// window.abrirNovoEndereco = REMOVIDO;
 window.closeModal = closeModal;
 window.openUploadModal = openUploadModal;
 window.closeUploadModal = closeUploadModal;

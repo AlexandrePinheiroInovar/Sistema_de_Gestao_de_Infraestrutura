@@ -389,47 +389,14 @@
 
                 <!-- Seção CRUD de Endereços -->
                 <div id="enderecos" class="section">
-                    <div class="endereco-stats-cards">
-                        <div class="endereco-stat-card blue">
-                            <div class="stat-content">
-                                <span class="stat-label">Total de Registros</span>
-                                <span class="stat-value" id="statTotalRegistros">0</span>
-                                <span class="stat-desc">Endereços cadastrados</span>
-                            </div>
-                            <div class="stat-icon">📋</div>
-                        </div>
-                        <div class="endereco-stat-card green">
-                            <div class="stat-content">
-                                <span class="stat-label">Endereços Distintos</span>
-                                <span class="stat-value" id="statEnderecosDistintos">0</span>
-                                <span class="stat-desc">Endereços únicos</span>
-                            </div>
-                            <div class="stat-icon">🏠</div>
-                        </div>
-                        <div class="endereco-stat-card orange">
-                            <div class="stat-content">
-                                <span class="stat-label">Equipes Distintas</span>
-                                <span class="stat-value" id="statEquipesDistintas">0</span>
-                                <span class="stat-desc">Equipes únicas</span>
-                            </div>
-                            <div class="stat-icon">👥</div>
-                        </div>
-                        <div class="endereco-stat-card purple">
-                            <div class="stat-content">
-                                <span class="stat-label">Produtividade</span>
-                                <span class="stat-value" id="statProdutividade">0%</span>
-                                <span class="stat-desc">Total / Produtiva</span>
-                            </div>
-                            <div class="stat-icon">⚡</div>
-                        </div>
-                    </div>
+                    <!-- Cards removidos - disponíveis apenas no Dashboard -->
                     <div class="crud-header">
                         <div class="crud-title">
                             <h2>🏠 Cadastro de Endereços</h2>
                             <p>Gerencie todos os endereços do sistema MDU</p>
                         </div>
                         <div class="btn-group">
-                            <button class="btn-primary" onclick="abrirNovoEndereco()">
+                            <button class="btn-primary" onclick="novoEnderecoLimpo()">
                                 <span class="btn-icon">➕</span>
                                 Novo Endereço
                             </button>
@@ -1376,6 +1343,7 @@
     <!-- Firebase Sistema Unificado (PRODUCTION ONLY) -->
     <script src="src/js/firebase-complete.js?v=1.3&t=2025081813"></script>
     <script src="src/js/firestore-integration.js?v=1.3&t=2025081813"></script>
+    <script src="src/js/novo-endereco-limpo.js?v=1.0&t=2025090201"></script> <!-- NOVO SISTEMA LIMPO -->
     <script src="src/js/dashboard-minimal.js?v=1.3&t=2025081813"></script>
     <script src="src/js/dashboard-functions.js?v=1.3&t=2025081813"></script>
     <!-- <script src="src/js/dashboard-handlers.js?v=1.3&t=2025081813"></script> DESABILITADO - Conflitando com novo sistema -->
