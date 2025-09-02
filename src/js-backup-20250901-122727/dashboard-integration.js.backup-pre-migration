@@ -6,29 +6,6 @@ let dashboardData = [];
 let filteredData = [];
 let charts = {};
 
-// ============= INICIALIZAÇÃO GLOBAL =============
-// Escutar sistema Firebase estar pronto globalmente
-window.addEventListener('firebaseSystemReady', function(event) {
-    console.log('🔧 [DASHBOARD-INTEGRATION] Sistema Firebase pronto globalmente:', event.detail);
-    
-    // Auto-inicializar se há dados
-    if (event.detail.dataLength > 0) {
-        setTimeout(async () => {
-            console.log('🚀 [DASHBOARD-INTEGRATION] Auto-inicializando com dados globais...');
-            
-            if (window.FirebaseTableSystem && window.FirebaseTableSystem.getData) {
-                const dados = window.FirebaseTableSystem.getData();
-                if (dados && dados.length > 0) {
-                    dashboardData = dados;
-                    filteredData = [...dados];
-                    await inicializarDashboard();
-                    console.log('✅ [DASHBOARD-INTEGRATION] Dashboard inicializado globalmente com', dados.length, 'registros');
-                }
-            }
-        }, 1000);
-    }
-});
-
 // ============= INICIALIZAÇÃO =============
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🔧 [DASHBOARD-INTEGRATION] Configurando sistema...');
@@ -121,25 +98,25 @@ async function inicializarDashboard() {
         // Configurar observador para recarregar filtros quando tabela mudar
         observarMudancasNaTabela();
         
-        // Cards são atualizados pelo firebase-table-system.js
-        console.log('📊 [DASHBOARD-INTEGRATION] Cards gerenciados pelo firebase-table-system.js');
+        // Atualizar cards estatísticos
+        atualizarCardsEstatisticos();
         
-        // Gerar gráficos usando dashboard-charts-v5.js diretamente
-        if (typeof window.criarTodosGraficos === 'function') {
-            console.log('🔄 [DASHBOARD-INTEGRATION] Inicializando gráficos V5...');
-            window.criarTodosGraficos(filteredData);
+        // Gerar gráficos usando sistema V5
+        // Usar sistema integrado do firebase-table-system.js
+        if (typeof window.criarTodosGraficosIntegrados === 'function') {
+            console.log('🔄 [DASHBOARD-INTEGRATION] Inicializando gráficos integrados...');
+            window.criarTodosGraficosIntegrados(filteredData);
         } else {
-            console.warn('⚠️ [DASHBOARD-INTEGRATION] Aguardando dashboard-charts-v5...');
+            console.warn('⚠️ [DASHBOARD-INTEGRATION] Aguardando sistema de gráficos integrado...');
             setTimeout(() => {
-                if (typeof window.criarTodosGraficos === 'function') {
-                    console.log('🔄 [DASHBOARD-INTEGRATION] Inicializando gráficos V5 (retry)...');
-                    window.criarTodosGraficos(filteredData);
+                if (typeof window.criarTodosGraficosIntegrados === 'function') {
+                    window.criarTodosGraficosIntegrados(filteredData);
                 }
             }, 2000);
         }
         
-        // Rankings são criados pelo firebase-table-system.js
-        console.log('🏆 [DASHBOARD-INTEGRATION] Rankings gerenciados pelo firebase-table-system.js');
+        // Gerar tabelas de ranking
+        gerarTabelasRanking();
         
         console.log('✅ [DASHBOARD-INTEGRATION] Dashboard inicializado com sucesso');
         
@@ -1453,15 +1430,123 @@ function getFilterLabel(selectId) {
 
 // ============= APLICAR FILTROS =============
 function applyInfraFilters() {
-    console.log('🚫 [DASHBOARD-INTEGRATION] applyInfraFilters() DESABILITADA - usando sistema unificado');
-    // FUNÇÃO DESABILITADA - Sistema unificado de filtros está ativo
-    return;
+    console.log('🔍 [DASHBOARD-INTEGRATION] Aplicando filtros...');
+    
+    const filtros = {
+        projeto: getSelectValues('infraFilterProjeto'),
+        subProjeto: getSelectValues('infraFilterSubProjeto'),
+        equipe: getSelectValues('infraFilterEquipe'),
+        status: getSelectValues('infraFilterStatus'),
+        cidade: getSelectValues('infraFilterCidade'),
+        supervisor: getSelectValues('infraFilterSupervisor'),
+        tipoAcao: getSelectValues('infraFilterTipoAcao'),
+        condominio: getSelectValues('infraFilterCondominio'),
+        dataInicio: document.getElementById('infraFilterDataInicio')?.value,
+        dataFim: document.getElementById('infraFilterDataFim')?.value
+    };
+    
+    // Filtrar dados
+    filteredData = dashboardData.filter(item => {
+        // Filtros de select múltiplo
+        if (filtros.projeto.length && !filtros.projeto.includes(item['Projeto'])) return false;
+        if (filtros.subProjeto.length && !filtros.subProjeto.includes(item['Sub Projeto'])) return false;
+        if (filtros.equipe.length && !filtros.equipe.includes(item['EQUIPE'])) return false;
+        if (filtros.status.length && !filtros.status.includes(item['Status'])) return false;
+        if (filtros.cidade.length && !filtros.cidade.includes(item['Cidade'])) return false;
+        if (filtros.supervisor.length && !filtros.supervisor.includes(item['Supervisor'])) return false;
+        if (filtros.tipoAcao.length && !filtros.tipoAcao.includes(item['Tipo de Ação'])) return false;
+        if (filtros.condominio.length && !filtros.condominio.includes(item['Condominio'])) return false;
+        
+        // Filtro de data
+        if (filtros.dataInicio || filtros.dataFim) {
+            const dataRecebimento = item['DATA RECEBIMENTO'];
+            if (dataRecebimento) {
+                const data = new Date(dataRecebimento);
+                if (filtros.dataInicio && data < new Date(filtros.dataInicio)) return false;
+                if (filtros.dataFim && data > new Date(filtros.dataFim)) return false;
+            }
+        }
+        
+        return true;
+    });
+    
+    // Atualizar dashboard
+    atualizarCardsEstatisticos();
+    
+    // Atualizar gráficos do dashboard-charts-v5.js com dados filtrados
+    console.log('🔄 [DASHBOARD-INTEGRATION] Notificando filtros aplicados...');
+    
+    // Método 1: Função direta
+    if (typeof window.criarTodosGraficosIntegrados === 'function') {
+        console.log('📊 [DASHBOARD-INTEGRATION] Atualizando gráficos integrados com dados filtrados...');
+        window.criarTodosGraficosIntegrados(filteredData);
+    } else {
+        console.warn('⚠️ [DASHBOARD-INTEGRATION] Função de atualização dos gráficos integrados não encontrada, tentando evento...');
+    }
+    
+    // Método 2: Evento customizado (mais robusto)
+    window.dispatchEvent(new CustomEvent('dashboardFiltersApplied', { 
+        detail: { 
+            filteredData: filteredData, 
+            filterCount: filteredData.length,
+            originalCount: dashboardData.length
+        } 
+    }));
+    
+    gerarTabelasRanking();
+    
+    console.log('✅ [DASHBOARD-INTEGRATION] Filtros aplicados. Resultados:', filteredData.length);
 }
 
 function clearInfraFilters() {
-    console.log('🚫 [DASHBOARD-INTEGRATION] clearInfraFilters() DESABILITADA - usando sistema unificado');
-    // FUNÇÃO DESABILITADA - Sistema unificado de filtros está ativo
-    return;
+    console.log('🧹 [DASHBOARD-INTEGRATION] Limpando filtros...');
+    
+    // Limpar todos os selects
+    const selects = [
+        'infraFilterProjeto', 'infraFilterSubProjeto', 'infraFilterEquipe',
+        'infraFilterStatus', 'infraFilterCidade', 'infraFilterSupervisor', 
+        'infraFilterTipoAcao', 'infraFilterCondominio'
+    ];
+    
+    selects.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (select) {
+            select.selectedIndex = -1;
+        }
+    });
+    
+    // Limpar datas
+    const dataInicio = document.getElementById('infraFilterDataInicio');
+    const dataFim = document.getElementById('infraFilterDataFim');
+    if (dataInicio) dataInicio.value = '';
+    if (dataFim) dataFim.value = '';
+    
+    // Resetar dados filtrados
+    filteredData = [...dashboardData];
+    
+    // Atualizar dashboard
+    atualizarCardsEstatisticos();
+    
+    // Atualizar gráficos do dashboard-charts-v5.js com todos os dados (sem filtro)
+    console.log('🔄 [DASHBOARD-INTEGRATION] Notificando filtros limpos...');
+    
+    // Método 1: Função direta
+    if (typeof window.criarTodosGraficosIntegrados === 'function') {
+        console.log('📊 [DASHBOARD-INTEGRATION] Atualizando gráficos integrados sem filtros...');
+        window.criarTodosGraficosIntegrados(filteredData);
+    } else {
+        console.warn('⚠️ [DASHBOARD-INTEGRATION] Função de atualização dos gráficos integrados não encontrada');
+    }
+    
+    // Método 2: Evento customizado (mais robusto)
+    window.dispatchEvent(new CustomEvent('dashboardFiltersCleared', { 
+        detail: { 
+            data: filteredData, 
+            count: filteredData.length
+        } 
+    }));
+    
+    gerarTabelasRanking();
 }
 
 // ============= FUNÇÕES AUXILIARES =============
@@ -1469,35 +1554,7 @@ function getSelectValues(selectId) {
     const select = document.getElementById(selectId);
     if (!select) return [];
     
-    // VERIFICAR SE É UM MULTI-SELECT DROPDOWN
-    if (select.dataset.multiSelectActive === 'true' || select.hasAttribute('data-multi-select')) {
-        // Buscar pelos valores selecionados no multi-select customizado
-        const container = select.closest('.multi-select-container');
-        if (container) {
-            const selectedValues = [];
-            const checkboxes = container.querySelectorAll('input[type="checkbox"]:checked');
-            checkboxes.forEach(checkbox => {
-                if (checkbox.value !== '') {
-                    selectedValues.push(checkbox.value);
-                }
-            });
-            console.log(`🎯 [DASHBOARD-INTEGRATION] Multi-select ${selectId}:`, selectedValues);
-            return selectedValues;
-        }
-        
-        // Fallback: buscar pela instância do MultiSelectDropdown
-        if (window.multiSelectInstances && window.multiSelectInstances[selectId]) {
-            const instance = window.multiSelectInstances[selectId];
-            const values = Array.from(instance.selectedValues);
-            console.log(`🎯 [DASHBOARD-INTEGRATION] Multi-select instance ${selectId}:`, values);
-            return values;
-        }
-    }
-    
-    // SELECT NORMAL
-    const values = Array.from(select.selectedOptions).map(option => option.value);
-    console.log(`📋 [DASHBOARD-INTEGRATION] Select normal ${selectId}:`, values);
-    return values;
+    return Array.from(select.selectedOptions).map(option => option.value);
 }
 
 function gerarCores(quantidade) {

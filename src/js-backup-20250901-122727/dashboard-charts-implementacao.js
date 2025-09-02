@@ -67,15 +67,15 @@ ChartsDashboard.criarGraficoProjetos = function() {
                         display: true,
                         anchor: 'end',
                         align: 'top',
-                        offset: 40,
+                        offset: 25,
                         color: '#1f2937',
                         font: { weight: 'bold', size: 10 },
                         formatter: (value) => value + '%',
-                        backgroundColor: 'rgba(255,255,255,0.95)',
+                        backgroundColor: 'rgba(255,255,255,0.8)',
                         borderColor: this.colors.linha,
                         borderWidth: 1,
-                        borderRadius: 4,
-                        padding: 3
+                        borderRadius: 3,
+                        padding: 2
                     }
                 }
             ]
@@ -109,7 +109,7 @@ ChartsDashboard.criarGraficoProjetos = function() {
     });
 };
 
-// ============= 2. GRÁFICO DE SUB PROJETOS (Barras + Linha) =============
+// ============= 2. GRÁFICO DE SUB PROJETOS (Pizza) =============
 ChartsDashboard.criarGraficoSubProjetos = function() {
     console.log('📊 [GRÁFICO-2] Criando Análise de Sub Projetos...');
     
@@ -133,90 +133,47 @@ ChartsDashboard.criarGraficoSubProjetos = function() {
     
     const labels = entries.map(([nome]) => nome);
     const data = entries.map(([,count]) => count);
-    const total = data.reduce((a, b) => a + b, 0);
-    const percentuais = data.map(val => Math.round((val / total) * 100));
     
     // Criar gráfico
     const ctx = canvas.getContext('2d');
     this.instances.subProjetos = new Chart(ctx, {
-        type: 'bar',
+        type: 'doughnut',
         data: {
             labels: labels,
-            datasets: [
-                {
-                    type: 'bar',
-                    label: 'Quantidade',
-                    data: data,
-                    backgroundColor: this.colors.secundaria,
-                    borderColor: this.colors.borda,
-                    borderWidth: 2,
-                    yAxisID: 'y',
-                    datalabels: {
-                        display: true,
-                        anchor: 'end',
-                        align: 'top',
-                        offset: 4,
-                        color: '#374151',
-                        font: { weight: 'bold', size: 11 },
-                        formatter: (value) => value
-                    }
-                },
-                {
-                    type: 'line',
-                    label: 'Percentual (%)',
-                    data: percentuais,
-                    backgroundColor: this.colors.clara,
-                    borderColor: this.colors.linha,
-                    borderWidth: 3,
-                    fill: false,
-                    yAxisID: 'y1',
-                    datalabels: {
-                        display: true,
-                        anchor: 'end',
-                        align: 'top',
-                        offset: 40,
-                        color: '#1f2937',
-                        font: { weight: 'bold', size: 10 },
-                        formatter: (value) => value + '%',
-                        backgroundColor: 'rgba(255,255,255,0.95)',
-                        borderColor: this.colors.linha,
-                        borderWidth: 1,
-                        borderRadius: 4,
-                        padding: 3
-                    }
+            datasets: [{
+                data: data,
+                backgroundColor: this.colors.gradiente,
+                borderColor: this.colors.borda,
+                borderWidth: 2,
+                datalabels: {
+                    display: true,
+                    color: '#fff',
+                    font: { weight: 'bold', size: 12 },
+                    formatter: (value, context) => {
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = Math.round((value / total) * 100);
+                        return percentage > 5 ? percentage + '%' : ''; // Só mostra se > 5%
+                    },
+                    textStrokeColor: '#000',
+                    textStrokeWidth: 1
                 }
-            ]
+            }]
         },
         plugins: [ChartDataLabels],
         options: {
             responsive: true,
             plugins: {
                 title: { display: true, text: 'Análise de Sub Projetos' },
-                legend: { display: true },
+                legend: { position: 'right' },
                 datalabels: {
                     display: false // Configuração individual por dataset
-                }
-            },
-            scales: {
-                y: {
-                    type: 'linear',
-                    display: true,
-                    position: 'left',
-                    title: { display: true, text: 'Quantidade' }
-                },
-                y1: {
-                    type: 'linear',
-                    display: true,
-                    position: 'right',
-                    title: { display: true, text: 'Percentual (%)' },
-                    grid: { drawOnChartArea: false }
                 }
             }
         }
     });
 };
 
-// ============= 3. GRÁFICO DE CIDADES (Barras verticais) =============
+// ============= 3. GRÁFICO DE CIDADES (Barras horizontais) =============
 ChartsDashboard.criarGraficoCidades = function() {
     console.log('📊 [GRÁFICO-3] Criando Análise de Cidades...');
     
@@ -267,6 +224,7 @@ ChartsDashboard.criarGraficoCidades = function() {
         plugins: [ChartDataLabels],
         options: {
             responsive: true,
+            indexAxis: 'y', // Barras horizontais
             plugins: {
                 title: { display: true, text: 'Análise de Cidades' },
                 legend: { display: false },
@@ -275,8 +233,8 @@ ChartsDashboard.criarGraficoCidades = function() {
                 }
             },
             scales: {
-                x: { title: { display: true, text: 'Cidades' } },
-                y: { title: { display: true, text: 'Quantidade' } }
+                x: { title: { display: true, text: 'Quantidade' } },
+                y: { title: { display: true, text: 'Cidades' } }
             }
         }
     });
@@ -754,14 +712,17 @@ ChartsDashboard.criarRankingStatus = function() {
         somaImprodutiva += item.improdutiva;
         somaTotal += item.total;
         
+        const cor = item.produtividade >= 80 ? '#22c55e' : 
+                   item.produtividade >= 60 ? '#f59e0b' : '#ef4444';
+        
         html += `
             <tr>
                 <td>${index + 1}º</td>
                 <td><strong>${item.equipe}</strong></td>
-                <td style="color: #000000; font-weight: bold;">${item.produtiva}</td>
-                <td style="color: #000000; font-weight: bold;">${item.improdutiva}</td>
+                <td style="color: #22c55e; font-weight: bold;">${item.produtiva}</td>
+                <td style="color: #ef4444; font-weight: bold;">${item.improdutiva}</td>
                 <td><strong>${item.total}</strong></td>
-                <td><span style="color: #000000; font-weight: bold;">${item.produtividade}%</span></td>
+                <td><span style="color: ${cor}; font-weight: bold;">${item.produtividade}%</span></td>
             </tr>
         `;
     });
@@ -783,7 +744,8 @@ ChartsDashboard.criarRankingStatus = function() {
     if (elements.totalStatusGeral) elements.totalStatusGeral.textContent = somaTotal;
     if (elements.totalProdutividade) {
         elements.totalProdutividade.textContent = produtividadeGeral + '%';
-        elements.totalProdutividade.style.color = '#000000';
+        elements.totalProdutividade.style.color = produtividadeGeral >= 70 ? '#22c55e' : 
+                                                  produtividadeGeral >= 50 ? '#f59e0b' : '#ef4444';
         elements.totalProdutividade.style.fontWeight = 'bold';
     }
     

@@ -182,34 +182,11 @@ let firebaseTableData = [];
 let firebaseTableColumns = [];
 let filterText = '';
 
-// ============= INICIALIZAÇÃO GLOBAL =============
-// Inicialização imediata para carregar dados em qualquer página
-(function() {
-    console.log('🚀 [FIREBASE-TABLE] Inicialização global ativada...');
-    
-    // Se DOM já carregou, inicializar imediatamente
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializeGlobal);
-    } else {
-        // DOM já carregou, inicializar após breve delay
-        setTimeout(initializeGlobal, 100);
-    }
-    
-    async function initializeGlobal() {
-        console.log('📄 [FIREBASE-TABLE] DOM carregado, configurando sistema GLOBALMENTE...');
-        
-        // Sempre inicializar o sistema, independente da página
-        await initializeFirebaseTableSystem();
-        
-        // Emitir evento global para outros sistemas
-        window.dispatchEvent(new CustomEvent('firebaseSystemReady', {
-            detail: { 
-                system: 'firebase-table-system',
-                dataLength: firebaseTableData?.length || 0
-            }
-        }));
-    }
-})();
+// ============= INICIALIZAÇÃO =============
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 [FIREBASE-TABLE] DOM carregado, configurando sistema...');
+    initializeFirebaseTableSystem();
+});
 
 async function initializeFirebaseTableSystem() {
     console.log('🔧 [FIREBASE-TABLE] Inicializando sistema completo...');
@@ -289,14 +266,7 @@ async function loadFirebaseTableData() {
             // ATUALIZAR CARDS, FILTROS E GRÁFICOS DO DASHBOARD
             try {
                 await updateDashboardCards();
-                
-                // Só atualizar filtros se não houver filtros ativos
-                if (!window.filterState || !window.filterState.hasActiveFilters()) {
-                    await updateDashboardFilters();
-                } else {
-                    console.log('🔒 [FIREBASE-TABLE] Mantendo filtros ativos, pulando atualização');
-                }
-                
+                await updateDashboardFilters();
                 await updateDashboardCharts(); // HABILITADO - gráficos integrados no firebase-table-system
                 console.log('✅ [FIREBASE-TABLE] Cards, filtros e gráficos atualizados');
             } catch (error) {
@@ -1337,14 +1307,9 @@ function updateStatCard(elementId, value) {
 
 // ============= FILTROS DINÂMICOS COMPLETOS =============
 async function updateDashboardFilters() {
-    console.log('🚫 [FIREBASE-TABLE] updateDashboardFilters() DESABILITADA - usando sistema unificado');
-    // FUNÇÃO DESABILITADA - Sistema unificado de filtros está ativo
-    return;
+    console.log('🔍 [FIREBASE-TABLE] Atualizando TODOS os filtros do dashboard...');
     
     try {
-        // Marcar que estamos atualizando filtros
-        window.isRestoringFilters = true;
-        
         await firebaseManager.ensureReady();
         const firestore = firebaseManager.getFirestore();
         const snapshot = await firestore.collection('enderecos').get();
@@ -1354,16 +1319,16 @@ async function updateDashboardFilters() {
             allData.push(doc.data());
         });
         
-        // Extrair valores únicos para TODOS os filtros (usando nomes corretos das colunas)
+        // Extrair valores únicos para TODOS os filtros
         const filterData = {
-            projetos: getUniqueValues(allData, 'Projeto'),
-            subProjetos: getUniqueValues(allData, 'Sub Projeto'),
-            cidades: getUniqueValues(allData, 'Cidade'),
-            equipes: getUniqueValues(allData, 'EQUIPE'),
-            supervisores: getUniqueValues(allData, 'Supervisor'),
-            status: getUniqueValues(allData, 'Status'),
-            condominios: getUniqueValues(allData, 'Condominio'),
-            tiposAcao: getUniqueValues(allData, 'Tipo de Ação')
+            projetos: getUniqueValues(allData, 'projeto'),
+            subProjetos: getUniqueValues(allData, 'subProjeto'),
+            cidades: getUniqueValues(allData, 'cidade'),
+            equipes: getUniqueValues(allData, 'equipe'),
+            supervisores: getUniqueValues(allData, 'supervisor'),
+            status: getUniqueValues(allData, 'status'),
+            condominios: getUniqueValues(allData, 'condominio'),
+            tiposAcao: getUniqueValues(allData, 'tipoAcao')
         };
         
         // ===== ATUALIZAR FILTROS DA SEÇÃO INFRAESTRUTURA =====
@@ -1374,7 +1339,6 @@ async function updateDashboardFilters() {
         populateFilterSelect('infraFilterCidade', filterData.cidades);
         populateFilterSelect('infraFilterSupervisor', filterData.supervisores);
         populateFilterSelect('infraFilterTipoAcao', filterData.tiposAcao);
-        populateFilterSelect('infraFilterCondominio', filterData.condominios);
         
         // ===== ATUALIZAR OUTROS FILTROS SE EXISTIREM =====
         populateFilterSelect('filterProjeto', filterData.projetos);
@@ -1388,17 +1352,10 @@ async function updateDashboardFilters() {
         setupFilterEvents();
         
         console.log('✅ [FIREBASE-TABLE] TODOS os filtros atualizados');
-        
-        // Desmarcar flag de restauração
-        setTimeout(() => {
-            window.isRestoringFilters = false;
-        }, 1000);
-        
         return filterData;
         
     } catch (error) {
         console.error('❌ [FIREBASE-TABLE] Erro ao atualizar filtros:', error);
-        window.isRestoringFilters = false; // Reset flag even on error
         return null;
     }
 }
@@ -1443,36 +1400,6 @@ async function applyFirebaseFilters(customFilters = null) {
         const filteredStats = calculateFilteredStatistics(filteredData);
         updateFilteredCards(filteredStats);
         
-        // EMITIR EVENTO PARA O SISTEMA DE GRÁFICOS
-        const hasActiveFilters = Object.values(filters).some(filterArray => 
-            Array.isArray(filterArray) && filterArray.length > 0
-        );
-        
-        if (hasActiveFilters) {
-            // Filtros ativos - enviar dados filtrados
-            const filterEvent = new CustomEvent('dashboardFiltersApplied', {
-                detail: {
-                    filteredData: filteredData,
-                    originalData: firebaseTableData,
-                    filterCount: filteredData.length,
-                    originalCount: firebaseTableData.length,
-                    appliedFilters: filters
-                }
-            });
-            window.dispatchEvent(filterEvent);
-            console.log('📤 [FIREBASE-TABLE] Evento dashboardFiltersApplied enviado:', filteredData.length, 'registros');
-        } else {
-            // Sem filtros - limpar filtros
-            const clearEvent = new CustomEvent('dashboardFiltersCleared', {
-                detail: {
-                    originalData: firebaseTableData,
-                    totalCount: firebaseTableData.length
-                }
-            });
-            window.dispatchEvent(clearEvent);
-            console.log('📤 [FIREBASE-TABLE] Evento dashboardFiltersCleared enviado:', firebaseTableData.length, 'registros');
-        }
-        
         console.log('✅ [FIREBASE-TABLE] Filtros aplicados:', filters);
         
     } catch (error) {
@@ -1484,39 +1411,12 @@ function getSelectValues(selectId) {
     const select = document.getElementById(selectId);
     if (!select) return [];
     
-    // VERIFICAR SE É UM MULTI-SELECT DROPDOWN
-    if (select.dataset.multiSelectActive === 'true' || select.hasAttribute('data-multi-select')) {
-        // Buscar pelos valores selecionados no multi-select customizado
-        const container = select.closest('.multi-select-container');
-        if (container) {
-            const selectedValues = [];
-            const checkboxes = container.querySelectorAll('input[type="checkbox"]:checked');
-            checkboxes.forEach(checkbox => {
-                if (checkbox.value !== '') {
-                    selectedValues.push(checkbox.value);
-                }
-            });
-            console.log(`🎯 [FIREBASE-TABLE] Multi-select ${selectId}:`, selectedValues);
-            return selectedValues;
-        }
-        
-        // Fallback: buscar pela instância do MultiSelectDropdown
-        if (window.multiSelectInstances && window.multiSelectInstances[selectId]) {
-            const instance = window.multiSelectInstances[selectId];
-            const values = Array.from(instance.selectedValues);
-            console.log(`🎯 [FIREBASE-TABLE] Multi-select instance ${selectId}:`, values);
-            return values;
-        }
-    }
-    
-    // SELECT NORMAL
     const values = [];
     for (const option of select.selectedOptions) {
         if (option.value) {
             values.push(option.value);
         }
     }
-    console.log(`📋 [FIREBASE-TABLE] Select normal ${selectId}:`, values);
     return values;
 }
 
@@ -1593,30 +1493,14 @@ function calculateFilteredStatistics(filteredData) {
 }
 
 function updateFilteredCards(stats) {
-    console.log('🎯 [FIREBASE-TABLE] Atualizando cards filtrados:', stats);
-    
-    // Atualizar cards principais da seção infraestrutura
+    // Atualizar apenas cards que devem mudar com filtros
     updateStatCard('infraStatTotalRegistros', stats.totalRegistros);
     updateStatCard('infraStatEnderecosDistintos', stats.enderecosDistintos);
-    updateStatCard('infraStatEquipesDistintas', stats.equipesDistintas);  
+    updateStatCard('infraStatEquipesDistintas', stats.equipesDistintas);
     updateStatCard('infraStatProdutividade', `${stats.produtividade}%`);
     
-    // Atualizar também os cards da seção endereços (se existirem)
-    updateStatCard('statTotalRegistros', stats.totalRegistros);
-    updateStatCard('statEnderecosDistintos', stats.enderecosDistintos);
-    updateStatCard('statEquipesDistintas', stats.equipesDistintas);
-    updateStatCard('statProdutividade', `${stats.produtividade}%`);
-    
-    // Atualizar cards de ranking (se existirem)
-    updateStatCard('totalStatusGeral', stats.totalRegistros);
-    updateStatCard('totalProdutiva', stats.totalProdutiva || 0);
-    updateStatCard('totalImprodutiva', stats.totalImprodutiva || 0);
-    updateStatCard('totalProdutividade', `${stats.produtividade}%`);
-    
-    // Atualizar ranking de equipes
+    // Atualizar ranking
     updateEquipeStatusRanking(stats.topEquipes, stats.statusCounts);
-    
-    console.log('✅ [FIREBASE-TABLE] Cards filtrados atualizados com sucesso');
 }
 
 function getUniqueValues(data, field) {
@@ -1630,62 +1514,13 @@ function getUniqueValues(data, field) {
 }
 
 function populateFilterSelect(selectId, values) {
-    console.log(`🚫 [FIREBASE-TABLE] populateFilterSelect() DESABILITADA - usando sistema unificado`);
-    // FUNÇÃO DESABILITADA - Sistema unificado de filtros está ativo
-    return;
+    const select = document.getElementById(selectId);
+    if (!select) return;
     
-    // BLOQUEAR se estamos restaurando filtros
-    if (window.isRestoringFilters) {
-        console.log(`🔒 [FIREBASE-TABLE] População bloqueada durante restauração: ${selectId}`);
-        return;
-    }
-    
-    // IMPORTANTE: Não recriar options se é um multi-select ativo OU tem filtros salvos
-    const isMultiSelect = select.classList.contains('multi-select-active') || select.hasAttribute('data-multi-select');
-    
-    // Verificar se existem filtros salvos para este select
-    const hasActiveFilters = window.filterState && window.filterState.hasActiveFilters();
-    
-    console.log(`🔍 [FIREBASE-TABLE] Análise do select ${selectId}:`, {
-        isMultiSelect: isMultiSelect,
-        hasActiveFilters: hasActiveFilters,
-        hasInstance: !!(window.multiSelectInstances && window.multiSelectInstances[selectId]),
-        classes: Array.from(select.classList),
-        attributes: Array.from(select.attributes).map(attr => `${attr.name}="${attr.value}"`)
-    });
-    
-    if (isMultiSelect) {
-        console.log(`🔒 [FIREBASE-TABLE] Preservando multi-select ativo: ${selectId}`);
-        
-        // Apenas atualizar as opções disponíveis sem alterar seleções
-        if (window.multiSelectInstances && window.multiSelectInstances[selectId]) {
-            const instance = window.multiSelectInstances[selectId];
-            
-            console.log(`🔧 [FIREBASE-TABLE] Valores selecionados antes da atualização:`, Array.from(instance.selectedValues));
-            
-            // Atualizar allOptions com novos valores, preservando seleções
-            const newOptions = values.map(value => ({
-                value: value,
-                text: value,
-                selected: instance.selectedValues.has(value)
-            }));
-            
-            instance.allOptions = newOptions;
-            instance.filteredOptions = [...newOptions];
-            instance.renderOptions();
-            
-            console.log(`🔧 [FIREBASE-TABLE] Valores selecionados após a atualização:`, Array.from(instance.selectedValues));
-            console.log(`✅ [FIREBASE-TABLE] Opções atualizadas no multi-select: ${selectId}`);
-        } else {
-            console.warn(`⚠️ [FIREBASE-TABLE] Instância do multi-select não encontrada para: ${selectId}`);
-        }
-        return;
-    }
-    
-    // Para selects normais, preservar valor selecionado
+    // Preservar valor selecionado
     const currentValue = select.value;
     
-    // Limpar e recriar options apenas para selects normais
+    // Limpar e recriar options
     select.innerHTML = '<option value="">Todos</option>';
     
     values.forEach(value => {
@@ -1697,16 +1532,14 @@ function populateFilterSelect(selectId, values) {
         }
         select.appendChild(option);
     });
-    
-    console.log(`✅ [FIREBASE-TABLE] Select normal atualizado: ${selectId} com ${values.length} opções`);
 }
 
 // ============= ATUALIZAÇÃO COMPLETA DE GRÁFICOS DO DASHBOARD =============
 // FUNÇÃO DESABILITADA - Os gráficos agora são gerenciados por dashboard-integration.js
 async function updateDashboardCharts() {
-    console.log('📈 [FIREBASE-TABLE] === SISTEMA DE GRÁFICOS REMOVIDO ===');
-    console.log('📈 [FIREBASE-TABLE] Aguardando implementação do novo sistema');
-    return true;
+    console.log('📈 [FIREBASE-TABLE] === FUNÇÃO DESABILITADA - USANDO DASHBOARD-CHARTS-V5.JS ===');
+    console.log('📈 [FIREBASE-TABLE] Gráficos agora são gerenciados pelo dashboard-charts-v5.js');
+    return true; // Retornar sucesso sem fazer nada
     
     /* CÓDIGO DESABILITADO - USANDO DASHBOARD-CHARTS-V5.JS
     try {
@@ -2880,14 +2713,7 @@ function integrateWithExistingSystems() {
         window.loadStatistics = async function() {
             try {
                 await updateDashboardCards();
-                
-                // Criar gráficos se disponível
-                if (typeof window.criarTodosGraficos === 'function') {
-                    await window.criarTodosGraficos();
-                    console.log('📊 [FIREBASE-TABLE] Gráficos criados após carregamento de dados');
-                }
-                
-                console.log('✅ [FIREBASE-TABLE] Estatísticas e gráficos atualizados via hook');
+                console.log('✅ [FIREBASE-TABLE] Estatísticas atualizadas via hook');
             } catch (error) {
                 console.warn('⚠️ Fallback para carregamento original:', error);
                 await originalLoadStats();
@@ -2919,14 +2745,7 @@ function integrateWithExistingSystems() {
         window.loadStatistics = async function() {
             try {
                 await updateDashboardCards();
-                
-                // Criar gráficos se disponível
-                if (typeof window.criarTodosGraficos === 'function') {
-                    await window.criarTodosGraficos();
-                    console.log('📊 [FIREBASE-TABLE] Gráficos criados após carregamento de dados');
-                }
-                
-                console.log('✅ [FIREBASE-TABLE] Estatísticas e gráficos atualizados via hook');
+                console.log('✅ [FIREBASE-TABLE] Estatísticas atualizadas via hook');
             } catch (error) {
                 console.warn('⚠️ Fallback para carregamento original:', error);
                 await originalLoadStats();
@@ -2944,14 +2763,7 @@ function integrateWithExistingSystems() {
                 
                 // Depois integrar nossos dados
                 await updateDashboardCards();
-                
-                // Só atualizar filtros se não houver filtros ativos
-                if (!window.filterState || !window.filterState.hasActiveFilters()) {
-                    await updateDashboardFilters();
-                } else {
-                    console.log('🔒 [FIREBASE-TABLE] Mantendo filtros ativos na integração');
-                }
-                
+                await updateDashboardFilters();
                 await updateDashboardCharts(); // HABILITADO - gráficos integrados no firebase-table-system
                 
                 console.log('✅ [FIREBASE-TABLE] Integração completa realizada');
@@ -2967,14 +2779,7 @@ function integrateWithExistingSystems() {
             if (firebaseTableData.length > 0) {
                 console.log('🔄 [FIREBASE-TABLE] Executando atualização forçada...');
                 await updateDashboardCards();
-                
-                // Só atualizar filtros se não houver filtros ativos
-                if (!window.filterState || !window.filterState.hasActiveFilters()) {
-                    await updateDashboardFilters();
-                } else {
-                    console.log('🔒 [FIREBASE-TABLE] Mantendo filtros ativos na atualização forçada');
-                }
-                
+                await updateDashboardFilters();
                 await updateDashboardCharts(); // HABILITADO - gráficos integrados no firebase-table-system
             }
         } catch (error) {
@@ -3384,8 +3189,13 @@ async function criarTodosGraficosIntegrados(dadosParaUsar = null) {
         // Criar cards estatísticos
         atualizarCardsEstatisticosIntegrado(dados);
         
-        // GRÁFICOS DESABILITADOS - Gerenciados pelo dashboard-integration.js
-        // Os gráficos são chamados pelo dashboard-integration.js para evitar conflitos
+        // Criar gráficos na mesma ordem (barras + linhas para projetos)
+        criarGrafico1_AnaliseProjetosIntegrado(dados);      // Barras + Linhas
+        criarGrafico2_AnaliseSubProjetosIntegrado(dados);   // Barras + Linhas  
+        criarGrafico3_AnaliseCidadesIntegrado(dados);       // Barras
+        criarGrafico4_AnaliseHPProjetosIntegrado(dados);    // Barras
+        criarGrafico5_AnaliseRecebimentosIntegrado(dados);  // Barras Duplas
+        criarGrafico6_AnaliseEnderecosSupervisorIntegrado(dados); // Barras Agrupadas
         
         // Criar tabelas de ranking
         criarRanking1_EquipesTipoAcaoIntegrado(dados);
@@ -3425,17 +3235,18 @@ function atualizarCardsEstatisticosIntegrado(dados) {
     const elemento4 = document.getElementById('infraStatProdutividade');
     if (elemento4) elemento4.textContent = `${produtividade}%`;
     
-    // Tempo médio de execução (Recebimento → Final)
+    // Tempos médios
     const tempoMedioExecucao = calcularTempoMedioIntegrado(dados, 'DATA RECEBIMENTO', 'DATA FINAL');
-    document.getElementById('infraStatTempoMedio').textContent = `${tempoMedioExecucao} dias`;
+    const elemento5 = document.getElementById('infraStatTempoMedio');
+    if (elemento5) elemento5.textContent = `${tempoMedioExecucao} dias`;
     
-    // Tempo médio Sala Técnica (Recebimento → Início)
     const tempoMedioSalaTecnica = calcularTempoMedioIntegrado(dados, 'DATA RECEBIMENTO', 'DATA INICIO');
-    document.getElementById('infraStatTempoSalaTecnica').textContent = `${tempoMedioSalaTecnica} dias`;
+    const elemento6 = document.getElementById('infraStatTempoSalaTecnica');
+    if (elemento6) elemento6.textContent = `${tempoMedioSalaTecnica} dias`;
     
-    // Tempo médio Técnicos (Início → Final)
     const tempoMedioTecnicos = calcularTempoMedioIntegrado(dados, 'DATA INICIO', 'DATA FINAL');
-    document.getElementById('infraStatTempoTecnicos').textContent = `${tempoMedioTecnicos} dias`;
+    const elemento7 = document.getElementById('infraStatTempoTecnicos');
+    if (elemento7) elemento7.textContent = `${tempoMedioTecnicos} dias`;
     
     console.log('✅ [FIREBASE-TABLE] Cards atualizados');
 }
@@ -3444,33 +3255,21 @@ function calcularTempoMedioIntegrado(dados, campoInicio, campoFim) {
     const registrosComDatas = dados.filter(item => {
         const inicio = item[campoInicio];
         const fim = item[campoFim];
-        // Verificar se os valores existem e são válidos (string ou objeto Date)
-        const inicioValido = inicio && (typeof inicio === 'string' ? inicio.trim() : true);
-        const fimValido = fim && (typeof fim === 'string' ? fim.trim() : true);
-        return inicioValido && fimValido;
+        return inicio && fim;
     });
     
     if (registrosComDatas.length === 0) return 0;
     
     const tempos = registrosComDatas.map(item => {
-        try {
-            const inicio = new Date(item[campoInicio]);
-            const fim = new Date(item[campoFim]);
-            
-            if (isNaN(inicio.getTime()) || isNaN(fim.getTime())) return 0;
-            
-            const diffTime = Math.abs(fim - inicio);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            return diffDays;
-        } catch (error) {
-            return 0;
-        }
-    });
+        const dataInicio = new Date(item[campoInicio]);
+        const dataFim = new Date(item[campoFim]);
+        const diffTime = Math.abs(dataFim - dataInicio);
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }).filter(tempo => !isNaN(tempo) && tempo >= 0);
     
-    const temposValidos = tempos.filter(t => t > 0);
-    if (temposValidos.length === 0) return 0;
+    if (tempos.length === 0) return 0;
     
-    const media = temposValidos.reduce((sum, t) => sum + t, 0) / temposValidos.length;
+    const media = tempos.reduce((sum, t) => sum + t, 0) / tempos.length;
     return Math.round(media);
 }
 
@@ -3745,27 +3544,20 @@ function criarGrafico4_AnaliseHPProjetosIntegrado(dados) {
 // ============= GRÁFICO 5: ANÁLISE DE RECEBIMENTOS E CONCLUSÕES (BARRAS DUPLAS) =============
 function criarGrafico5_AnaliseRecebimentosIntegrado(dados) {
     console.log('📊 [FIREBASE-TABLE] Criando Análise de Recebimentos e Conclusões (Barras Duplas)...');
-    console.log('📊 [DEBUG-RECEBIMENTOS] Total de dados recebidos:', dados.length);
     
     const canvas = document.getElementById('recebimentosChart');
     if (!canvas) {
         console.warn('⚠️ Canvas recebimentosChart não encontrado');
         return;
     }
-    console.log('✅ [DEBUG-RECEBIMENTOS] Canvas encontrado:', canvas);
     
     // Contar recebimentos e conclusões por mês/ano
     const dadosPorMes = {};
     
-    let datasRecebimentoEncontradas = 0;
-    let datasConclusaoEncontradas = 0;
-    
-    dados.forEach((item, index) => {
+    dados.forEach(item => {
         // Data de recebimento
-        const dataRecebimento = obterCampo(item, 'dataRecebimento');
-        if (index < 3) console.log(`📅 [DEBUG-RECEBIMENTOS] Item ${index} - dataRecebimento:`, dataRecebimento);
+        const dataRecebimento = obterCampo(item, 'data_recebimento');
         if (dataRecebimento) {
-            datasRecebimentoEncontradas++;
             const mesAnoRecebimento = formatarMesAno(dataRecebimento);
             if (mesAnoRecebimento) {
                 if (!dadosPorMes[mesAnoRecebimento]) {
@@ -3776,10 +3568,8 @@ function criarGrafico5_AnaliseRecebimentosIntegrado(dados) {
         }
         
         // Data de conclusão
-        const dataConclusao = obterCampo(item, 'dataFinal');
-        if (index < 3) console.log(`📅 [DEBUG-RECEBIMENTOS] Item ${index} - dataFinal:`, dataConclusao);
+        const dataConclusao = obterCampo(item, 'data_final');
         if (dataConclusao) {
-            datasConclusaoEncontradas++;
             const mesAnoConclusao = formatarMesAno(dataConclusao);
             if (mesAnoConclusao) {
                 if (!dadosPorMes[mesAnoConclusao]) {
@@ -3789,10 +3579,6 @@ function criarGrafico5_AnaliseRecebimentosIntegrado(dados) {
             }
         }
     });
-    
-    console.log('📊 [DEBUG-RECEBIMENTOS] Datas de recebimento encontradas:', datasRecebimentoEncontradas);
-    console.log('📊 [DEBUG-RECEBIMENTOS] Datas de conclusão encontradas:', datasConclusaoEncontradas);
-    console.log('📊 [DEBUG-RECEBIMENTOS] Dados por mês:', dadosPorMes);
     
     // Função auxiliar para formatar mês/ano como "Jan/2025"
     function formatarMesAno(dataStr) {
@@ -3943,140 +3729,148 @@ function criarGrafico6_AnaliseEnderecosSupervisorIntegrado(dados) {
 
 // ============= RANKING 1: EQUIPES POR TIPO DE AÇÃO =============
 function criarRanking1_EquipesTipoAcaoIntegrado(dados) {
-    console.log('🏆 [FIREBASE-TABLE] Gerando ranking por tipo de ação...');
+    console.log('📊 [FIREBASE-TABLE] Criando Ranking de Equipes por Tipo de Ação...');
     
-    const tbody = document.getElementById('equipeRankingTableBody');
-    if (!tbody) return;
+    const tabela = document.getElementById('rankingEquipesTipoAcao');
+    if (!tabela) {
+        console.warn('⚠️ Tabela rankingEquipesTipoAcao não encontrada');
+        return;
+    }
     
-    // Agrupar por equipe e tipo de ação
-    const equipeStats = {};
+    // Contar ações por equipe e tipo
+    const dadosPorEquipe = {};
     
     dados.forEach(item => {
-        const equipe = item['EQUIPE'] || 'Não especificado';
-        const tipoAcao = item['Tipo de Ação'] || 'Não especificado';
+        const equipe = obterCampo(item, 'equipe') || 'Não especificada';
+        const tipoAcao = obterCampo(item, 'tipo_acao') || obterCampo(item, 'acao') || 'Não especificado';
         
-        if (!equipeStats[equipe]) {
-            equipeStats[equipe] = { ATIVAÇÃO: 0, CONSTRUÇÃO: 0, VISTORIA: 0 };
+        if (!dadosPorEquipe[equipe]) {
+            dadosPorEquipe[equipe] = {};
         }
         
-        const tipo = tipoAcao.toUpperCase();
-        if (equipeStats[equipe][tipo] !== undefined) {
-            equipeStats[equipe][tipo]++;
-        }
+        dadosPorEquipe[equipe][tipoAcao] = (dadosPorEquipe[equipe][tipoAcao] || 0) + 1;
     });
     
-    // Calcular totais e ranquear
-    const rankings = Object.entries(equipeStats).map(([equipe, stats]) => ({
-        equipe,
-        ativacao: stats.ATIVAÇÃO,
-        construcao: stats.CONSTRUÇÃO,
-        vistoria: stats.VISTORIA,
-        total: stats.ATIVAÇÃO + stats.CONSTRUÇÃO + stats.VISTORIA
-    })).sort((a, b) => b.total - a.total);
+    // Converter para array e calcular totais
+    const rankingEquipes = Object.entries(dadosPorEquipe).map(([equipe, acoes]) => {
+        const total = Object.values(acoes).reduce((sum, count) => sum + count, 0);
+        const tiposAcao = Object.entries(acoes)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, 3)
+            .map(([tipo, count]) => `${tipo}: ${count}`)
+            .join(', ');
+            
+        return { equipe, total, tiposAcao };
+    }).sort((a, b) => b.total - a.total).slice(0, 10);
     
-    // Limitar a 50 equipes principais para evitar sobrecarga
-    const topRankings = rankings.slice(0, 50);
+    // Criar HTML da tabela
+    let html = `
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Equipe</th>
+                <th>Total</th>
+                <th>Principais Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
     
-    // Adicionar nota se há mais dados
-    const moreDataNote = rankings.length > 50 ? 
-        `<tr class="info-row"><td colspan="6" style="text-align: center; font-style: italic; color: #666; padding: 10px;">
-            📊 Mostrando top 50 de ${rankings.length} equipes
-        </td></tr>` : '';
+    rankingEquipes.forEach((item, index) => {
+        html += `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${item.equipe}</td>
+                <td><strong>${item.total}</strong></td>
+                <td><small>${item.tiposAcao}</small></td>
+            </tr>
+        `;
+    });
     
-    // Gerar HTML
-    tbody.innerHTML = topRankings.map((item, index) => `
-        <tr>
-            <td>${index + 1}</td>
-            <td>${item.equipe}</td>
-            <td>${item.ativacao}</td>
-            <td>${item.construcao}</td>
-            <td>${item.vistoria}</td>
-            <td><strong>${item.total}</strong></td>
-        </tr>
-    `).join('') + moreDataNote;
+    html += '</tbody>';
+    tabela.innerHTML = html;
     
-    // Atualizar totais
-    const totalAtivacao = rankings.reduce((sum, item) => sum + item.ativacao, 0);
-    const totalConstrucao = rankings.reduce((sum, item) => sum + item.construcao, 0);
-    const totalVistoria = rankings.reduce((sum, item) => sum + item.vistoria, 0);
-    const totalGeral = totalAtivacao + totalConstrucao + totalVistoria;
-    
-    document.getElementById('totalAtivacao').textContent = totalAtivacao;
-    document.getElementById('totalConstrucao').textContent = totalConstrucao;
-    document.getElementById('totalVistoria').textContent = totalVistoria;
-    document.getElementById('totalGeral').textContent = totalGeral;
+    console.log('✅ [FIREBASE-TABLE] Ranking de Equipes por Tipo de Ação criado');
 }
 
 // ============= RANKING 2: EQUIPES POR STATUS =============
 function criarRanking2_EquipesStatusIntegrado(dados) {
-    console.log('🏆 [FIREBASE-TABLE] Gerando ranking por status...');
+    console.log('📊 [FIREBASE-TABLE] Criando Ranking de Equipes por Status...');
     
-    const tbody = document.getElementById('equipeStatusRankingTableBody');
-    if (!tbody) return;
+    const tabela = document.getElementById('rankingEquipesStatus');
+    if (!tabela) {
+        console.warn('⚠️ Tabela rankingEquipesStatus não encontrada');
+        return;
+    }
     
-    // Agrupar por equipe e status
-    const equipeStats = {};
+    // Contar status por equipe
+    const dadosPorEquipe = {};
     
     dados.forEach(item => {
-        const equipe = item['EQUIPE'] || 'Não especificado';
-        const status = item['Status'] || 'Não especificado';
+        const equipe = obterCampo(item, 'equipe') || 'Não especificada';
+        const status = (obterCampo(item, 'status') || '').toUpperCase();
         
-        if (!equipeStats[equipe]) {
-            equipeStats[equipe] = { PRODUTIVA: 0, IMPRODUTIVA: 0 };
+        if (!dadosPorEquipe[equipe]) {
+            dadosPorEquipe[equipe] = { PRODUTIVA: 0, IMPRODUTIVA: 0, OUTROS: 0, total: 0 };
         }
         
-        if (status.toUpperCase() === 'PRODUTIVA') {
-            equipeStats[equipe].PRODUTIVA++;
-        } else if (status.toUpperCase() === 'IMPRODUTIVA') {
-            equipeStats[equipe].IMPRODUTIVA++;
+        if (status === 'PRODUTIVA' || status.includes('PRODUTIVA')) {
+            dadosPorEquipe[equipe].PRODUTIVA++;
+        } else if (status === 'IMPRODUTIVA' || status.includes('IMPRODUTIVA')) {
+            dadosPorEquipe[equipe].IMPRODUTIVA++;
+        } else {
+            dadosPorEquipe[equipe].OUTROS++;
         }
+        
+        dadosPorEquipe[equipe].total++;
     });
     
-    // Calcular totais e produtividade
-    const rankings = Object.entries(equipeStats).map(([equipe, stats]) => {
-        const total = stats.PRODUTIVA + stats.IMPRODUTIVA;
-        const produtividade = total > 0 ? Math.round((stats.PRODUTIVA / total) * 100) : 0;
+    // Converter para array e calcular produtividade
+    const rankingEquipes = Object.entries(dadosPorEquipe).map(([equipe, status]) => {
+        const produtividade = status.total > 0 ? Math.round((status.PRODUTIVA / status.total) * 100) : 0;
         
-        return {
-            equipe,
-            produtiva: stats.PRODUTIVA,
-            improdutiva: stats.IMPRODUTIVA,
-            total,
-            produtividade
+        return { 
+            equipe, 
+            total: status.total,
+            produtiva: status.PRODUTIVA,
+            improdutiva: status.IMPRODUTIVA,
+            outros: status.OUTROS,
+            produtividade 
         };
-    }).sort((a, b) => b.produtividade - a.produtividade);
+    }).sort((a, b) => b.produtividade - a.produtividade).slice(0, 10);
     
-    // Limitar a 50 equipes principais para evitar sobrecarga
-    const topRankings = rankings.slice(0, 50);
+    // Criar HTML da tabela
+    let html = `
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Equipe</th>
+                <th>Total</th>
+                <th>Produtiva</th>
+                <th>Improdutiva</th>
+                <th>Produtividade</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
     
-    // Adicionar nota se há mais dados
-    const moreDataNote = rankings.length > 50 ? 
-        `<tr class="info-row"><td colspan="6" style="text-align: center; font-style: italic; color: #666; padding: 10px;">
-            📊 Mostrando top 50 de ${rankings.length} equipes
-        </td></tr>` : '';
+    rankingEquipes.forEach((item, index) => {
+        html += `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${item.equipe}</td>
+                <td>${item.total}</td>
+                <td class="text-success">${item.produtiva}</td>
+                <td class="text-danger">${item.improdutiva}</td>
+                <td><strong>${item.produtividade}%</strong></td>
+            </tr>
+        `;
+    });
     
-    // Gerar HTML
-    tbody.innerHTML = topRankings.map((item, index) => `
-        <tr>
-            <td>${index + 1}</td>
-            <td>${item.equipe}</td>
-            <td>${item.produtiva}</td>
-            <td>${item.improdutiva}</td>
-            <td><strong>${item.total}</strong></td>
-            <td><strong>${item.produtividade}%</strong></td>
-        </tr>
-    `).join('') + moreDataNote;
+    html += '</tbody>';
+    tabela.innerHTML = html;
     
-    // Atualizar totais
-    const totalProdutiva = rankings.reduce((sum, item) => sum + item.produtiva, 0);
-    const totalImprodutiva = rankings.reduce((sum, item) => sum + item.improdutiva, 0);
-    const totalStatusGeral = totalProdutiva + totalImprodutiva;
-    const produtividadeGeral = totalStatusGeral > 0 ? Math.round((totalProdutiva / totalStatusGeral) * 100) : 0;
-    
-    document.getElementById('totalProdutiva').textContent = totalProdutiva;
-    document.getElementById('totalImprodutiva').textContent = totalImprodutiva;
-    document.getElementById('totalStatusGeral').textContent = totalStatusGeral;
-    document.getElementById('totalProdutividade').textContent = `${produtividadeGeral}%`;
+    console.log('✅ [FIREBASE-TABLE] Ranking de Equipes por Status criado');
 }
 
 console.log('✅ [FIREBASE-TABLE] Sistema de tabela Firebase carregado');

@@ -1337,9 +1337,13 @@ function updateStatCard(elementId, value) {
 
 // ============= FILTROS DINÂMICOS COMPLETOS =============
 async function updateDashboardFilters() {
-    console.log('🚫 [FIREBASE-TABLE] updateDashboardFilters() DESABILITADA - usando sistema unificado');
-    // FUNÇÃO DESABILITADA - Sistema unificado de filtros está ativo
-    return;
+    console.log('🔍 [FIREBASE-TABLE] Atualizando TODOS os filtros do dashboard...');
+    
+    // BLOQUEAR se sistema de persistência está ativo para evitar conflitos
+    if (window.filterState && window.filterState.hasActiveFilters()) {
+        console.log('🔒 [FIREBASE-TABLE] Filtros ativos detectados - mantendo estado atual');
+        return;
+    }
     
     try {
         // Marcar que estamos atualizando filtros
@@ -1630,9 +1634,16 @@ function getUniqueValues(data, field) {
 }
 
 function populateFilterSelect(selectId, values) {
-    console.log(`🚫 [FIREBASE-TABLE] populateFilterSelect() DESABILITADA - usando sistema unificado`);
-    // FUNÇÃO DESABILITADA - Sistema unificado de filtros está ativo
-    return;
+    console.log(`📥 [FIREBASE-TABLE] === POPULATE FILTER SELECT: ${selectId} ===`);
+    console.log(`📥 [FIREBASE-TABLE] Timestamp:`, new Date().toLocaleTimeString());
+    console.log(`📥 [FIREBASE-TABLE] Valores recebidos:`, values?.length, values);
+    console.trace(`📥 [FIREBASE-TABLE] Stack trace completo:`);
+    
+    const select = document.getElementById(selectId);
+    if (!select) {
+        console.log(`❌ [FIREBASE-TABLE] Select não encontrado: ${selectId}`);
+        return;
+    }
     
     // BLOQUEAR se estamos restaurando filtros
     if (window.isRestoringFilters) {

@@ -1453,15 +1453,192 @@ function getFilterLabel(selectId) {
 
 // ============= APLICAR FILTROS =============
 function applyInfraFilters() {
-    console.log('🚫 [DASHBOARD-INTEGRATION] applyInfraFilters() DESABILITADA - usando sistema unificado');
-    // FUNÇÃO DESABILITADA - Sistema unificado de filtros está ativo
-    return;
+    console.log('🔍 [DASHBOARD-INTEGRATION] Aplicando filtros...');
+    
+    // Coletar valores atuais dos filtros
+    const filtros = {
+        projeto: getSelectValues('infraFilterProjeto'),
+        subProjeto: getSelectValues('infraFilterSubProjeto'),
+        equipe: getSelectValues('infraFilterEquipe'),
+        status: getSelectValues('infraFilterStatus'),
+        cidade: getSelectValues('infraFilterCidade'),
+        supervisor: getSelectValues('infraFilterSupervisor'),
+        tipoAcao: getSelectValues('infraFilterTipoAcao'),
+        condominio: getSelectValues('infraFilterCondominio'),
+        dataInicio: document.getElementById('infraFilterDataInicio')?.value || '',
+        dataFim: document.getElementById('infraFilterDataFim')?.value || ''
+    };
+    
+    // SALVAR ESTADO DOS FILTROS para persistência
+    if (window.filterState) {
+        window.filterState.setState(filtros);
+        console.log('💾 [DASHBOARD-INTEGRATION] Estado dos filtros salvo:', filtros);
+    }
+    
+    // Filtrar dados
+    filteredData = dashboardData.filter(item => {
+        // Filtros de select múltiplo
+        if (filtros.projeto.length && !filtros.projeto.includes(item['Projeto'])) return false;
+        if (filtros.subProjeto.length && !filtros.subProjeto.includes(item['Sub Projeto'])) return false;
+        if (filtros.equipe.length && !filtros.equipe.includes(item['EQUIPE'])) return false;
+        if (filtros.status.length && !filtros.status.includes(item['Status'])) return false;
+        if (filtros.cidade.length && !filtros.cidade.includes(item['Cidade'])) return false;
+        if (filtros.supervisor.length && !filtros.supervisor.includes(item['Supervisor'])) return false;
+        if (filtros.tipoAcao.length && !filtros.tipoAcao.includes(item['Tipo de Ação'])) return false;
+        if (filtros.condominio.length && !filtros.condominio.includes(item['Condominio'])) return false;
+        
+        // Filtro de data
+        if (filtros.dataInicio || filtros.dataFim) {
+            const dataRecebimento = item['DATA RECEBIMENTO'];
+            if (dataRecebimento) {
+                const data = new Date(dataRecebimento);
+                if (filtros.dataInicio && data < new Date(filtros.dataInicio)) return false;
+                if (filtros.dataFim && data > new Date(filtros.dataFim)) return false;
+            }
+        }
+        
+        return true;
+    });
+    
+    // ATUALIZAR CARDS DO DASHBOARD COM DADOS FILTRADOS
+    atualizarCardsEstatisticos();
+    
+    // CHAMAR SISTEMA FIREBASE PARA ATUALIZAR TABELA E CARDS
+    if (typeof window.applyFirebaseFilters === 'function') {
+        console.log('🔄 [DASHBOARD-INTEGRATION] Sincronizando com firebase-table-system...');
+        // Transformar filtros para formato esperado pelo firebase
+        const firebaseFilters = {
+            projeto: filtros.projeto,
+            subProjeto: filtros.subProjeto,
+            equipe: filtros.equipe,
+            status: filtros.status,
+            cidade: filtros.cidade,
+            supervisor: filtros.supervisor,
+            tipoAcao: filtros.tipoAcao,
+            condominio: filtros.condominio
+        };
+        window.applyFirebaseFilters(firebaseFilters);
+    } else {
+        console.warn('⚠️ [DASHBOARD-INTEGRATION] applyFirebaseFilters não encontrada');
+    }
+    
+    // Cards atualizados pelo firebase-table-system.js
+    console.log('📊 [DASHBOARD-INTEGRATION] Cards gerenciados pelo sistema integrado');
+    
+    // Atualizar gráficos do dashboard-charts-v5.js com dados filtrados
+    console.log('🔄 [DASHBOARD-INTEGRATION] Notificando filtros aplicados...');
+    
+    // Método 1: Função direta - Usar dashboard-charts-v5
+    if (typeof window.criarTodosGraficos === 'function') {
+        console.log('📊 [DASHBOARD-INTEGRATION] Atualizando gráficos V5 com dados filtrados...');
+        window.criarTodosGraficos(filteredData);
+    } else {
+        console.warn('⚠️ [DASHBOARD-INTEGRATION] Função de atualização dos gráficos integrados não encontrada, tentando evento...');
+    }
+    
+    // Método 2: Evento customizado (mais robusto)
+    window.dispatchEvent(new CustomEvent('dashboardFiltersApplied', { 
+        detail: { 
+            filteredData: filteredData, 
+            filterCount: filteredData.length,
+            originalCount: dashboardData.length
+        } 
+    }));
+    
+    // Rankings criados pelo firebase-table-system.js
+    console.log('🏆 [DASHBOARD-INTEGRATION] Rankings gerenciados pelo sistema integrado');
+    
+    console.log('✅ [DASHBOARD-INTEGRATION] Filtros aplicados. Resultados:', filteredData.length);
 }
 
 function clearInfraFilters() {
-    console.log('🚫 [DASHBOARD-INTEGRATION] clearInfraFilters() DESABILITADA - usando sistema unificado');
-    // FUNÇÃO DESABILITADA - Sistema unificado de filtros está ativo
-    return;
+    console.log('🧹 [DASHBOARD-INTEGRATION] Limpando filtros...');
+    
+    // RESETAR ESTADO DOS FILTROS primeiro
+    if (window.filterState) {
+        window.filterState.resetState();
+        console.log('🗑️ [DASHBOARD-INTEGRATION] Estado dos filtros resetado e localStorage limpo');
+    }
+    
+    // Limpar todos os multi-selects
+    const selects = [
+        'infraFilterProjeto', 'infraFilterSubProjeto', 'infraFilterEquipe',
+        'infraFilterStatus', 'infraFilterCidade', 'infraFilterSupervisor', 
+        'infraFilterTipoAcao', 'infraFilterCondominio'
+    ];
+    
+    selects.forEach(selectId => {
+        // Limpar multi-select se existir
+        if (window.multiSelectInstances && window.multiSelectInstances[selectId]) {
+            window.multiSelectInstances[selectId].clearAll();
+            console.log(`✅ [DASHBOARD-INTEGRATION] Multi-select ${selectId} limpo`);
+        } else {
+            // Fallback: limpar select normal
+            const select = document.getElementById(selectId);
+            if (select) {
+                select.selectedIndex = -1;
+                Array.from(select.options).forEach(option => {
+                    option.selected = false;
+                });
+            }
+        }
+    });
+    
+    // Limpar inputs de data
+    const dataInicio = document.getElementById('infraFilterDataInicio');
+    const dataFim = document.getElementById('infraFilterDataFim');
+    if (dataInicio) dataInicio.value = '';
+    if (dataFim) dataFim.value = '';
+    
+    // Resetar dados filtrados
+    filteredData = [...dashboardData];
+    
+    // ATUALIZAR CARDS DO DASHBOARD SEM FILTROS
+    atualizarCardsEstatisticos();
+    
+    // CHAMAR SISTEMA FIREBASE PARA LIMPAR FILTROS NA TABELA E CARDS
+    if (typeof window.applyFirebaseFilters === 'function') {
+        console.log('🔄 [DASHBOARD-INTEGRATION] Limpando filtros no firebase-table-system...');
+        // Enviar filtros vazios para limpar
+        const emptyFilters = {
+            projeto: [],
+            subProjeto: [],
+            equipe: [],
+            status: [],
+            cidade: [],
+            supervisor: [],
+            tipoAcao: [],
+            condominio: []
+        };
+        window.applyFirebaseFilters(emptyFilters);
+    } else {
+        console.warn('⚠️ [DASHBOARD-INTEGRATION] applyFirebaseFilters não encontrada');
+    }
+    
+    // Cards atualizados pelo firebase-table-system.js
+    console.log('📊 [DASHBOARD-INTEGRATION] Cards gerenciados pelo sistema integrado');
+    
+    // Atualizar gráficos do dashboard-charts-v5.js com todos os dados (sem filtro)
+    console.log('🔄 [DASHBOARD-INTEGRATION] Notificando filtros limpos...');
+    
+    // Método 1: Função direta - Usar dashboard-charts-v5
+    if (typeof window.criarTodosGraficos === 'function') {
+        console.log('📊 [DASHBOARD-INTEGRATION] Atualizando gráficos V5 sem filtros...');
+        window.criarTodosGraficos(filteredData);
+    } else {
+        console.warn('⚠️ [DASHBOARD-INTEGRATION] Função de atualização dos gráficos integrados não encontrada');
+    }
+    
+    // Método 2: Evento customizado (mais robusto)
+    window.dispatchEvent(new CustomEvent('dashboardFiltersCleared', { 
+        detail: { 
+            data: filteredData, 
+            count: filteredData.length
+        } 
+    }));
+    
+    // Rankings criados pelo firebase-table-system.js
+    console.log('🏆 [DASHBOARD-INTEGRATION] Rankings gerenciados pelo sistema integrado');
 }
 
 // ============= FUNÇÕES AUXILIARES =============
