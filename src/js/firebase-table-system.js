@@ -1,6 +1,14 @@
 // ============= SISTEMA DE TABELA FIREBASE COMPLETAMENTE NOVO =============
 console.log('🔥 [FIREBASE-TABLE] Inicializando sistema de tabela Firebase...');
 
+// ============= SISTEMA DE PAGINAÇÃO =============
+const paginationConfig = {
+    currentPage: 1,
+    recordsPerPage: 50,
+    totalRecords: 0,
+    totalPages: 0
+};
+
 // ============= SISTEMA DE GERENCIAMENTO FIREBASE - SINGLETON =============
 class FirebaseManager {
     constructor() {
@@ -264,6 +272,8 @@ async function loadFirebaseTableData() {
         
         // Armazenar dados
         firebaseTableData = data;
+        // Armazenar globalmente para paginação
+        window.currentFirebaseData = data;
         
         // Notificar outros sistemas que os dados estão prontos
         console.log('📢 [FIREBASE-TABLE] Notificando outros sistemas sobre dados carregados...');
@@ -468,6 +478,10 @@ function renderTableBody(tbody, data) {
             });
         }) : data;
     
+    // Atualizar configuração de paginação
+    paginationConfig.totalRecords = filteredData.length;
+    paginationConfig.totalPages = Math.ceil(filteredData.length / paginationConfig.recordsPerPage);
+    
     if (filteredData.length === 0) {
         const tr = document.createElement('tr');
         const td = document.createElement('td');
@@ -479,10 +493,18 @@ function renderTableBody(tbody, data) {
             '<div class="loading-spinner"><p>Nenhum dado disponível</p></div>';
         tr.appendChild(td);
         tbody.appendChild(tr);
+        updatePaginationControls();
         return;
     }
     
-    filteredData.forEach((row, index) => {
+    // Calcular índices para paginação
+    const startIndex = (paginationConfig.currentPage - 1) * paginationConfig.recordsPerPage;
+    const endIndex = startIndex + paginationConfig.recordsPerPage;
+    const paginatedData = filteredData.slice(startIndex, endIndex);
+    
+    console.log(`📄 [PAGINAÇÃO] Exibindo registros ${startIndex + 1}-${Math.min(endIndex, filteredData.length)} de ${filteredData.length}`);
+    
+    paginatedData.forEach((row, index) => {
         const tr = document.createElement('tr');
         
         // Debug para primeiro registro
@@ -547,6 +569,9 @@ function renderTableBody(tbody, data) {
         
         tbody.appendChild(tr);
     });
+    
+    // Atualizar controles de paginação
+    updatePaginationControls();
 }
 
 // ============= FUNÇÕES DE AÇÃO =============
@@ -579,6 +604,101 @@ window.deleteFirebaseTableRecord = async function(id) {
     } catch (error) {
         console.error('❌ [FIREBASE-TABLE] Erro ao excluir:', error);
         showNotification('❌ Erro', 'Erro ao excluir registro: ' + error.message, 'error');
+    }
+};
+
+// ============= FUNÇÕES DE PAGINAÇÃO =============
+function updatePaginationControls() {
+    const paginationContainer = document.getElementById('paginationContainer');
+    if (!paginationContainer) {
+        console.warn('⚠️ [PAGINAÇÃO] Container de paginação não encontrado');
+        return;
+    }
+    
+    if (paginationConfig.totalPages <= 1) {
+        paginationContainer.innerHTML = '';
+        return;
+    }
+    
+    let paginationHTML = `
+        <div class="pagination-info">
+            <span>Mostrando ${(paginationConfig.currentPage - 1) * paginationConfig.recordsPerPage + 1}-${Math.min(paginationConfig.currentPage * paginationConfig.recordsPerPage, paginationConfig.totalRecords)} de ${paginationConfig.totalRecords} registros</span>
+        </div>
+        <div class="pagination-controls">
+            <button onclick="changePage(1)" ${paginationConfig.currentPage === 1 ? 'disabled' : ''} class="pagination-btn">
+                « Primeiro
+            </button>
+            <button onclick="changePage(${paginationConfig.currentPage - 1})" ${paginationConfig.currentPage === 1 ? 'disabled' : ''} class="pagination-btn">
+                ‹ Anterior
+            </button>
+            <span class="pagination-pages">
+    `;
+    
+    // Calcular páginas a mostrar
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, paginationConfig.currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(paginationConfig.totalPages, startPage + maxVisiblePages - 1);
+    
+    // Ajustar se não temos páginas suficientes no final
+    if (endPage - startPage < maxVisiblePages - 1) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        paginationHTML += `
+            <button onclick="changePage(${i})" class="pagination-btn ${i === paginationConfig.currentPage ? 'active' : ''}">
+                ${i}
+            </button>
+        `;
+    }
+    
+    paginationHTML += `
+            </span>
+            <button onclick="changePage(${paginationConfig.currentPage + 1})" ${paginationConfig.currentPage === paginationConfig.totalPages ? 'disabled' : ''} class="pagination-btn">
+                Próxima ›
+            </button>
+            <button onclick="changePage(${paginationConfig.totalPages})" ${paginationConfig.currentPage === paginationConfig.totalPages ? 'disabled' : ''} class="pagination-btn">
+                Última »
+            </button>
+        </div>
+        <div class="pagination-size">
+            <label for="recordsPerPage">Registros por página:</label>
+            <select id="recordsPerPage" onchange="changeRecordsPerPage(this.value)">
+                <option value="25" ${paginationConfig.recordsPerPage === 25 ? 'selected' : ''}>25</option>
+                <option value="50" ${paginationConfig.recordsPerPage === 50 ? 'selected' : ''}>50</option>
+                <option value="100" ${paginationConfig.recordsPerPage === 100 ? 'selected' : ''}>100</option>
+                <option value="200" ${paginationConfig.recordsPerPage === 200 ? 'selected' : ''}>200</option>
+            </select>
+        </div>
+    `;
+    
+    paginationContainer.innerHTML = paginationHTML;
+}
+
+window.changePage = function(page) {
+    if (page < 1 || page > paginationConfig.totalPages || page === paginationConfig.currentPage) {
+        return;
+    }
+    
+    paginationConfig.currentPage = page;
+    console.log(`📄 [PAGINAÇÃO] Mudando para página ${page}`);
+    
+    // Re-renderizar tabela
+    const tbody = document.getElementById('enderecoTableBody');
+    if (tbody && window.currentFirebaseData) {
+        renderTableBody(tbody, window.currentFirebaseData);
+    }
+};
+
+window.changeRecordsPerPage = function(recordsPerPage) {
+    paginationConfig.recordsPerPage = parseInt(recordsPerPage);
+    paginationConfig.currentPage = 1; // Resetar para primeira página
+    console.log(`📄 [PAGINAÇÃO] Alterando para ${recordsPerPage} registros por página`);
+    
+    // Re-renderizar tabela
+    const tbody = document.getElementById('enderecoTableBody');
+    if (tbody && window.currentFirebaseData) {
+        renderTableBody(tbody, window.currentFirebaseData);
     }
 };
 
