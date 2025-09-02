@@ -309,7 +309,7 @@ class UserDropdownSystem {
             <div class="profile-modal">
                 <div class="profile-modal-header">
                     <h3><i class="fas fa-user"></i> Perfil do Usuário</h3>
-                    <button class="profile-close-btn" onclick="document.getElementById('profileModal').remove()">
+                    <button class="profile-close-btn" onclick="userDropdownSystem.closeProfile()">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -318,35 +318,35 @@ class UserDropdownSystem {
                         <h4><i class="fas fa-key"></i> Alterar Senha</h4>
                         <form id="changePasswordForm" class="profile-form">
                             <div class="profile-form-group">
-                                <label for="currentPassword">Senha Atual</label>
+                                <label for="profileCurrentPassword">Senha Atual</label>
                                 <div class="profile-password-input">
-                                    <input type="password" id="currentPassword" required>
-                                    <button type="button" class="password-toggle" onclick="userDropdownSystem.togglePasswordVisibility('currentPassword')">
+                                    <input type="password" id="profileCurrentPassword" required>
+                                    <button type="button" class="password-toggle" onclick="userDropdownSystem.togglePasswordVisibility('profileCurrentPassword')">
                                         <i class="fas fa-eye"></i>
                                     </button>
                                 </div>
                             </div>
                             <div class="profile-form-group">
-                                <label for="newPassword">Nova Senha</label>
+                                <label for="profileNewPassword">Nova Senha</label>
                                 <div class="profile-password-input">
-                                    <input type="password" id="newPassword" required minlength="6">
-                                    <button type="button" class="password-toggle" onclick="userDropdownSystem.togglePasswordVisibility('newPassword')">
+                                    <input type="password" id="profileNewPassword" required minlength="6">
+                                    <button type="button" class="password-toggle" onclick="userDropdownSystem.togglePasswordVisibility('profileNewPassword')">
                                         <i class="fas fa-eye"></i>
                                     </button>
                                 </div>
                                 <small class="password-requirements">Mínimo 6 caracteres</small>
                             </div>
                             <div class="profile-form-group">
-                                <label for="confirmPassword">Confirmar Nova Senha</label>
+                                <label for="profileConfirmPassword">Confirmar Nova Senha</label>
                                 <div class="profile-password-input">
-                                    <input type="password" id="confirmPassword" required>
-                                    <button type="button" class="password-toggle" onclick="userDropdownSystem.togglePasswordVisibility('confirmPassword')">
+                                    <input type="password" id="profileConfirmPassword" required>
+                                    <button type="button" class="password-toggle" onclick="userDropdownSystem.togglePasswordVisibility('profileConfirmPassword')">
                                         <i class="fas fa-eye"></i>
                                     </button>
                                 </div>
                             </div>
                             <div class="profile-form-actions">
-                                <button type="button" class="btn-secondary" onclick="document.getElementById('profileModal').remove()">
+                                <button type="button" class="btn-secondary" onclick="userDropdownSystem.closeProfile()">
                                     Cancelar
                                 </button>
                                 <button type="submit" class="btn-primary">
@@ -532,13 +532,28 @@ class UserDropdownSystem {
         }
     }
     
+    closeProfile() {
+        const modal = document.getElementById('profileModal');
+        if (modal) {
+            console.log('🔒 [PROFILE] Fechando modal de perfil');
+            modal.remove();
+        }
+    }
+    
     async changePassword() {
-        const currentPassword = document.getElementById('currentPassword').value;
-        const newPassword = document.getElementById('newPassword').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
+        const currentPassword = document.getElementById('profileCurrentPassword').value;
+        const newPassword = document.getElementById('profileNewPassword').value;
+        const confirmPassword = document.getElementById('profileConfirmPassword').value;
+        
+        // Debug para verificar captura dos campos
+        console.log('🔍 [DEBUG] Campos capturados:');
+        console.log('- Senha atual:', currentPassword ? '***preenchido***' : 'VAZIO');
+        console.log('- Nova senha:', newPassword ? '***preenchido***' : 'VAZIO');
+        console.log('- Confirmar senha:', confirmPassword ? '***preenchido***' : 'VAZIO');
         
         // Validações
         if (!currentPassword || !newPassword || !confirmPassword) {
+            console.log('❌ [DEBUG] Validação falhou - campos vazios');
             this.showNotification('Todos os campos são obrigatórios', 'error');
             return;
         }
@@ -578,7 +593,7 @@ class UserDropdownSystem {
             console.log('✅ [PASSWORD] Senha alterada com sucesso');
             
             // Fechar modal
-            document.getElementById('profileModal').remove();
+            this.closeProfile();
             
             this.showNotification('Senha alterada com sucesso!', 'success');
             

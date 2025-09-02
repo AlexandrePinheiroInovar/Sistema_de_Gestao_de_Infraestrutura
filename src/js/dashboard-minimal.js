@@ -513,8 +513,14 @@ window.abrirNovoEndereco = function() {
                 console.log('📝 [ENDERECO-V2] Modal configurado, carregando dropdowns...');
                 
                 // Carregar dados dos dropdowns
-                if (typeof loadFormDropdowns === 'function') {
+                if (typeof populateDropdowns === 'function') {
+                    console.log('📋 [ENDERECO-V2] Chamando populateDropdowns...');
+                    populateDropdowns();
+                } else if (typeof loadFormDropdowns === 'function') {
+                    console.log('📋 [ENDERECO-V2] Chamando loadFormDropdowns como fallback...');
                     loadFormDropdowns();
+                } else {
+                    console.warn('⚠️ [ENDERECO-V2] Nenhuma função de carregamento de dropdowns encontrada!');
                 }
                 
                 // Mostrar modal com múltiplas propriedades CSS
@@ -558,12 +564,29 @@ async function loadFormDropdowns() {
     try {
         console.log('🔄 [FORM] Carregando dados dos dropdowns...');
         
-        // Carregar dados básicos para os dropdowns
+        // Verificar se Firebase está disponível
+        if (!window.firestore) {
+            console.warn('⚠️ [FORM] Firebase não disponível, aguardando...');
+            // Aguardar até Firebase estar disponível
+            let attempts = 0;
+            while (!window.firestore && attempts < 30) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                attempts++;
+            }
+            
+            if (!window.firestore) {
+                throw new Error('Firebase não está disponível após aguardar');
+            }
+        }
+        
+        // Carregar dados básicos para os dropdowns - CAMINHOS CORRETOS
         const collections = {
-            projeto: 'gestao/projetos',
-            cidade: 'gestao/cidades', 
-            equipe: 'gestao/equipes',
-            supervisor: 'gestao/supervisores'
+            projeto: 'nova_gestao_projetos',
+            subProjeto: 'nova_gestao_subprojetos',
+            tipoAcao: 'nova_gestao_tipos_acao',
+            cidade: 'nova_gestao_cidades',
+            equipe: 'nova_gestao_equipes',
+            supervisor: 'nova_gestao_supervisores'
         };
         
         for (const [fieldName, collectionPath] of Object.entries(collections)) {
@@ -573,22 +596,26 @@ async function loadFormDropdowns() {
                 dropdown.innerHTML = '<option value="">Selecione...</option>';
                 
                 try {
-                    const snapshot = await window.firestore.collection(collectionPath.split('/')[0])
-                        .doc(collectionPath.split('/')[1])
-                        .collection(collectionPath.split('/')[2] || '')
-                        .get();
+                    // Acessar coleções diretas do Firebase
+                    console.log(`🔍 [FORM] Carregando dados para ${fieldName} da coleção ${collectionPath}...`);
+                    const snapshot = await window.firestore.collection(collectionPath).get();
                     
                     if (!snapshot.empty) {
+                        let itemsLoaded = 0;
                         snapshot.forEach(doc => {
                             const data = doc.data();
                             const option = document.createElement('option');
-                            option.value = doc.id;
+                            option.value = data.nome || data.name || doc.id;
                             option.textContent = data.nome || data.name || doc.id;
                             dropdown.appendChild(option);
+                            itemsLoaded++;
                         });
+                        console.log(`✅ [FORM] ${fieldName}: ${itemsLoaded} itens carregados`);
+                    } else {
+                        console.warn(`⚠️ [FORM] ${fieldName}: Coleção vazia`);
                     }
                 } catch (e) {
-                    console.warn(`⚠️ [FORM] Erro ao carregar ${fieldName}:`, e.message);
+                    console.error(`❌ [FORM] Erro ao carregar ${fieldName}:`, e);
                 }
             }
         }
