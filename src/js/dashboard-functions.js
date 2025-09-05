@@ -9,7 +9,7 @@ function closeModal() {
     if (modal) {
         modal.style.display = 'none';
     }
-    
+
     // Reset da variável de edição
     if (window.currentEditingId !== undefined) {
         window.currentEditingId = null;
@@ -18,7 +18,7 @@ function closeModal() {
 
 function openUploadModal() {
     console.log('📁 Abrindo modal de upload');
-    
+
     const modal = document.getElementById('uploadModal');
     if (modal) {
         modal.style.display = 'block';
@@ -30,36 +30,42 @@ function closeUploadModal() {
     if (modal) {
         modal.style.display = 'none';
     }
-    
+
     // Reset dos dados de upload
     if (window.currentUploadData !== undefined) {
         window.currentUploadData = [];
     }
-    
+
     // Esconder seções
     const previewDiv = document.getElementById('uploadPreview');
     const mappingDiv = document.getElementById('uploadMapping');
     const processBtn = document.getElementById('processBtn');
-    
-    if (previewDiv) previewDiv.style.display = 'none';
-    if (mappingDiv) mappingDiv.style.display = 'none';
-    if (processBtn) processBtn.style.display = 'none';
+
+    if (previewDiv) {
+        previewDiv.style.display = 'none';
+    }
+    if (mappingDiv) {
+        mappingDiv.style.display = 'none';
+    }
+    if (processBtn) {
+        processBtn.style.display = 'none';
+    }
 }
 
 // ============= FUNÇÕES DE GESTÃO DE PROJETOS =============
 function openGestaoModal(modalId) {
     console.log(`📋 Abrindo modal: ${modalId}`);
-    
+
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'block';
-        
+
         // Reset do formulário
         const form = modal.querySelector('form');
         if (form) {
             form.reset();
         }
-        
+
         // Reset da variável de edição
         if (window.currentEditingId !== undefined) {
             window.currentEditingId = null;
@@ -72,7 +78,7 @@ function closeGestaoModal(modalId) {
     if (modal) {
         modal.style.display = 'none';
     }
-    
+
     // Reset da variável de edição
     if (window.currentEditingId !== undefined) {
         window.currentEditingId = null;
@@ -84,45 +90,45 @@ function showSection(sectionId, event) {
     if (event) {
         event.preventDefault();
     }
-    
+
     console.log(`🔄 Mostrando seção: ${sectionId}`);
-    
+
     // Esconder todas as seções
     const sections = document.querySelectorAll('.section');
     sections.forEach(section => {
         section.classList.remove('active');
     });
-    
+
     // Mostrar seção selecionada
     const targetSection = document.getElementById(sectionId);
     if (targetSection) {
         targetSection.classList.add('active');
     }
-    
+
     // Atualizar menu
     const menuLinks = document.querySelectorAll('.sidebar-menu a');
     menuLinks.forEach(link => {
         link.classList.remove('active');
     });
-    
+
     const activeLink = document.querySelector(`[onclick*="showSection('${sectionId}'"]`);
     if (activeLink) {
         activeLink.classList.add('active');
     }
-    
+
     // Atualizar título da seção
     const sectionTitle = document.getElementById('section-title');
     if (sectionTitle) {
         const titles = {
-            'inicio': 'Início',
-            'infraestrutura': 'Dashboard - Infraestrutura',
-            'enderecos': 'Cadastro de Endereços',
+            inicio: 'Início',
+            infraestrutura: 'Dashboard - Infraestrutura',
+            enderecos: 'Cadastro de Endereços',
             'gestao-projetos': 'Gestão de Projetos'
         };
-        
+
         sectionTitle.textContent = titles[sectionId] || sectionId;
     }
-    
+
     // Carregar dados específicos da seção se necessário
     loadSectionData(sectionId);
 }
@@ -136,12 +142,12 @@ async function loadSectionData(sectionId) {
                     await window.loadEnderecosTable();
                 }
                 break;
-                
+
             case 'gestao-projetos':
                 // Carregar dados de gestão
                 await loadGestaoData();
                 break;
-                
+
             case 'infraestrutura':
                 // Carregar dados de infraestrutura
                 if (typeof window.loadStatistics === 'function') {
@@ -157,30 +163,30 @@ async function loadSectionData(sectionId) {
 // ============= FUNÇÕES DE GESTÃO DE ABAS =============
 function showGestaoTab(tabId) {
     console.log(`📑 Mostrando aba: ${tabId}`);
-    
+
     // Esconder todas as abas
     const tabs = document.querySelectorAll('.gestao-tab-content');
     tabs.forEach(tab => {
         tab.classList.remove('active');
     });
-    
+
     // Mostrar aba selecionada
     const targetTab = document.getElementById(`gestao-${tabId}-tab`);
     if (targetTab) {
         targetTab.classList.add('active');
     }
-    
+
     // Atualizar botões das abas
     const tabButtons = document.querySelectorAll('.gestao-tab-btn');
     tabButtons.forEach(btn => {
         btn.classList.remove('active');
     });
-    
+
     const activeButton = document.querySelector(`[onclick*="showGestaoTab('${tabId}'"]`);
     if (activeButton) {
         activeButton.classList.add('active');
     }
-    
+
     // Carregar dados da aba
     // loadTabData(tabId); // Desabilitado - usando gestao-renovada.js
 }
@@ -215,14 +221,20 @@ async function loadTabData(tabId) {
 // ============= FUNÇÕES DE CARREGAMENTO DE TABELAS =============
 async function loadProjetosTable() {
     try {
-        if (!window.FirestoreIntegration) return;
-        
+        if (!window.FirestoreIntegration) {
+            return;
+        }
+
         const projetos = await window.FirestoreIntegration.loadProjetos();
         const tbody = document.getElementById('projetosTableBody');
-        
-        if (!tbody) return;
-        
-        tbody.innerHTML = projetos.map(projeto => `
+
+        if (!tbody) {
+            return;
+        }
+
+        tbody.innerHTML = projetos
+            .map(
+                projeto => `
             <tr>
                 <td>${projeto.id}</td>
                 <td>${projeto.nome || ''}</td>
@@ -235,8 +247,9 @@ async function loadProjetosTable() {
                     <button class="btn-delete" onclick="deleteProjeto('${projeto.id}')">🗑️</button>
                 </td>
             </tr>
-        `).join('');
-        
+        `
+            )
+            .join('');
     } catch (error) {
         console.error('❌ Erro ao carregar tabela de projetos:', error);
     }
@@ -244,14 +257,20 @@ async function loadProjetosTable() {
 
 async function loadSubProjetosTable() {
     try {
-        if (!window.FirestoreIntegration) return;
-        
+        if (!window.FirestoreIntegration) {
+            return;
+        }
+
         const subprojetos = await window.FirestoreIntegration.loadSubProjetos();
         const tbody = document.getElementById('subprojetosTableBody');
-        
-        if (!tbody) return;
-        
-        tbody.innerHTML = subprojetos.map(subprojeto => `
+
+        if (!tbody) {
+            return;
+        }
+
+        tbody.innerHTML = subprojetos
+            .map(
+                subprojeto => `
             <tr>
                 <td>${subprojeto.id}</td>
                 <td>${subprojeto.nome || ''}</td>
@@ -264,8 +283,9 @@ async function loadSubProjetosTable() {
                     <button class="btn-delete" onclick="deleteSubProjeto('${subprojeto.id}')">🗑️</button>
                 </td>
             </tr>
-        `).join('');
-        
+        `
+            )
+            .join('');
     } catch (error) {
         console.error('❌ Erro ao carregar tabela de sub projetos:', error);
     }
@@ -273,14 +293,20 @@ async function loadSubProjetosTable() {
 
 async function loadTiposAcaoTable() {
     try {
-        if (!window.FirestoreIntegration) return;
-        
+        if (!window.FirestoreIntegration) {
+            return;
+        }
+
         const tipos = await window.FirestoreIntegration.loadTiposAcao();
         const tbody = document.getElementById('tiposAcaoTableBody');
-        
-        if (!tbody) return;
-        
-        tbody.innerHTML = tipos.map(tipo => `
+
+        if (!tbody) {
+            return;
+        }
+
+        tbody.innerHTML = tipos
+            .map(
+                tipo => `
             <tr>
                 <td>${tipo.id}</td>
                 <td>${tipo.nome || ''}</td>
@@ -293,8 +319,9 @@ async function loadTiposAcaoTable() {
                     <button class="btn-delete" onclick="deleteTipoAcao('${tipo.id}')">🗑️</button>
                 </td>
             </tr>
-        `).join('');
-        
+        `
+            )
+            .join('');
     } catch (error) {
         console.error('❌ Erro ao carregar tabela de tipos de ação:', error);
     }
@@ -302,14 +329,20 @@ async function loadTiposAcaoTable() {
 
 async function loadSupervisoresTable() {
     try {
-        if (!window.FirestoreIntegration) return;
-        
+        if (!window.FirestoreIntegration) {
+            return;
+        }
+
         const supervisores = await window.FirestoreIntegration.loadSupervisores();
         const tbody = document.getElementById('supervisoresTableBody');
-        
-        if (!tbody) return;
-        
-        tbody.innerHTML = supervisores.map(supervisor => `
+
+        if (!tbody) {
+            return;
+        }
+
+        tbody.innerHTML = supervisores
+            .map(
+                supervisor => `
             <tr>
                 <td>${supervisor.id}</td>
                 <td>${supervisor.nome || ''}</td>
@@ -323,8 +356,9 @@ async function loadSupervisoresTable() {
                     <button class="btn-delete" onclick="deleteSupervisor('${supervisor.id}')">🗑️</button>
                 </td>
             </tr>
-        `).join('');
-        
+        `
+            )
+            .join('');
     } catch (error) {
         console.error('❌ Erro ao carregar tabela de supervisores:', error);
     }
@@ -332,14 +366,20 @@ async function loadSupervisoresTable() {
 
 async function loadEquipesTable() {
     try {
-        if (!window.FirestoreIntegration) return;
-        
+        if (!window.FirestoreIntegration) {
+            return;
+        }
+
         const equipes = await window.FirestoreIntegration.loadEquipes();
         const tbody = document.getElementById('equipesTableBody');
-        
-        if (!tbody) return;
-        
-        tbody.innerHTML = equipes.map(equipe => `
+
+        if (!tbody) {
+            return;
+        }
+
+        tbody.innerHTML = equipes
+            .map(
+                equipe => `
             <tr>
                 <td>${equipe.id}</td>
                 <td>${equipe.nome || ''}</td>
@@ -353,8 +393,9 @@ async function loadEquipesTable() {
                     <button class="btn-delete" onclick="deleteEquipe('${equipe.id}')">🗑️</button>
                 </td>
             </tr>
-        `).join('');
-        
+        `
+            )
+            .join('');
     } catch (error) {
         console.error('❌ Erro ao carregar tabela de equipes:', error);
     }
@@ -362,14 +403,20 @@ async function loadEquipesTable() {
 
 async function loadCidadesTable() {
     try {
-        if (!window.FirestoreIntegration) return;
-        
+        if (!window.FirestoreIntegration) {
+            return;
+        }
+
         const cidades = await window.FirestoreIntegration.loadCidades();
         const tbody = document.getElementById('cidadesTableBody');
-        
-        if (!tbody) return;
-        
-        tbody.innerHTML = cidades.map(cidade => `
+
+        if (!tbody) {
+            return;
+        }
+
+        tbody.innerHTML = cidades
+            .map(
+                cidade => `
             <tr>
                 <td>${cidade.id}</td>
                 <td>${cidade.nome || ''}</td>
@@ -382,8 +429,9 @@ async function loadCidadesTable() {
                     <button class="btn-delete" onclick="deleteCidade('${cidade.id}')">🗑️</button>
                 </td>
             </tr>
-        `).join('');
-        
+        `
+            )
+            .join('');
     } catch (error) {
         console.error('❌ Erro ao carregar tabela de cidades:', error);
     }
@@ -397,35 +445,43 @@ async function loadGestaoData() {
 // ============= FUNÇÕES DE FILTRO E BUSCA =============
 function filterTable() {
     const input = document.getElementById('searchInput');
-    if (!input) return;
-    
+    if (!input) {
+        return;
+    }
+
     const filter = input.value.toLowerCase();
     const table = document.getElementById('enderecosTable');
-    if (!table) return;
-    
+    if (!table) {
+        return;
+    }
+
     const rows = table.getElementsByTagName('tr');
-    
-    for (let i = 1; i < rows.length; i++) { // Skip header
+
+    for (let i = 1; i < rows.length; i++) {
+        // Skip header
         const row = rows[i];
         const cells = row.getElementsByTagName('td');
         let found = false;
-        
-        for (let j = 0; j < cells.length - 1; j++) { // Skip actions column
+
+        for (let j = 0; j < cells.length - 1; j++) {
+            // Skip actions column
             const cellText = cells[j].textContent.toLowerCase();
             if (cellText.includes(filter)) {
                 found = true;
                 break;
             }
         }
-        
+
         row.style.display = found ? '' : 'none';
     }
 }
 
 // ============= FUNÇÕES UTILITÁRIAS =============
 function formatDate(timestamp) {
-    if (!timestamp || !timestamp.toDate) return '';
-    
+    if (!timestamp || !timestamp.toDate) {
+        return '';
+    }
+
     try {
         return timestamp.toDate().toLocaleDateString('pt-BR');
     } catch (error) {
@@ -439,44 +495,44 @@ function testUploadWithSampleData() {
 
 function downloadTemplate() {
     console.log('📥 Baixando planilha modelo');
-    
+
     // Criar dados da planilha modelo
     const templateData = [
         {
-            'Projeto': 'CLARO',
+            Projeto: 'CLARO',
             'Sub Projeto': 'FTTH',
             'Tipo Ação': 'ATIVAÇÃO',
-            'Condomínio': 'Nome do Condomínio',
-            'Endereço': 'Endereço Completo',
-            'Cidade': 'Nome da Cidade',
-            'PEP': 'PEP123',
+            Condomínio: 'Nome do Condomínio',
+            Endereço: 'Endereço Completo',
+            Cidade: 'Nome da Cidade',
+            PEP: 'PEP123',
             'COD IMOVEL GED': 'GED123',
             'NODE GERENCIAL': 'NODE123',
             'Área Técnica': 'PTBAA',
-            'HP': '5',
-            'ANDAR': '10',
+            HP: '5',
+            ANDAR: '10',
             'Data Recebimento': '2024-01-15',
             'Data Início': '2024-01-20',
             'Data Final': '2024-01-25',
-            'Equipe': 'Equipe A',
-            'Supervisor': 'João Silva',
-            'Status': 'PRODUTIVA',
-            'RDO': 'SIM',
-            'BOOK': 'SIM',
-            'PROJETO': 'CONCLUIDO',
-            'Situação': 'Finalizado',
-            'Justificativa': 'Trabalho concluído com sucesso'
+            Equipe: 'Equipe A',
+            Supervisor: 'João Silva',
+            Status: 'PRODUTIVA',
+            RDO: 'SIM',
+            BOOK: 'SIM',
+            PROJETO: 'CONCLUIDO',
+            Situação: 'Finalizado',
+            Justificativa: 'Trabalho concluído com sucesso'
         }
     ];
-    
+
     // Criar workbook
     const ws = XLSX.utils.json_to_sheet(templateData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Modelo');
-    
+
     // Download
     XLSX.writeFile(wb, 'modelo-upload-enderecos.xlsx');
-    
+
     showMessage('📥 Planilha modelo baixada com sucesso!', 'success');
 }
 

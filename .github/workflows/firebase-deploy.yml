@@ -1,18 +1,21 @@
 name: Deploy to Firebase Hosting
 
 on:
-  push:
-    branches:
-      - main
-      - master
-  pull_request:
-    branches:
-      - main
-      - master
+  workflow_dispatch:
+    inputs:
+      confirm_deploy:
+        description: 'Deploy to production? (yes/no)'
+        required: true
+        default: 'no'
+        type: choice
+        options:
+        - 'yes'
+        - 'no'
 
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    if: github.event.inputs.confirm_deploy == 'yes'
     
     steps:
     - name: Checkout repository

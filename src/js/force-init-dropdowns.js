@@ -7,16 +7,20 @@ let originalPopulateInfraFilters = null;
 // Função para inicializar dropdowns após filtros serem populados
 function initializeDropdownsAfterFilters() {
     console.log('🎯 Inicializando dropdowns após populateInfraFilters...');
-    
+
     // Debug: Verificar se os elementos existem
     const selectElement = document.getElementById('infraFilterProjeto');
     if (selectElement) {
-        console.log('📊 Select infraFilterProjeto encontrado com', selectElement.options.length, 'opções');
+        console.log(
+            '📊 Select infraFilterProjeto encontrado com',
+            selectElement.options.length,
+            'opções'
+        );
     } else {
         console.warn('⚠️ Select infraFilterProjeto não encontrado');
         return;
     }
-    
+
     // Aguardar um momento para garantir que o DOM foi atualizado
     setTimeout(() => {
         if (typeof window.initializeCheckboxDropdownsWhenReady === 'function') {
@@ -35,23 +39,23 @@ function initializeDropdownsAfterFilters() {
 function waitForPopulateInfraFilters() {
     if (typeof window.populateInfraFilters === 'function') {
         console.log('✅ Função populateInfraFilters encontrada, criando interceptador...');
-        
+
         // Salvar referência da função original
         originalPopulateInfraFilters = window.populateInfraFilters;
-        
+
         // Substituir por versão interceptada
-        window.populateInfraFilters = function(...args) {
+        window.populateInfraFilters = function (...args) {
             console.log('🔄 Interceptando populateInfraFilters...');
-            
+
             // Chamar função original
             const result = originalPopulateInfraFilters.apply(this, args);
-            
+
             // Inicializar dropdowns após filtros serem populados
             initializeDropdownsAfterFilters();
-            
+
             return result;
         };
-        
+
         console.log('🎯 Interceptador de populateInfraFilters configurado');
     } else {
         console.log('⏳ populateInfraFilters ainda não definida, tentando novamente...');
@@ -64,9 +68,13 @@ function waitForPopulateInfraFilters() {
 waitForPopulateInfraFilters();
 
 // Backup: inicialização quando usuário clica em Dashboard
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
     const target = e.target.closest('a');
-    if (target && (target.textContent.includes('Dashboard') || target.onclick && target.onclick.toString().includes('infraestrutura'))) {
+    if (
+        target &&
+        (target.textContent.includes('Dashboard') ||
+            (target.onclick && target.onclick.toString().includes('infraestrutura')))
+    ) {
         console.log('🎯 Click em Dashboard detectado, aguardando inicialização...');
         setTimeout(() => {
             initializeDropdownsAfterFilters();

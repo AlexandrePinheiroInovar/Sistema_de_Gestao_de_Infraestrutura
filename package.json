@@ -26,20 +26,23 @@
     "precommit": "npm run lint && npm run format",
     "prepare": "husky install",
     "firebase:serve": "firebase serve --port=5000",
-    "firebase:deploy": "npm run build && firebase deploy",
+    "firebase:deploy": "echo 'DEPLOY MANUAL: Execute apenas quando solicitado!' && npm run build && firebase deploy",
+    "deploy:manual": "echo '🚀 Deploy Manual para Produção...' && npm run build && firebase deploy",
     "analyze": "npm run analyze:js && npm run analyze:css",
     "analyze:js": "echo 'Analyzing JavaScript...' && find src/js -name '*.js' -exec wc -l {} + | tail -1",
     "analyze:css": "echo 'Analyzing CSS...' && find src/css -name '*.css' -exec wc -l {} + | tail -1"
   },
   "dependencies": {
-    "firebase": "^12.1.0",
-    "xlsx": "^0.18.5",
+    "cors": "^2.8.5",
     "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "firebase": "^12.1.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "clean-css-cli": "^5.6.3",
     "eslint": "^8.57.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
     "html-validate": "^8.15.0",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.2",

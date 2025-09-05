@@ -550,14 +550,20 @@ function renderTableBody(tbody, data) {
             tr.appendChild(td);
         });
         
-        // Adicionar coluna de ações
+        // Adicionar coluna de ações (COM HISTÓRICO)
         const actionsTd = document.createElement('td');
         actionsTd.style.textAlign = 'center';
+        actionsTd.style.minWidth = '160px';
         actionsTd.innerHTML = `
             <button onclick="editFirebaseTableRecord('${row.id}')" 
-                    style="margin-right: 5px; padding: 4px 8px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;"
+                    style="margin-right: 3px; padding: 4px 8px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;"
                     title="Editar registro">
                 ✏️
+            </button>
+            <button onclick="duplicateFirebaseTableRecord('${row.id}')" 
+                    style="margin-right: 3px; padding: 4px 8px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer;"
+                    title="Duplicar linha">
+                📄
             </button>
             <button onclick="deleteFirebaseTableRecord('${row.id}')" 
                     style="padding: 4px 8px; background: #dc3545; color: white; border: none; border-radius: 3px; cursor: pointer;"
@@ -575,10 +581,88 @@ function renderTableBody(tbody, data) {
 }
 
 // ============= FUNÇÕES DE AÇÃO =============
-window.editFirebaseTableRecord = function(id) {
+window.editFirebaseTableRecord = async function(id) {
     console.log('✏️ [FIREBASE-TABLE] Editando registro:', id);
-    // TODO: Implementar edição
-    alert('Funcionalidade de edição em desenvolvimento');
+    
+    try {
+        // Garantir que Firebase está pronto
+        await firebaseManager.ensureReady();
+        const firestore = firebaseManager.getFirestore();
+        
+        // Buscar o registro no Firestore
+        const doc = await firestore.collection('enderecos').doc(id).get();
+        if (!doc.exists) {
+            alert('Registro não encontrado!');
+            return;
+        }
+        
+        const data = doc.data();
+        console.log('📄 [FIREBASE-TABLE] Dados do registro:', data);
+        
+        // Abrir modal de edição
+        openEditModal(id, data);
+        
+    } catch (error) {
+        console.error('❌ [FIREBASE-TABLE] Erro ao carregar registro para edição:', error);
+        alert('Erro ao carregar registro: ' + error.message);
+    }
+};
+
+// Função para duplicar registro
+window.duplicateFirebaseTableRecord = async function(id) {
+    console.log('📄 [FIREBASE-TABLE] Duplicando registro:', id);
+    
+    if (!confirm('Deseja duplicar este registro?')) {
+        return;
+    }
+    
+    try {
+        // Garantir que Firebase está pronto
+        await firebaseManager.ensureReady();
+        const firestore = firebaseManager.getFirestore();
+        
+        // Buscar o registro original
+        const originalDoc = await firestore.collection('enderecos').doc(id).get();
+        if (!originalDoc.exists) {
+            alert('Registro original não encontrado!');
+            return;
+        }
+        
+        const originalData = originalDoc.data();
+        
+        // Remover o ID e timestamp para criar um novo documento
+        const duplicateData = { ...originalData };
+        delete duplicateData.id;
+        delete duplicateData.createdAt;
+        delete duplicateData.updatedAt;
+        
+        // Adicionar sufixo ao condomínio para identificar como cópia
+        if (duplicateData.condominio) {
+            duplicateData.condominio += ' - CÓPIA';
+        }
+        
+        // Adicionar timestamps
+        duplicateData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        duplicateData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+        
+        // Salvar novo registro
+        const newDocRef = await firestore.collection('enderecos').add(duplicateData);
+        console.log('✅ [FIREBASE-TABLE] Registro duplicado com ID:', newDocRef.id);
+        
+        // Salvar log de duplicação
+        if (typeof window.salvarLogAlteracao === 'function') {
+            await window.salvarLogAlteracao(newDocRef.id, {}, duplicateData, 'duplicate', `Duplicado de: ${originalData.condominio || 'registro'}`);
+        }
+        
+        // Recarregar dados
+        await loadFirebaseTableData();
+        
+        alert('✅ Registro duplicado com sucesso!');
+        
+    } catch (error) {
+        console.error('❌ [FIREBASE-TABLE] Erro ao duplicar registro:', error);
+        alert('Erro ao duplicar registro: ' + error.message);
+    }
 };
 
 window.deleteFirebaseTableRecord = async function(id) {
@@ -593,13 +677,21 @@ window.deleteFirebaseTableRecord = async function(id) {
         await firebaseManager.ensureReady();
         const firestore = firebaseManager.getFirestore();
         
+        // Obter dados antes de excluir para histórico
+        const doc = await firestore.collection('enderecos').doc(id).get();
+        const dadosAntigos = doc.exists ? doc.data() : {};
+        
         await firestore.collection('enderecos').doc(id).delete();
+        
+        // Salvar log de exclusão no histórico
+        console.log('📝 [FIREBASE-TABLE] Salvando log de exclusão...');
+        await salvarLogAlteracao(id, dadosAntigos, {}, 'delete');
         
         // Recarregar dados
         await loadFirebaseTableData();
         
         console.log('✅ [FIREBASE-TABLE] Registro excluído com sucesso');
-        showNotification('✅ Sucesso!', 'Registro excluído com sucesso!', 'success');
+        showNotification('✅ Sucesso!', 'Registro excluído e histórico salvo!', 'success');
         
     } catch (error) {
         console.error('❌ [FIREBASE-TABLE] Erro ao excluir:', error);
@@ -4257,3 +4349,786 @@ window.debugFirebaseTable = function() {
         }
     }
 };
+
+// ============= SISTEMA DE EDIÇÃO DE REGISTROS =============
+
+// Variável global para armazenar ID do registro sendo editado
+let currentEditingRecordId = null;
+
+// Função para abrir modal de edição
+function openEditModal(recordId, recordData) {
+    console.log('✏️ [EDIT-MODAL] Abrindo modal de edição para ID:', recordId);
+    
+    currentEditingRecordId = recordId;
+    
+    // Verificar se existe o modal do sistema novo-endereco-limpo
+    const modal = document.getElementById('crudModal');
+    if (!modal) {
+        alert('Modal de edição não encontrado! Verifique se o sistema está carregado corretamente.');
+        return;
+    }
+    
+    // Definir título como edição
+    const modalTitle = document.getElementById('modalTitle');
+    if (modalTitle) {
+        modalTitle.textContent = 'Editar Endereço';
+    }
+    
+    // Carregar seletores com dados atualizados (igual ao novo endereço)
+    console.log('📋 [EDIT-MODAL] Carregando seletores para edição...');
+    carregarSeletoresParaEdicao();
+    
+    // Preencher formulário com dados do registro
+    setTimeout(() => {
+        populateEditForm(recordData);
+    }, 500);
+    
+    // Configurar event listener do formulário para edição
+    setupEditFormSubmission();
+    
+    // Abrir modal
+    modal.style.display = 'block';
+    modal.style.visibility = 'visible';
+    modal.style.opacity = '1';
+    modal.classList.add('show');
+    
+    console.log('✅ [EDIT-MODAL] Modal de edição aberto');
+}
+
+// Função para carregar seletores para edição (igual ao novo endereço)
+async function carregarSeletoresParaEdicao() {
+    console.log('📋 [EDIT-SELETORES] Carregando dados dos seletores...');
+    
+    try {
+        // Usar a mesma lógica do novo-endereco-limpo.js
+        if (window.NovoEndereco && window.NovoEndereco.initialized && window.NovoEndereco.firestore) {
+            await window.NovoEndereco.carregarSeletores();
+        } else {
+            // Fallback: carregar dados estáticos + PEP
+            carregarSeletoresFallbackComPEP();
+        }
+        
+        console.log('✅ [EDIT-SELETORES] Seletores carregados para edição');
+    } catch (error) {
+        console.error('❌ [EDIT-SELETORES] Erro ao carregar seletores:', error);
+        carregarSeletoresFallbackComPEP();
+    }
+}
+
+// Função para carregar seletores com dados da tabela (incluindo PEP da tabela)
+function carregarSeletoresFallbackComPEP() {
+    console.log('🔄 [EDIT-SELETORES] Carregando seletores com dados da tabela...');
+    
+    // Extrair dados únicos da tabela atual
+    const dadosDaTabela = extrairDadosUnicosDaTabela();
+    
+    // Dados estáticos para campos que não estão na tabela
+    const dadosEstaticos = {
+        projeto: dadosDaTabela.projeto.length > 0 ? dadosDaTabela.projeto : ['CLARO', 'VIVO', 'TIM', 'OI'],
+        subProjeto: dadosDaTabela.subProjeto.length > 0 ? dadosDaTabela.subProjeto : ['MDU RESIDENCIAL', 'MDU COMERCIAL', 'FTTH', 'HFC'],
+        tipoAcao: dadosDaTabela.tipoAcao.length > 0 ? dadosDaTabela.tipoAcao : ['VISTORIA', 'CONSTRUÇÃO', 'ATIVAÇÃO', 'MANUTENÇÃO'],
+        cidade: dadosDaTabela.cidade.length > 0 ? dadosDaTabela.cidade : ['SALVADOR', 'LAURO DE FREITAS', 'CAMAÇARI', 'FEIRA DE SANTANA'],
+        equipe: dadosDaTabela.equipe.length > 0 ? dadosDaTabela.equipe : ['EQUIPE A', 'EQUIPE B', 'EQUIPE C', 'EQUIPE D'],
+        supervisor: dadosDaTabela.supervisor.length > 0 ? dadosDaTabela.supervisor : ['JOÃO SILVA', 'MARIA SANTOS', 'PEDRO OLIVEIRA'],
+        pep: dadosDaTabela.pep // PEP sempre vem da tabela
+    };
+    
+    // Popular cada seletor
+    for (const [selectorId, opcoes] of Object.entries(dadosEstaticos)) {
+        const select = document.getElementById(selectorId);
+        if (!select) continue;
+        
+        // Manter valor selecionado atual se existir
+        const valorAtual = select.value;
+        
+        // Limpar e recriar opções
+        select.innerHTML = '<option value="">Selecione...</option>';
+        
+        opcoes.forEach(opcao => {
+            const option = document.createElement('option');
+            option.value = opcao;
+            option.textContent = opcao;
+            if (opcao === valorAtual) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+        
+        console.log(`✅ [EDIT-SELETORES] ${selectorId}: ${opcoes.length} opções carregadas`);
+    }
+    
+    // Adicionar status fixo
+    const statusSelect = document.getElementById('status');
+    if (statusSelect) {
+        const valorAtualStatus = statusSelect.value;
+        statusSelect.innerHTML = `
+            <option value="">Selecione o status...</option>
+            <option value="PRODUTIVA" ${valorAtualStatus === 'PRODUTIVA' ? 'selected' : ''}>PRODUTIVA</option>
+            <option value="IMPRODUTIVA" ${valorAtualStatus === 'IMPRODUTIVA' ? 'selected' : ''}>IMPRODUTIVA</option>
+        `;
+        console.log('✅ [EDIT-SELETORES] Status: Opções fixas adicionadas');
+    }
+}
+
+// Função para extrair dados únicos da tabela de endereços
+function extrairDadosUnicosDaTabela() {
+    console.log('📊 [EXTRAIR-DADOS] Extraindo dados únicos da tabela...');
+    
+    const tbody = document.getElementById('enderecoTableBody');
+    if (!tbody) {
+        console.warn('⚠️ [EXTRAIR-DADOS] Tabela não encontrada');
+        return {
+            projeto: [], subProjeto: [], tipoAcao: [], cidade: [], 
+            equipe: [], supervisor: [], pep: []
+        };
+    }
+    
+    const linhas = tbody.querySelectorAll('tr:not(.empty-state)');
+    const dados = {
+        projeto: new Set(),
+        subProjeto: new Set(), 
+        tipoAcao: new Set(),
+        cidade: new Set(),
+        equipe: new Set(),
+        supervisor: new Set(),
+        pep: new Set()
+    };
+    
+    linhas.forEach(linha => {
+        const colunas = linha.querySelectorAll('td');
+        if (colunas.length >= 18) {
+            // Extrair valores das colunas correspondentes
+            const projeto = colunas[0]?.textContent?.trim();
+            const subProjeto = colunas[1]?.textContent?.trim();
+            const tipoAcao = colunas[2]?.textContent?.trim();
+            const cidade = colunas[6]?.textContent?.trim();
+            const pep = colunas[7]?.textContent?.trim(); // Coluna PEP
+            const equipe = colunas[15]?.textContent?.trim();
+            const supervisor = colunas[16]?.textContent?.trim();
+            
+            if (projeto) dados.projeto.add(projeto);
+            if (subProjeto) dados.subProjeto.add(subProjeto);
+            if (tipoAcao) dados.tipoAcao.add(tipoAcao);
+            if (cidade) dados.cidade.add(cidade);
+            if (pep) dados.pep.add(pep);
+            if (equipe) dados.equipe.add(equipe);
+            if (supervisor) dados.supervisor.add(supervisor);
+        }
+    });
+    
+    // Converter Sets para Arrays ordenados
+    const resultado = {
+        projeto: Array.from(dados.projeto).sort(),
+        subProjeto: Array.from(dados.subProjeto).sort(),
+        tipoAcao: Array.from(dados.tipoAcao).sort(),
+        cidade: Array.from(dados.cidade).sort(),
+        equipe: Array.from(dados.equipe).sort(),
+        supervisor: Array.from(dados.supervisor).sort(),
+        pep: Array.from(dados.pep).sort()
+    };
+    
+    console.log('📊 [EXTRAIR-DADOS] Dados únicos extraídos:', {
+        projeto: resultado.projeto.length,
+        subProjeto: resultado.subProjeto.length,
+        tipoAcao: resultado.tipoAcao.length,
+        cidade: resultado.cidade.length,
+        equipe: resultado.equipe.length,
+        supervisor: resultado.supervisor.length,
+        pep: resultado.pep.length
+    });
+    
+    return resultado;
+}
+
+// ============= SISTEMA DE HISTÓRICO DE ALTERAÇÕES =============
+
+// Função para gerar descrição amigável do registro
+function gerarDescricaoAmigavel(dados) {
+    if (!dados) return 'Registro desconhecido';
+    
+    // Para endereços
+    if (dados.condominio || dados.endereco) {
+        const partes = [];
+        if (dados.condominio) partes.push(`"${dados.condominio}"`);
+        if (dados.endereco) partes.push(dados.endereco);
+        if (dados.cidade) partes.push(`(${dados.cidade})`);
+        if (dados.projeto) partes.push(`- ${dados.projeto}`);
+        
+        return partes.length > 0 ? partes.join(' ') : 'Endereço';
+    }
+    
+    // Para projetos/gestão
+    if (dados.nome) {
+        return `"${dados.nome}"`;
+    }
+    
+    // Para outros tipos
+    if (dados.titulo) {
+        return `"${dados.titulo}"`;
+    }
+    
+    // Fallback genérico
+    const campos = ['projeto', 'subProjeto', 'tipoAcao', 'equipe', 'supervisor'];
+    for (const campo of campos) {
+        if (dados[campo]) {
+            return `${campo}: "${dados[campo]}"`;
+        }
+    }
+    
+    return 'Registro do sistema';
+}
+
+// Função para salvar log de alteração
+async function salvarLogAlteracao(recordId, dadosAntigos, dadosNovos, tipoOperacao = 'edit') {
+    if (!firebase || !firebase.firestore) {
+        console.warn('⚠️ [HISTORICO] Firebase não disponível para salvar log');
+        return;
+    }
+    
+    try {
+        // Identificar usuário (usar email do Firebase Auth se disponível)
+        let usuario = 'Sistema';
+        if (firebase.auth && firebase.auth().currentUser) {
+            usuario = firebase.auth().currentUser.email || 'Usuário Autenticado';
+        } else {
+            // Fallback: tentar obter de localStorage ou session
+            usuario = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser') || 'Usuário Anônimo';
+        }
+        
+        // Gerar descrição amigável do registro
+        const descricaoRegistro = gerarDescricaoAmigavel(dadosNovos || dadosAntigos || {});
+        
+        // Identificar campos alterados
+        const camposAlterados = [];
+        for (const campo in dadosNovos) {
+            if (dadosAntigos[campo] !== dadosNovos[campo]) {
+                camposAlterados.push({
+                    campo: campo,
+                    valorAnterior: dadosAntigos[campo] || '',
+                    valorNovo: dadosNovos[campo] || ''
+                });
+            }
+        }
+        
+        // Criar registro de log
+        const logEntry = {
+            recordId: recordId,
+            usuario: usuario,
+            tipoOperacao: tipoOperacao, // 'edit', 'create', 'delete'
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            timestampLocal: new Date().toISOString(),
+            camposAlterados: camposAlterados,
+            totalCamposAlterados: camposAlterados.length,
+            dadosCompletos: {
+                antes: dadosAntigos,
+                depois: dadosNovos
+            },
+            ip: await obterIPUsuario(),
+            userAgent: navigator.userAgent,
+            origem: 'sistema_mdu_v1',
+            descricaoRegistro: descricaoRegistro // Descrição amigável
+        };
+        
+        // Salvar no Firebase
+        const logRef = await firebase.firestore()
+            .collection('logs_alteracoes')
+            .add(logEntry);
+            
+        console.log(`📝 [HISTORICO] Log salvo: ${logRef.id} - ${camposAlterados.length} campos alterados por ${usuario}`);
+        
+        return logRef.id;
+        
+    } catch (error) {
+        console.error('❌ [HISTORICO] Erro ao salvar log:', error);
+        return null;
+    }
+}
+
+// Função para obter IP do usuário (simplificada)
+async function obterIPUsuario() {
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        return data.ip;
+    } catch (error) {
+        return 'IP não identificado';
+    }
+}
+
+// Função para visualizar histórico geral de todos os registros
+async function visualizarHistoricoGeral() {
+    if (!firebase || !firebase.firestore) {
+        alert('⚠️ Firebase não disponível para consultar histórico');
+        return;
+    }
+    
+    try {
+        console.log('🔍 [HISTORICO-GERAL] Buscando histórico geral...');
+        
+        const logs = await firebase.firestore()
+            .collection('logs_alteracoes')
+            .orderBy('timestamp', 'desc')
+            .limit(100)
+            .get();
+            
+        if (logs.empty) {
+            alert('📄 Nenhum histórico encontrado no sistema');
+            return;
+        }
+        
+        // Criar modal de histórico geral
+        criarModalHistoricoGeral(logs.docs);
+        
+    } catch (error) {
+        console.error('❌ [HISTORICO-GERAL] Erro ao buscar histórico:', error);
+        alert('❌ Erro ao buscar histórico: ' + error.message);
+    }
+}
+
+// Função para visualizar histórico de um registro específico (mantida para compatibilidade)
+async function visualizarHistorico(recordId) {
+    if (!firebase || !firebase.firestore) {
+        alert('⚠️ Firebase não disponível para consultar histórico');
+        return;
+    }
+    
+    try {
+        console.log(`🔍 [HISTORICO] Buscando histórico para record: ${recordId}`);
+        
+        const logs = await firebase.firestore()
+            .collection('logs_alteracoes')
+            .where('recordId', '==', recordId)
+            .orderBy('timestamp', 'desc')
+            .limit(50)
+            .get();
+            
+        if (logs.empty) {
+            alert('📄 Nenhum histórico encontrado para este registro');
+            return;
+        }
+        
+        // Criar modal de histórico
+        criarModalHistorico(logs.docs, recordId);
+        
+    } catch (error) {
+        console.error('❌ [HISTORICO] Erro ao buscar histórico:', error);
+        alert('❌ Erro ao buscar histórico: ' + error.message);
+    }
+}
+
+// Função para criar modal de histórico
+function criarModalHistorico(logDocs, recordId) {
+    // Remover modal existente se houver
+    const modalExistente = document.getElementById('historicoModal');
+    if (modalExistente) {
+        modalExistente.remove();
+    }
+    
+    // Criar HTML do modal
+    const modalHTML = `
+        <div id="historicoModal" class="modal" style="display: block; z-index: 9999;">
+            <div class="modal-content" style="max-width: 80%; max-height: 80%; overflow-y: auto;">
+                <div class="modal-header">
+                    <h3>📋 Histórico de Alterações</h3>
+                    <div style="font-size: 14px; color: #6b7280; margin-top: 5px;">
+                        ${logDocs.length > 0 ? gerarDescricaoAmigavel(logDocs[0].data().dadosCompletos?.depois || logDocs[0].data().dadosCompletos?.antes || {}) : 'Registro'}
+                    </div>
+                    <span class="close" onclick="document.getElementById('historicoModal').remove()">&times;</span>
+                </div>
+                <div class="historico-content">
+                    ${gerarHTMLHistorico(logDocs)}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Inserir no DOM
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    console.log(`✅ [HISTORICO] Modal criado com ${logDocs.length} entradas`);
+}
+
+// Função para gerar HTML do histórico
+function gerarHTMLHistorico(logDocs) {
+    let html = '<div class="historico-timeline" style="padding: 20px;">';
+    
+    logDocs.forEach((doc, index) => {
+        const log = doc.data();
+        const data = log.timestampLocal ? new Date(log.timestampLocal) : new Date();
+        const dataFormatada = data.toLocaleString('pt-BR');
+        
+        html += `
+            <div class="historico-entry" style="border-left: 3px solid #3b82f6; padding-left: 15px; margin-bottom: 20px; position: relative;">
+                <div class="historico-header" style="font-weight: bold; color: #1f2937; margin-bottom: 8px;">
+                    <span style="background: #3b82f6; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px;">
+                        ${log.tipoOperacao?.toUpperCase() || 'EDIT'}
+                    </span>
+                    <span style="margin-left: 10px;">${log.usuario || 'Usuário não identificado'}</span>
+                    <span style="float: right; font-size: 12px; color: #6b7280;">${dataFormatada}</span>
+                </div>
+                <div class="historico-detalhes">
+                    ${log.camposAlterados && log.camposAlterados.length > 0 ? 
+                        `<div><strong>${log.camposAlterados.length} campos alterados:</strong></div>
+                         <ul style="margin: 8px 0; padding-left: 20px;">
+                            ${log.camposAlterados.map(campo => `
+                                <li style="margin: 4px 0; font-size: 13px;">
+                                    <strong>${campo.campo}:</strong> 
+                                    <span style="color: #dc2626; text-decoration: line-through;">"${campo.valorAnterior}"</span>
+                                    → <span style="color: #059669;">"${campo.valorNovo}"</span>
+                                </li>
+                            `).join('')}
+                         </ul>` 
+                        : '<div style="color: #6b7280;">Nenhuma alteração específica registrada</div>'
+                    }
+                    ${log.ip && log.ip !== 'IP não identificado' ? 
+                        `<div style="font-size: 11px; color: #9ca3af; margin-top: 8px;">IP: ${log.ip}</div>` 
+                        : ''
+                    }
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    return html;
+}
+
+// Função para criar modal de histórico geral
+function criarModalHistoricoGeral(logDocs) {
+    // Remover modal existente se houver
+    const modalExistente = document.getElementById('historicoModal');
+    if (modalExistente) {
+        modalExistente.remove();
+    }
+    
+    // Criar HTML do modal
+    const modalHTML = `
+        <div id="historicoModal" class="modal" style="display: block; z-index: 9999;">
+            <div class="modal-content" style="max-width: 90%; max-height: 90%; overflow-y: auto;">
+                <div class="modal-header">
+                    <h3>📋 Histórico Geral do Sistema</h3>
+                    <div style="font-size: 14px; color: #6b7280; margin-top: 5px;">
+                        ${logDocs.length} alterações encontradas (últimas 100)
+                    </div>
+                    <span class="close" onclick="document.getElementById('historicoModal').remove()">&times;</span>
+                </div>
+                <div class="historico-content">
+                    ${gerarHTMLHistoricoGeral(logDocs)}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Inserir no DOM
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    console.log(`✅ [HISTORICO-GERAL] Modal criado com ${logDocs.length} entradas`);
+}
+
+// Função para gerar HTML do histórico geral
+function gerarHTMLHistoricoGeral(logDocs) {
+    let html = '<div class="historico-timeline" style="padding: 20px;">';
+    
+    logDocs.forEach((doc, index) => {
+        const log = doc.data();
+        const data = log.timestampLocal ? new Date(log.timestampLocal) : new Date();
+        const dataFormatada = data.toLocaleString('pt-BR');
+        
+        // Cor do border baseada no tipo de operação
+        let borderColor = '#3b82f6'; // padrão azul
+        let operationIcon = '✏️';
+        
+        switch(log.tipoOperacao?.toLowerCase()) {
+            case 'create':
+            case 'criar':
+                borderColor = '#10b981'; // verde
+                operationIcon = '➕';
+                break;
+            case 'delete':
+            case 'deletar':
+            case 'excluir':
+                borderColor = '#ef4444'; // vermelho
+                operationIcon = '🗑️';
+                break;
+            case 'duplicate':
+            case 'duplicar':
+                borderColor = '#8b5cf6'; // roxo
+                operationIcon = '📄';
+                break;
+            case 'edit':
+            case 'editar':
+            default:
+                borderColor = '#3b82f6'; // azul
+                operationIcon = '✏️';
+                break;
+        }
+        
+        html += `
+            <div class="historico-entry" style="border-left: 3px solid ${borderColor}; padding-left: 15px; margin-bottom: 20px; position: relative;">
+                <div class="historico-header" style="font-weight: bold; color: #1f2937; margin-bottom: 8px;">
+                    <span style="background: ${borderColor}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px;">
+                        ${operationIcon} ${log.tipoOperacao?.toUpperCase() || 'EDIT'}
+                    </span>
+                    <span style="margin-left: 10px;">${log.usuario || 'Usuário não identificado'}</span>
+                    <span style="float: right; font-size: 12px; color: #6b7280;">${dataFormatada}</span>
+                </div>
+                <div class="historico-record-info" style="margin-bottom: 8px;">
+                    <strong>Registro:</strong> 
+                    <span style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #1f2937;">
+                        ${log.descricaoRegistro || gerarDescricaoAmigavel(log.dadosCompletos?.depois || log.dadosCompletos?.antes || {}) || 'Registro desconhecido'}
+                    </span>
+                    ${log.tipoOperacao?.toLowerCase() === 'delete' ? 
+                        '<span style="color: #ef4444; margin-left: 10px; font-size: 11px;">(EXCLUÍDO)</span>' 
+                        : ''
+                    }
+                    <br>
+                    <span style="font-size: 10px; color: #9ca3af;">
+                        ID: ${log.recordId || 'N/A'}
+                    </span>
+                </div>
+                <div class="historico-detalhes">
+                    ${log.camposAlterados && log.camposAlterados.length > 0 ? 
+                        `<div><strong>${log.camposAlterados.length} campos alterados:</strong></div>
+                         <ul style="margin: 8px 0; padding-left: 20px; font-size: 12px;">
+                            ${log.camposAlterados.map(campo => `
+                                <li style="margin-bottom: 4px;">
+                                    <strong>${campo.campo}:</strong> 
+                                    <span style="color: #dc2626; text-decoration: line-through;">${campo.valorAntigo || 'vazio'}</span>
+                                    → 
+                                    <span style="color: #059669;">${campo.valorNovo || 'vazio'}</span>
+                                </li>
+                            `).join('')}
+                         </ul>` 
+                        : '<div style="color: #6b7280;">Nenhuma alteração específica registrada</div>'
+                    }
+                    ${log.ip && log.ip !== 'IP não identificado' ? 
+                        `<div style="font-size: 11px; color: #9ca3af; margin-top: 8px;">IP: ${log.ip}</div>` 
+                        : ''
+                    }
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    return html;
+}
+
+// Exportar funções de histórico para escopo global
+window.visualizarHistorico = visualizarHistorico;
+window.visualizarHistoricoGeral = visualizarHistoricoGeral;
+window.salvarLogAlteracao = salvarLogAlteracao;
+
+// Função para preencher formulário com dados existentes
+function populateEditForm(data) {
+    console.log('📝 [EDIT-FORM] Preenchendo formulário com dados:', data);
+    
+    const fieldMapping = {
+        'projeto': data.projeto || '',
+        'subProjeto': data.subProjeto || '',
+        'tipoAcao': data.tipoAcao || '',
+        'contrato': data.contrato || '',
+        'condominio': data.condominio || '',
+        'endereco': data.endereco || '',
+        'cidade': data.cidade || '',
+        'pep': data.pep || '',
+        'codImovelGed': data.codImovelGed || '',
+        'nodeGerencial': data.nodeGerencial || '',
+        'areaTecnica': data.areaTecnica || '',
+        'hp': data.hp || '',
+        'andar': data.andar || '',
+        'dataRecebimento': formatDateForInput(data.dataRecebimento),
+        'dataInicio': formatDateForInput(data.dataInicio),
+        'dataFinal': formatDateForInput(data.dataFinal),
+        'equipe': data.equipe || '',
+        'supervisor': data.supervisor || '',
+        'status': data.status || '',
+        'rdo': data.rdo || '',
+        'book': data.book || '',
+        'projetoStatus': data.projetoStatus || '',
+        'situacao': data.situacao || '',
+        'justificativa': data.justificativa || '',
+        'observacao': data.observacao || ''
+    };
+    
+    // Preencher todos os campos do formulário
+    Object.entries(fieldMapping).forEach(([fieldId, value]) => {
+        const element = document.getElementById(fieldId);
+        if (element) {
+            element.value = value;
+            console.log(`📝 [EDIT-FORM] Campo ${fieldId} preenchido com:`, value);
+        } else {
+            console.warn(`⚠️ [EDIT-FORM] Campo ${fieldId} não encontrado no DOM`);
+        }
+    });
+}
+
+// Função para formatar data do Firestore para input
+function formatDateForInput(firebaseDate) {
+    if (!firebaseDate) return '';
+    
+    try {
+        let date;
+        
+        // Se é um Timestamp do Firebase
+        if (firebaseDate && typeof firebaseDate.toDate === 'function') {
+            date = firebaseDate.toDate();
+        }
+        // Se é uma string de data
+        else if (typeof firebaseDate === 'string') {
+            date = new Date(firebaseDate);
+        }
+        // Se já é um objeto Date
+        else if (firebaseDate instanceof Date) {
+            date = firebaseDate;
+        }
+        else {
+            return '';
+        }
+        
+        // Retornar no formato YYYY-MM-DD
+        return date.toISOString().split('T')[0];
+        
+    } catch (error) {
+        console.warn('⚠️ [EDIT-FORM] Erro ao formatar data:', firebaseDate, error);
+        return '';
+    }
+}
+
+// Configurar submissão do formulário para edição
+function setupEditFormSubmission() {
+    const form = document.getElementById('enderecoForm');
+    if (!form) {
+        console.error('❌ [EDIT-FORM] Formulário não encontrado');
+        return;
+    }
+    
+    // Remover event listeners anteriores para evitar duplicações
+    const newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+    
+    // Adicionar novo event listener
+    newForm.addEventListener('submit', handleEditFormSubmission);
+    
+    console.log('🔧 [EDIT-FORM] Event listener de edição configurado');
+}
+
+// Handler para submissão de formulário de edição (COM HISTÓRICO)
+async function handleEditFormSubmission(event) {
+    event.preventDefault();
+    
+    console.log('💾 [EDIT-FORM] Salvando alterações do registro:', currentEditingRecordId);
+    
+    if (!currentEditingRecordId) {
+        alert('Erro: ID do registro não encontrado!');
+        return;
+    }
+    
+    try {
+        // Garantir que Firebase está pronto
+        await firebaseManager.ensureReady();
+        const firestore = firebaseManager.getFirestore();
+        
+        // Primeiro, obter dados atuais para histórico
+        const docAtual = await firestore.collection('enderecos').doc(currentEditingRecordId).get();
+        const dadosAntigos = docAtual.exists ? docAtual.data() : {};
+        console.log('📄 [EDIT-FORM] Dados atuais obtidos para histórico');
+        
+        // Coletar dados do formulário
+        const formData = collectFormData();
+        console.log('📋 [EDIT-FORM] Dados coletados:', formData);
+        
+        // Adicionar timestamp de atualização
+        formData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+        formData.updatedAtLocal = new Date().toISOString();
+        
+        // Salvar no Firestore
+        await firestore.collection('enderecos').doc(currentEditingRecordId).update(formData);
+        console.log('✅ [EDIT-FORM] Registro atualizado no Firestore');
+        
+        // Salvar log de alteração no histórico
+        console.log('📝 [EDIT-FORM] Salvando log de alteração...');
+        await salvarLogAlteracao(currentEditingRecordId, dadosAntigos, formData, 'edit');
+        
+        // Fechar modal
+        closeModal();
+        
+        // Recarregar dados da tabela
+        await loadFirebaseTableData();
+        
+        // Mostrar notificação de sucesso
+        if (typeof showNotification === 'function') {
+            showNotification('✅ Sucesso!', 'Registro atualizado e histórico salvo!', 'success');
+        } else {
+            alert('✅ Registro atualizado com sucesso!');
+        }
+        
+        // Limpar variável de edição
+        currentEditingRecordId = null;
+        
+    } catch (error) {
+        console.error('❌ [EDIT-FORM] Erro ao salvar alterações:', error);
+        alert('Erro ao salvar alterações: ' + error.message);
+    }
+}
+
+// Função para coletar dados do formulário
+function collectFormData() {
+    const form = document.getElementById('enderecoForm');
+    if (!form) {
+        throw new Error('Formulário não encontrado');
+    }
+    
+    const formData = {};
+    
+    // Lista de todos os campos do formulário
+    const fieldIds = [
+        'projeto', 'subProjeto', 'tipoAcao', 'contrato', 'condominio', 'endereco', 
+        'cidade', 'pep', 'codImovelGed', 'nodeGerencial', 'areaTecnica', 'hp', 'andar',
+        'dataRecebimento', 'dataInicio', 'dataFinal', 'equipe', 'supervisor', 'status',
+        'rdo', 'book', 'projetoStatus', 'situacao', 'justificativa', 'observacao'
+    ];
+    
+    fieldIds.forEach(fieldId => {
+        const element = document.getElementById(fieldId);
+        if (element) {
+            let value = element.value.trim();
+            
+            // Converter datas para formato Date se não estiver vazio
+            if ((fieldId.includes('data') || fieldId.includes('Data')) && value) {
+                try {
+                    value = new Date(value);
+                } catch (e) {
+                    console.warn(`⚠️ [FORM-DATA] Erro ao converter data ${fieldId}:`, value);
+                }
+            }
+            
+            // Converter HP para número se não estiver vazio
+            if (fieldId === 'hp' && value) {
+                value = parseInt(value) || 0;
+            }
+            
+            formData[fieldId] = value;
+        }
+    });
+    
+    return formData;
+}
+
+// Função para fechar modal (usando a função global existente)
+function closeModal() {
+    const modal = document.getElementById('crudModal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.style.visibility = 'hidden';
+        modal.style.opacity = '0';
+        modal.classList.remove('show');
+    }
+    
+    // Limpar variável de edição
+    currentEditingRecordId = null;
+    
+    console.log('❌ [EDIT-MODAL] Modal fechado');
+}
+
+console.log('✅ [FIREBASE-TABLE-SYSTEM] Sistema de edição carregado completamente');

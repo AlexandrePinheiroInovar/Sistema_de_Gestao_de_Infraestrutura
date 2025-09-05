@@ -8,21 +8,25 @@ let charts = {};
 
 // ============= INICIALIZAÇÃO GLOBAL =============
 // Escutar sistema Firebase estar pronto globalmente
-window.addEventListener('firebaseSystemReady', function(event) {
+window.addEventListener('firebaseSystemReady', function (event) {
     console.log('🔧 [DASHBOARD-INTEGRATION] Sistema Firebase pronto globalmente:', event.detail);
-    
+
     // Auto-inicializar se há dados
     if (event.detail.dataLength > 0) {
         setTimeout(async () => {
             console.log('🚀 [DASHBOARD-INTEGRATION] Auto-inicializando com dados globais...');
-            
+
             if (window.FirebaseTableSystem && window.FirebaseTableSystem.getData) {
                 const dados = window.FirebaseTableSystem.getData();
                 if (dados && dados.length > 0) {
                     dashboardData = dados;
                     filteredData = [...dados];
                     await inicializarDashboard();
-                    console.log('✅ [DASHBOARD-INTEGRATION] Dashboard inicializado globalmente com', dados.length, 'registros');
+                    console.log(
+                        '✅ [DASHBOARD-INTEGRATION] Dashboard inicializado globalmente com',
+                        dados.length,
+                        'registros'
+                    );
                 }
             }
         }, 1000);
@@ -30,21 +34,25 @@ window.addEventListener('firebaseSystemReady', function(event) {
 });
 
 // ============= INICIALIZAÇÃO =============
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log('🔧 [DASHBOARD-INTEGRATION] Configurando sistema...');
-    
+
     // Escutar quando os dados do firebase-table-system estiverem prontos
-    window.addEventListener('firebaseTableDataLoaded', function(event) {
-        console.log('📢 [DASHBOARD-INTEGRATION] Recebido evento de dados carregados:', event.detail.length, 'registros');
+    window.addEventListener('firebaseTableDataLoaded', function (event) {
+        console.log(
+            '📢 [DASHBOARD-INTEGRATION] Recebido evento de dados carregados:',
+            event.detail.length,
+            'registros'
+        );
         dashboardData = event.detail.data;
         filteredData = [...event.detail.data];
-        
+
         // Inicializar dashboard com dados carregados
         setTimeout(() => {
             inicializarDashboard();
         }, 100);
     });
-    
+
     // Aguardar Firebase E firebase-table-system carregarem (método de fallback)
     setTimeout(() => {
         // Aguardar firebase-table-system estar pronto
@@ -53,7 +61,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (window.FirebaseTableSystem.isInitialized()) {
                     // Verificar se já não foi inicializado pelo evento
                     if (!dashboardData || dashboardData.length === 0) {
-                        console.log('📋 [DASHBOARD-INTEGRATION] FirebaseTableSystem está pronto (fallback)');
+                        console.log(
+                            '📋 [DASHBOARD-INTEGRATION] FirebaseTableSystem está pronto (fallback)'
+                        );
                         const data = window.FirebaseTableSystem.getData();
                         if (data && data.length > 0) {
                             dashboardData = data;
@@ -66,11 +76,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     setTimeout(waitForFirebaseTable, 1000);
                 }
             } else {
-                console.log('⏳ [DASHBOARD-INTEGRATION] Aguardando FirebaseTableSystem carregar...');
+                console.log(
+                    '⏳ [DASHBOARD-INTEGRATION] Aguardando FirebaseTableSystem carregar...'
+                );
                 setTimeout(waitForFirebaseTable, 1000);
             }
         };
-        
+
         waitForFirebaseTable();
     }, 3000);
 });
@@ -78,18 +90,28 @@ document.addEventListener('DOMContentLoaded', function() {
 async function inicializarDashboard() {
     try {
         console.log('🚀 [DASHBOARD-INTEGRATION] Carregando dados do dashboard...');
-        
+
         // PRIORIDADE 1: Usar dados do FirebaseTableSystem (dados reais da tabela)
         if (window.FirebaseTableSystem && window.FirebaseTableSystem.getData) {
             const firebaseData = window.FirebaseTableSystem.getData();
-            console.log('🔍 [DASHBOARD-INTEGRATION] Dados do FirebaseTableSystem:', firebaseData?.length || 0, 'registros');
-            
+            console.log(
+                '🔍 [DASHBOARD-INTEGRATION] Dados do FirebaseTableSystem:',
+                firebaseData?.length || 0,
+                'registros'
+            );
+
             if (firebaseData && firebaseData.length > 0) {
-                console.log('✅ [DASHBOARD-INTEGRATION] Usando dados reais da tabela:', firebaseData.length, 'registros');
+                console.log(
+                    '✅ [DASHBOARD-INTEGRATION] Usando dados reais da tabela:',
+                    firebaseData.length,
+                    'registros'
+                );
                 dashboardData = firebaseData;
                 filteredData = [...dashboardData];
             } else {
-                console.log('📥 [DASHBOARD-INTEGRATION] Tabela vazia, carregando dados diretamente do Firestore...');
+                console.log(
+                    '📥 [DASHBOARD-INTEGRATION] Tabela vazia, carregando dados diretamente do Firestore...'
+                );
                 const dadosCarregados = await carregarDadosEnderecos();
                 if (!dadosCarregados || dadosCarregados.length === 0) {
                     console.warn('⚠️ [DASHBOARD-INTEGRATION] Nenhum dado encontrado na coleção');
@@ -102,28 +124,34 @@ async function inicializarDashboard() {
             // Fallback: carregar dados diretamente
             const dadosCarregados = await carregarDadosEnderecos();
             if (!dadosCarregados || dadosCarregados.length === 0) {
-                console.warn('⚠️ [DASHBOARD-INTEGRATION] Nenhum dado encontrado na coleção enderecos_mdu');
+                console.warn(
+                    '⚠️ [DASHBOARD-INTEGRATION] Nenhum dado encontrado na coleção enderecos_mdu'
+                );
                 return;
             }
         }
-        
-        console.log('✅ [DASHBOARD-INTEGRATION] Dados carregados com sucesso:', dashboardData.length, 'registros');
-        
+
+        console.log(
+            '✅ [DASHBOARD-INTEGRATION] Dados carregados com sucesso:',
+            dashboardData.length,
+            'registros'
+        );
+
         // Aguardar um pouco para garantir que os dados estejam disponíveis
         await new Promise(resolve => setTimeout(resolve, 500));
-        
+
         // Configurar filtros conectados à tabela de endereços
         configurarFiltros();
-        
+
         // Aguardar dropdowns serem criados e inicializados
         await new Promise(resolve => setTimeout(resolve, 3000));
-        
+
         // Configurar observador para recarregar filtros quando tabela mudar
         observarMudancasNaTabela();
-        
+
         // Cards são atualizados pelo firebase-table-system.js
         console.log('📊 [DASHBOARD-INTEGRATION] Cards gerenciados pelo firebase-table-system.js');
-        
+
         // Gerar gráficos usando dashboard-charts-v5.js diretamente
         if (typeof window.criarTodosGraficos === 'function') {
             console.log('🔄 [DASHBOARD-INTEGRATION] Inicializando gráficos V5...');
@@ -137,12 +165,13 @@ async function inicializarDashboard() {
                 }
             }, 2000);
         }
-        
+
         // Rankings são criados pelo firebase-table-system.js
-        console.log('🏆 [DASHBOARD-INTEGRATION] Rankings gerenciados pelo firebase-table-system.js');
-        
+        console.log(
+            '🏆 [DASHBOARD-INTEGRATION] Rankings gerenciados pelo firebase-table-system.js'
+        );
+
         console.log('✅ [DASHBOARD-INTEGRATION] Dashboard inicializado com sucesso');
-        
     } catch (error) {
         console.error('❌ [DASHBOARD-INTEGRATION] Erro na inicialização:', error);
     }
@@ -154,24 +183,25 @@ async function carregarDadosEnderecos() {
         if (!window.firebase || !firebase.firestore) {
             throw new Error('Firebase não disponível');
         }
-        
+
         console.log('📂 [DASHBOARD-INTEGRATION] Carregando dados dos endereços...');
-        
-        const snapshot = await firebase.firestore()
-            .collection('enderecos_mdu')
-            .get();
-        
+
+        const snapshot = await firebase.firestore().collection('enderecos_mdu').get();
+
         dashboardData = [];
         snapshot.forEach(doc => {
             dashboardData.push({ ...doc.data(), _id: doc.id });
         });
-        
+
         filteredData = [...dashboardData];
-        
-        console.log('✅ [DASHBOARD-INTEGRATION] Dados carregados:', dashboardData.length, 'registros');
-        
+
+        console.log(
+            '✅ [DASHBOARD-INTEGRATION] Dados carregados:',
+            dashboardData.length,
+            'registros'
+        );
+
         return dashboardData;
-        
     } catch (error) {
         console.error('❌ [DASHBOARD-INTEGRATION] Erro ao carregar dados:', error);
         return [];
@@ -181,38 +211,43 @@ async function carregarDadosEnderecos() {
 // ============= CARDS ESTATÍSTICOS =============
 function atualizarCardsEstatisticos() {
     console.log('📊 [DASHBOARD-INTEGRATION] Atualizando cards estatísticos...');
-    
+
     const dados = filteredData;
-    
+
     // Total de registros
     const totalRegistros = dados.length;
     document.getElementById('infraStatTotalRegistros').textContent = totalRegistros;
-    
+
     // Endereços distintos
-    const enderecosUnicos = new Set(dados.map(item => item['ENDEREÇO'] || '').filter(e => e.trim()));
+    const enderecosUnicos = new Set(
+        dados.map(item => item['ENDEREÇO'] || '').filter(e => e.trim())
+    );
     document.getElementById('infraStatEnderecosDistintos').textContent = enderecosUnicos.size;
-    
+
     // Equipes distintas
     const equipesUnicas = new Set(dados.map(item => item['EQUIPE'] || '').filter(e => e.trim()));
     document.getElementById('infraStatEquipesDistintas').textContent = equipesUnicas.size;
-    
+
     // Produtividade
-    const produtivos = dados.filter(item => (item['Status'] || '').toUpperCase() === 'PRODUTIVA').length;
+    const produtivos = dados.filter(
+        item => (item['Status'] || '').toUpperCase() === 'PRODUTIVA'
+    ).length;
     const produtividade = totalRegistros > 0 ? Math.round((produtivos / totalRegistros) * 100) : 0;
     document.getElementById('infraStatProdutividade').textContent = `${produtividade}%`;
-    
+
     // Tempo médio de execução (Recebimento → Final)
     const tempoMedioExecucao = calcularTempoMedio(dados, 'DATA RECEBIMENTO', 'DATA FINAL');
     document.getElementById('infraStatTempoMedio').textContent = `${tempoMedioExecucao} dias`;
-    
+
     // Tempo médio Sala Técnica (Recebimento → Início)
     const tempoMedioSalaTecnica = calcularTempoMedio(dados, 'DATA RECEBIMENTO', 'DATA INICIO');
-    document.getElementById('infraStatTempoSalaTecnica').textContent = `${tempoMedioSalaTecnica} dias`;
-    
+    document.getElementById('infraStatTempoSalaTecnica').textContent =
+        `${tempoMedioSalaTecnica} dias`;
+
     // Tempo médio Técnicos (Início → Final)
     const tempoMedioTecnicos = calcularTempoMedio(dados, 'DATA INICIO', 'DATA FINAL');
     document.getElementById('infraStatTempoTecnicos').textContent = `${tempoMedioTecnicos} dias`;
-    
+
     console.log('✅ [DASHBOARD-INTEGRATION] Cards atualizados');
 }
 
@@ -225,16 +260,20 @@ function calcularTempoMedio(dados, campoInicio, campoFim) {
         const fimValido = fim && (typeof fim === 'string' ? fim.trim() : true);
         return inicioValido && fimValido;
     });
-    
-    if (registrosComDatas.length === 0) return 0;
-    
+
+    if (registrosComDatas.length === 0) {
+        return 0;
+    }
+
     const tempos = registrosComDatas.map(item => {
         try {
             const inicio = new Date(item[campoInicio]);
             const fim = new Date(item[campoFim]);
-            
-            if (isNaN(inicio.getTime()) || isNaN(fim.getTime())) return 0;
-            
+
+            if (isNaN(inicio.getTime()) || isNaN(fim.getTime())) {
+                return 0;
+            }
+
             const diffTime = Math.abs(fim - inicio);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             return diffDays;
@@ -242,17 +281,21 @@ function calcularTempoMedio(dados, campoInicio, campoFim) {
             return 0;
         }
     });
-    
+
     const temposValidos = tempos.filter(t => t > 0);
-    if (temposValidos.length === 0) return 0;
-    
+    if (temposValidos.length === 0) {
+        return 0;
+    }
+
     const media = temposValidos.reduce((sum, t) => sum + t, 0) / temposValidos.length;
     return Math.round(media);
 }
 
 // ============= GRÁFICOS =============
 function gerarGraficos() {
-    console.log('📈 [DASHBOARD-INTEGRATION] === GRÁFICOS DESABILITADOS - USANDO DASHBOARD-CHARTS-V5.JS ===');
+    console.log(
+        '📈 [DASHBOARD-INTEGRATION] === GRÁFICOS DESABILITADOS - USANDO DASHBOARD-CHARTS-V5.JS ==='
+    );
     return true; // Retornar sucesso sem fazer nada
     /* CÓDIGO DESABILITADO - USANDO DASHBOARD-CHARTS-V5.JS
     console.log('📈 [DASHBOARD-INTEGRATION] Gerando gráficos modernos V3.0...');
@@ -379,14 +422,16 @@ function gerarGraficos() {
 
 // ============= GRÁFICOS MODERNOS V3.0 =============
 function criarGraficoProjetosModerno() {
-    console.log('📊 [DASHBOARD-INTEGRATION] Criando gráfico de Projetos Moderno (Barras + Linhas)...');
-    
+    console.log(
+        '📊 [DASHBOARD-INTEGRATION] Criando gráfico de Projetos Moderno (Barras + Linhas)...'
+    );
+
     const ctx = document.getElementById('projetosChart');
     if (!ctx) {
         console.warn('❌ Canvas projetosChart não encontrado');
         return;
     }
-    
+
     // Contar projetos usando mapeamento correto dos campos
     const contadorProjetos = {};
     filteredData.forEach(item => {
@@ -394,17 +439,17 @@ function criarGraficoProjetosModerno() {
         const projeto = item['Projeto'] || item['projeto'] || 'Não especificado';
         contadorProjetos[projeto] = (contadorProjetos[projeto] || 0) + 1;
     });
-    
+
     const labels = Object.keys(contadorProjetos);
     const data = Object.values(contadorProjetos);
     const total = data.reduce((a, b) => a + b, 0);
     const percentuais = data.map(val => Math.round((val / total) * 100));
-    
+
     // Destruir gráfico anterior
     if (charts.projetos) {
         charts.projetos.destroy();
     }
-    
+
     // Criar gráfico combinado moderno
     charts.projetos = new Chart(ctx, {
         type: 'bar',
@@ -440,7 +485,7 @@ function criarGraficoProjetosModerno() {
             responsive: true,
             interaction: {
                 mode: 'index',
-                intersect: false,
+                intersect: false
             },
             scales: {
                 x: {
@@ -471,7 +516,7 @@ function criarGraficoProjetosModerno() {
                         color: 'rgba(37, 99, 235, 1)'
                     },
                     grid: {
-                        drawOnChartArea: false,
+                        drawOnChartArea: false
                     },
                     beginAtZero: true,
                     max: 100
@@ -487,7 +532,7 @@ function criarGraficoProjetosModerno() {
                     anchor: 'end',
                     align: 'top',
                     offset: 4,
-                    formatter: function(value, context) {
+                    formatter: function (value, context) {
                         if (context.datasetIndex === 0) {
                             return value; // Quantidade
                         } else {
@@ -498,7 +543,7 @@ function criarGraficoProjetosModerno() {
                         weight: 'bold',
                         size: 10
                     },
-                    color: function(context) {
+                    color: function (context) {
                         return context.datasetIndex === 0 ? '#1e40af' : '#2563eb';
                     }
                 }
@@ -506,19 +551,21 @@ function criarGraficoProjetosModerno() {
         },
         plugins: typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : []
     });
-    
+
     console.log('✅ Gráfico de Projetos Moderno criado');
 }
 
 function criarGraficoSubProjetosModerno() {
-    console.log('📊 [DASHBOARD-INTEGRATION] Criando gráfico de Sub-Projetos Moderno (Barras + Linhas)...');
-    
+    console.log(
+        '📊 [DASHBOARD-INTEGRATION] Criando gráfico de Sub-Projetos Moderno (Barras + Linhas)...'
+    );
+
     const ctx = document.getElementById('subProjetosChart');
     if (!ctx) {
         console.warn('❌ Canvas subProjetosChart não encontrado');
         return;
     }
-    
+
     // Contar sub projetos usando mapeamento correto dos campos
     const contadorSubProjetos = {};
     filteredData.forEach(item => {
@@ -526,17 +573,17 @@ function criarGraficoSubProjetosModerno() {
         const subProjeto = item['Sub Projeto'] || item['subProjeto'] || 'Não especificado';
         contadorSubProjetos[subProjeto] = (contadorSubProjetos[subProjeto] || 0) + 1;
     });
-    
+
     const labels = Object.keys(contadorSubProjetos);
     const data = Object.values(contadorSubProjetos);
     const total = data.reduce((a, b) => a + b, 0);
     const percentuais = data.map(val => Math.round((val / total) * 100));
-    
+
     // Destruir gráfico anterior
     if (charts.subProjetos) {
         charts.subProjetos.destroy();
     }
-    
+
     // Criar gráfico combinado moderno
     charts.subProjetos = new Chart(ctx, {
         type: 'bar',
@@ -572,7 +619,7 @@ function criarGraficoSubProjetosModerno() {
             responsive: true,
             interaction: {
                 mode: 'index',
-                intersect: false,
+                intersect: false
             },
             scales: {
                 x: {
@@ -603,7 +650,7 @@ function criarGraficoSubProjetosModerno() {
                         color: 'rgba(37, 99, 235, 1)'
                     },
                     grid: {
-                        drawOnChartArea: false,
+                        drawOnChartArea: false
                     },
                     beginAtZero: true,
                     max: 100
@@ -619,7 +666,7 @@ function criarGraficoSubProjetosModerno() {
                     anchor: 'end',
                     align: 'top',
                     offset: 4,
-                    formatter: function(value, context) {
+                    formatter: function (value, context) {
                         if (context.datasetIndex === 0) {
                             return value; // Quantidade
                         } else {
@@ -630,7 +677,7 @@ function criarGraficoSubProjetosModerno() {
                         weight: 'bold',
                         size: 10
                     },
-                    color: function(context) {
+                    color: function (context) {
                         return context.datasetIndex === 0 ? '#1e40af' : '#2563eb';
                     }
                 }
@@ -638,19 +685,19 @@ function criarGraficoSubProjetosModerno() {
         },
         plugins: typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : []
     });
-    
+
     console.log('✅ Gráfico de Sub-Projetos Moderno criado');
 }
 
 function criarGraficoCidadesModerno() {
     console.log('📊 [DASHBOARD-INTEGRATION] Criando gráfico de Cidades Moderno (Barras Azuis)...');
-    
+
     const ctx = document.getElementById('cidadesChart');
     if (!ctx) {
         console.warn('❌ Canvas cidadesChart não encontrado');
         return;
     }
-    
+
     // Contar cidades usando mapeamento correto dos campos
     const contadorCidades = {};
     filteredData.forEach(item => {
@@ -658,42 +705,44 @@ function criarGraficoCidadesModerno() {
         const cidade = item['Cidade'] || item['cidade'] || 'Não especificado';
         contadorCidades[cidade] = (contadorCidades[cidade] || 0) + 1;
     });
-    
+
     // Ordenar por quantidade e limitar a 15 principais
     const sortedCidades = Object.entries(contadorCidades)
-        .sort(([,a], [,b]) => b - a)
+        .sort(([, a], [, b]) => b - a)
         .slice(0, 15);
-    
+
     // Agrupar o resto em "Outras"
     const remainingCidades = Object.entries(contadorCidades)
-        .sort(([,a], [,b]) => b - a)
+        .sort(([, a], [, b]) => b - a)
         .slice(15);
-    
+
     if (remainingCidades.length > 0) {
-        const outrasQuantidade = remainingCidades.reduce((sum, [,qty]) => sum + qty, 0);
+        const outrasQuantidade = remainingCidades.reduce((sum, [, qty]) => sum + qty, 0);
         sortedCidades.push([`Outras (${remainingCidades.length})`, outrasQuantidade]);
     }
-    
+
     const labels = sortedCidades.map(([nome]) => nome);
-    const data = sortedCidades.map(([,qty]) => qty);
-    
+    const data = sortedCidades.map(([, qty]) => qty);
+
     // Destruir gráfico anterior
     if (charts.cidades) {
         charts.cidades.destroy();
     }
-    
+
     // Criar gráfico moderno com barras azuis uniformes
     charts.cidades = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
-            datasets: [{
-                label: 'Quantidade por Cidade',
-                data: data,
-                backgroundColor: 'rgba(59, 130, 246, 0.6)',
-                borderColor: 'rgba(59, 130, 246, 1)',
-                borderWidth: 2
-            }]
+            datasets: [
+                {
+                    label: 'Quantidade por Cidade',
+                    data: data,
+                    backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 2
+                }
+            ]
         },
         options: {
             responsive: true,
@@ -706,7 +755,7 @@ function criarGraficoCidadesModerno() {
                     anchor: 'end',
                     align: 'top',
                     offset: 4,
-                    formatter: function(value) {
+                    formatter: function (value) {
                         return value;
                     },
                     font: {
@@ -731,7 +780,7 @@ function criarGraficoCidadesModerno() {
                     },
                     ticks: {
                         maxTicksLimit: 10,
-                        callback: function(value) {
+                        callback: function (value) {
                             if (Math.floor(value) === value) {
                                 return value;
                             }
@@ -742,19 +791,21 @@ function criarGraficoCidadesModerno() {
         },
         plugins: typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : []
     });
-    
+
     console.log('✅ Gráfico de Cidades Moderno criado');
 }
 
 function criarGraficoHPProjetosModerno() {
-    console.log('📊 [DASHBOARD-INTEGRATION] Criando gráfico de HP por Projeto Moderno (Barras Azuis)...');
-    
+    console.log(
+        '📊 [DASHBOARD-INTEGRATION] Criando gráfico de HP por Projeto Moderno (Barras Azuis)...'
+    );
+
     const ctx = document.getElementById('hpProjetosChart');
     if (!ctx) {
         console.warn('❌ Canvas hpProjetosChart não encontrado');
         return;
     }
-    
+
     // Somar HP por projeto usando mapeamento correto dos campos
     const hpPorProjeto = {};
     filteredData.forEach(item => {
@@ -763,27 +814,29 @@ function criarGraficoHPProjetosModerno() {
         const hp = parseInt(item['HP'] || item['hp'] || 0) || 0;
         hpPorProjeto[projeto] = (hpPorProjeto[projeto] || 0) + hp;
     });
-    
+
     const labels = Object.keys(hpPorProjeto);
     const data = Object.values(hpPorProjeto);
-    
+
     // Destruir gráfico anterior
     if (charts.hpProjetos) {
         charts.hpProjetos.destroy();
     }
-    
+
     // Criar gráfico moderno com barras azuis uniformes
     charts.hpProjetos = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
-            datasets: [{
-                label: 'Total HP',
-                data: data,
-                backgroundColor: 'rgba(59, 130, 246, 0.6)',
-                borderColor: 'rgba(59, 130, 246, 1)',
-                borderWidth: 2
-            }]
+            datasets: [
+                {
+                    label: 'Total HP',
+                    data: data,
+                    backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 2
+                }
+            ]
         },
         options: {
             responsive: true,
@@ -796,7 +849,7 @@ function criarGraficoHPProjetosModerno() {
                     anchor: 'end',
                     align: 'top',
                     offset: 4,
-                    formatter: function(value) {
+                    formatter: function (value) {
                         return value;
                     },
                     font: {
@@ -824,23 +877,23 @@ function criarGraficoHPProjetosModerno() {
         },
         plugins: typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : []
     });
-    
+
     console.log('✅ Gráfico de HP por Projeto Moderno criado');
 }
 
 function criarGraficoRecebimentosModerno() {
     console.log('📊 [DASHBOARD-INTEGRATION] Criando gráfico de Recebimentos Moderno...');
-    
+
     const ctx = document.getElementById('recebimentosChart');
     if (!ctx) {
         console.warn('❌ Canvas recebimentosChart não encontrado');
         return;
     }
-    
+
     // Agrupar por mês
     const recebimentosPorMes = {};
     const conclusoesPorMes = {};
-    
+
     filteredData.forEach(item => {
         // Recebimentos - usar mapeamento correto dos campos
         const dataRecebimento = item['DATA RECEBIMENTO'] || item['dataRecebimento'];
@@ -858,7 +911,7 @@ function criarGraficoRecebimentosModerno() {
                 recebimentosPorMes[mes] = (recebimentosPorMes[mes] || 0) + 1;
             }
         }
-        
+
         // Conclusões - usar mapeamento correto dos campos
         const dataFinal = item['DATA FINAL'] || item['dataFinal'];
         if (dataFinal) {
@@ -876,45 +929,51 @@ function criarGraficoRecebimentosModerno() {
             }
         }
     });
-    
+
     // Combinar meses únicos
-    const mesesUnicos = new Set([...Object.keys(recebimentosPorMes), ...Object.keys(conclusoesPorMes)]);
+    const mesesUnicos = new Set([
+        ...Object.keys(recebimentosPorMes),
+        ...Object.keys(conclusoesPorMes)
+    ]);
     const labels = Array.from(mesesUnicos).sort();
-    
+
     const dataRecebimentos = labels.map(mes => recebimentosPorMes[mes] || 0);
     const dataConclusoes = labels.map(mes => conclusoesPorMes[mes] || 0);
-    
+
     // Destruir gráfico anterior
     if (charts.recebimentos) {
         charts.recebimentos.destroy();
     }
-    
+
     // Criar gráfico moderno
     charts.recebimentos = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
-            datasets: [{
-                label: 'Recebidos',
-                data: dataRecebimentos,
-                borderColor: 'rgba(59, 130, 246, 1)',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                borderWidth: 3,
-                pointBackgroundColor: 'rgba(59, 130, 246, 1)',
-                pointBorderColor: 'rgba(59, 130, 246, 1)',
-                pointRadius: 5,
-                tension: 0.4
-            }, {
-                label: 'Concluídos',
-                data: dataConclusoes,
-                borderColor: 'rgba(30, 64, 175, 1)',
-                backgroundColor: 'rgba(30, 64, 175, 0.1)',
-                borderWidth: 3,
-                pointBackgroundColor: 'rgba(30, 64, 175, 1)',
-                pointBorderColor: 'rgba(30, 64, 175, 1)',
-                pointRadius: 5,
-                tension: 0.4
-            }]
+            datasets: [
+                {
+                    label: 'Recebidos',
+                    data: dataRecebimentos,
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                    pointBorderColor: 'rgba(59, 130, 246, 1)',
+                    pointRadius: 5,
+                    tension: 0.4
+                },
+                {
+                    label: 'Concluídos',
+                    data: dataConclusoes,
+                    borderColor: 'rgba(30, 64, 175, 1)',
+                    backgroundColor: 'rgba(30, 64, 175, 0.1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: 'rgba(30, 64, 175, 1)',
+                    pointBorderColor: 'rgba(30, 64, 175, 1)',
+                    pointRadius: 5,
+                    tension: 0.4
+                }
+            ]
         },
         options: {
             responsive: true,
@@ -938,7 +997,7 @@ function criarGraficoRecebimentosModerno() {
                     },
                     ticks: {
                         maxTicksLimit: 10,
-                        callback: function(value) {
+                        callback: function (value) {
                             if (Math.floor(value) === value) {
                                 return value;
                             }
@@ -948,65 +1007,70 @@ function criarGraficoRecebimentosModerno() {
             }
         }
     });
-    
+
     console.log('✅ Gráfico de Recebimentos Moderno criado');
 }
 
 function criarGraficoSupervisorModerno() {
-    console.log('📊 [DASHBOARD-INTEGRATION] Criando gráfico de Supervisores Moderno (2 Barras Separadas)...');
-    
+    console.log(
+        '📊 [DASHBOARD-INTEGRATION] Criando gráfico de Supervisores Moderno (2 Barras Separadas)...'
+    );
+
     const ctx = document.getElementById('supervisorStatusChart');
     if (!ctx) {
         console.warn('❌ Canvas supervisorStatusChart não encontrado');
         return;
     }
-    
+
     // Agrupar por supervisor e status
     const supervisorStatus = {};
-    
+
     filteredData.forEach(item => {
         // Usar mapeamento correto dos campos do Firestore
         const supervisor = item['Supervisor'] || item['supervisor'] || 'Não especificado';
         const status = item['Status'] || item['status'] || 'Não especificado';
-        
+
         if (!supervisorStatus[supervisor]) {
             supervisorStatus[supervisor] = { PRODUTIVA: 0, IMPRODUTIVA: 0 };
         }
-        
+
         if (status.toUpperCase() === 'PRODUTIVA') {
             supervisorStatus[supervisor].PRODUTIVA++;
         } else if (status.toUpperCase() === 'IMPRODUTIVA') {
             supervisorStatus[supervisor].IMPRODUTIVA++;
         }
     });
-    
+
     const supervisores = Object.keys(supervisorStatus);
     const produtivas = supervisores.map(s => supervisorStatus[s].PRODUTIVA);
     const improdutivas = supervisores.map(s => supervisorStatus[s].IMPRODUTIVA);
-    
+
     // Destruir gráfico anterior
     if (charts.supervisorStatus) {
         charts.supervisorStatus.destroy();
     }
-    
+
     // Criar gráfico moderno com 2 barras separadas por supervisor
     charts.supervisorStatus = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: supervisores,
-            datasets: [{
-                label: 'Produtiva',
-                data: produtivas,
-                backgroundColor: 'rgba(59, 130, 246, 0.7)',
-                borderColor: 'rgba(59, 130, 246, 1)',
-                borderWidth: 2
-            }, {
-                label: 'Improdutiva',
-                data: improdutivas,
-                backgroundColor: 'rgba(30, 64, 175, 0.7)',
-                borderColor: 'rgba(30, 64, 175, 1)',
-                borderWidth: 2
-            }]
+            datasets: [
+                {
+                    label: 'Produtiva',
+                    data: produtivas,
+                    backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 2
+                },
+                {
+                    label: 'Improdutiva',
+                    data: improdutivas,
+                    backgroundColor: 'rgba(30, 64, 175, 0.7)',
+                    borderColor: 'rgba(30, 64, 175, 1)',
+                    borderWidth: 2
+                }
+            ]
         },
         options: {
             responsive: true,
@@ -1020,14 +1084,14 @@ function criarGraficoSupervisorModerno() {
                     anchor: 'end',
                     align: 'top',
                     offset: 4,
-                    formatter: function(value) {
+                    formatter: function (value) {
                         return value > 0 ? value : '';
                     },
                     font: {
                         weight: 'bold',
                         size: 10
                     },
-                    color: function(context) {
+                    color: function (context) {
                         return context.datasetIndex === 0 ? '#3b82f6' : '#1e40af';
                     }
                 }
@@ -1052,7 +1116,7 @@ function criarGraficoSupervisorModerno() {
         },
         plugins: typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : []
     });
-    
+
     console.log('✅ Gráfico de Supervisores Moderno criado');
 }
 
@@ -1061,52 +1125,61 @@ function criarGraficoSupervisorModerno() {
 // ============= TABELAS DE RANKING =============
 function gerarTabelasRanking() {
     console.log('🏆 [DASHBOARD-INTEGRATION] Gerando tabelas de ranking...');
-    
+
     gerarRankingTipoAcao();
     gerarRankingStatus();
 }
 
 function gerarRankingTipoAcao() {
     const tbody = document.getElementById('equipeRankingTableBody');
-    if (!tbody) return;
-    
+    if (!tbody) {
+        return;
+    }
+
     // Agrupar por equipe e tipo de ação
     const equipeStats = {};
-    
+
     filteredData.forEach(item => {
         const equipe = item['EQUIPE'] || 'Não especificado';
         const tipoAcao = item['Tipo de Ação'] || 'Não especificado';
-        
+
         if (!equipeStats[equipe]) {
             equipeStats[equipe] = { ATIVAÇÃO: 0, CONSTRUÇÃO: 0, VISTORIA: 0 };
         }
-        
+
         const tipo = tipoAcao.toUpperCase();
         if (equipeStats[equipe][tipo] !== undefined) {
             equipeStats[equipe][tipo]++;
         }
     });
-    
+
     // Calcular totais e ranquear
-    const rankings = Object.entries(equipeStats).map(([equipe, stats]) => ({
-        equipe,
-        ativacao: stats.ATIVAÇÃO,
-        construcao: stats.CONSTRUÇÃO,
-        vistoria: stats.VISTORIA,
-        total: stats.ATIVAÇÃO + stats.CONSTRUÇÃO + stats.VISTORIA
-    })).sort((a, b) => b.total - a.total);
-    
+    const rankings = Object.entries(equipeStats)
+        .map(([equipe, stats]) => ({
+            equipe,
+            ativacao: stats.ATIVAÇÃO,
+            construcao: stats.CONSTRUÇÃO,
+            vistoria: stats.VISTORIA,
+            total: stats.ATIVAÇÃO + stats.CONSTRUÇÃO + stats.VISTORIA
+        }))
+        .sort((a, b) => b.total - a.total);
+
     // Limitar a 50 equipes principais para evitar sobrecarga
     const topRankings = rankings.slice(0, 50);
-    
+
     // Adicionar nota se há mais dados
-    const moreDataNote = rankings.length > 50 ? 
-        `<tr class="info-row"><td colspan="6" style="text-align: center; font-style: italic; color: #666; padding: 10px;">
+    const moreDataNote =
+        rankings.length > 50
+            ? `<tr class="info-row"><td colspan="6" style="text-align: center; font-style: italic; color: #666; padding: 10px;">
             📊 Mostrando top 50 de ${rankings.length} equipes
-        </td></tr>` : '';
-    
+        </td></tr>`
+            : '';
+
     // Gerar HTML
-    tbody.innerHTML = topRankings.map((item, index) => `
+    tbody.innerHTML =
+        topRankings
+            .map(
+                (item, index) => `
         <tr>
             <td>${index + 1}</td>
             <td>${item.equipe}</td>
@@ -1115,14 +1188,16 @@ function gerarRankingTipoAcao() {
             <td>${item.vistoria}</td>
             <td><strong>${item.total}</strong></td>
         </tr>
-    `).join('') + moreDataNote;
-    
+    `
+            )
+            .join('') + moreDataNote;
+
     // Atualizar totais
     const totalAtivacao = rankings.reduce((sum, item) => sum + item.ativacao, 0);
     const totalConstrucao = rankings.reduce((sum, item) => sum + item.construcao, 0);
     const totalVistoria = rankings.reduce((sum, item) => sum + item.vistoria, 0);
     const totalGeral = totalAtivacao + totalConstrucao + totalVistoria;
-    
+
     document.getElementById('totalAtivacao').textContent = totalAtivacao;
     document.getElementById('totalConstrucao').textContent = totalConstrucao;
     document.getElementById('totalVistoria').textContent = totalVistoria;
@@ -1131,51 +1206,60 @@ function gerarRankingTipoAcao() {
 
 function gerarRankingStatus() {
     const tbody = document.getElementById('equipeStatusRankingTableBody');
-    if (!tbody) return;
-    
+    if (!tbody) {
+        return;
+    }
+
     // Agrupar por equipe e status
     const equipeStats = {};
-    
+
     filteredData.forEach(item => {
         const equipe = item['EQUIPE'] || 'Não especificado';
         const status = item['Status'] || 'Não especificado';
-        
+
         if (!equipeStats[equipe]) {
             equipeStats[equipe] = { PRODUTIVA: 0, IMPRODUTIVA: 0 };
         }
-        
+
         if (status.toUpperCase() === 'PRODUTIVA') {
             equipeStats[equipe].PRODUTIVA++;
         } else if (status.toUpperCase() === 'IMPRODUTIVA') {
             equipeStats[equipe].IMPRODUTIVA++;
         }
     });
-    
+
     // Calcular totais e produtividade
-    const rankings = Object.entries(equipeStats).map(([equipe, stats]) => {
-        const total = stats.PRODUTIVA + stats.IMPRODUTIVA;
-        const produtividade = total > 0 ? Math.round((stats.PRODUTIVA / total) * 100) : 0;
-        
-        return {
-            equipe,
-            produtiva: stats.PRODUTIVA,
-            improdutiva: stats.IMPRODUTIVA,
-            total,
-            produtividade
-        };
-    }).sort((a, b) => b.produtividade - a.produtividade);
-    
+    const rankings = Object.entries(equipeStats)
+        .map(([equipe, stats]) => {
+            const total = stats.PRODUTIVA + stats.IMPRODUTIVA;
+            const produtividade = total > 0 ? Math.round((stats.PRODUTIVA / total) * 100) : 0;
+
+            return {
+                equipe,
+                produtiva: stats.PRODUTIVA,
+                improdutiva: stats.IMPRODUTIVA,
+                total,
+                produtividade
+            };
+        })
+        .sort((a, b) => b.produtividade - a.produtividade);
+
     // Limitar a 50 equipes principais para evitar sobrecarga
     const topRankings = rankings.slice(0, 50);
-    
+
     // Adicionar nota se há mais dados
-    const moreDataNote = rankings.length > 50 ? 
-        `<tr class="info-row"><td colspan="6" style="text-align: center; font-style: italic; color: #666; padding: 10px;">
+    const moreDataNote =
+        rankings.length > 50
+            ? `<tr class="info-row"><td colspan="6" style="text-align: center; font-style: italic; color: #666; padding: 10px;">
             📊 Mostrando top 50 de ${rankings.length} equipes
-        </td></tr>` : '';
-    
+        </td></tr>`
+            : '';
+
     // Gerar HTML
-    tbody.innerHTML = topRankings.map((item, index) => `
+    tbody.innerHTML =
+        topRankings
+            .map(
+                (item, index) => `
         <tr>
             <td>${index + 1}</td>
             <td>${item.equipe}</td>
@@ -1184,14 +1268,17 @@ function gerarRankingStatus() {
             <td><strong>${item.total}</strong></td>
             <td><strong>${item.produtividade}%</strong></td>
         </tr>
-    `).join('') + moreDataNote;
-    
+    `
+            )
+            .join('') + moreDataNote;
+
     // Atualizar totais
     const totalProdutiva = rankings.reduce((sum, item) => sum + item.produtiva, 0);
     const totalImprodutiva = rankings.reduce((sum, item) => sum + item.improdutiva, 0);
     const totalStatusGeral = totalProdutiva + totalImprodutiva;
-    const produtividadeGeral = totalStatusGeral > 0 ? Math.round((totalProdutiva / totalStatusGeral) * 100) : 0;
-    
+    const produtividadeGeral =
+        totalStatusGeral > 0 ? Math.round((totalProdutiva / totalStatusGeral) * 100) : 0;
+
     document.getElementById('totalProdutiva').textContent = totalProdutiva;
     document.getElementById('totalImprodutiva').textContent = totalImprodutiva;
     document.getElementById('totalStatusGeral').textContent = totalStatusGeral;
@@ -1201,33 +1288,41 @@ function gerarRankingStatus() {
 // ============= NOVO SISTEMA DE FILTROS =============
 function configurarFiltros() {
     console.log('🔍 [NOVO-FILTRO] Configurando novo sistema de filtros...');
-    
+
     // Buscar dados diretamente da tabela de endereços no DOM
     const dados = extrairDadosDaTabelaEndereco();
-    
+
     if (!dados || dados.length === 0) {
         console.warn('⚠️ [NOVO-FILTRO] Nenhum dado encontrado na tabela de endereços');
         // NÃO fazer loop infinito - aguardar firebase-table-system carregar
         if (window.FirebaseTableSystem && window.FirebaseTableSystem.getData) {
             const firebaseData = window.FirebaseTableSystem.getData();
             if (firebaseData && firebaseData.length > 0) {
-                console.log('📊 [NOVO-FILTRO] Usando dados do FirebaseTableSystem:', firebaseData.length, 'registros');
+                console.log(
+                    '📊 [NOVO-FILTRO] Usando dados do FirebaseTableSystem:',
+                    firebaseData.length,
+                    'registros'
+                );
                 preencherNovosFiltros(firebaseData);
                 return;
             }
         }
-        
+
         // Fallback: usar dados do dashboard se disponível
         if (dashboardData && dashboardData.length > 0) {
-            console.log('📊 [NOVO-FILTRO] Usando dados do dashboard:', dashboardData.length, 'registros');
+            console.log(
+                '📊 [NOVO-FILTRO] Usando dados do dashboard:',
+                dashboardData.length,
+                'registros'
+            );
             preencherNovosFiltros(dashboardData);
         }
         return;
     }
-    
+
     console.log('✅ [NOVO-FILTRO] Dados extraídos da tabela:', dados.length, 'registros');
     console.log('📊 [NOVO-FILTRO] Exemplo de dados:', dados[0]);
-    
+
     // Preencher filtros com dados da tabela
     preencherNovosFiltros(dados);
 }
@@ -1238,87 +1333,87 @@ function extrairDadosDaTabelaEndereco() {
         console.warn('⚠️ [NOVO-FILTRO] Tabela de endereços não encontrada');
         return [];
     }
-    
+
     const tbody = tabela.querySelector('#enderecoTableBody');
     if (!tbody) {
         console.warn('⚠️ [NOVO-FILTRO] Tbody da tabela não encontrado');
         return [];
     }
-    
+
     const linhas = tbody.querySelectorAll('tr:not(.empty-state)');
     if (linhas.length === 0) {
         console.warn('⚠️ [NOVO-FILTRO] Nenhuma linha de dados encontrada na tabela');
         return [];
     }
-    
+
     const dados = [];
     linhas.forEach(linha => {
         const colunas = linha.querySelectorAll('td');
         if (colunas.length >= 25) {
             dados.push({
-                'Projeto': colunas[0]?.textContent?.trim() || '',
+                Projeto: colunas[0]?.textContent?.trim() || '',
                 'Sub Projeto': colunas[1]?.textContent?.trim() || '',
                 'Tipo de Ação': colunas[2]?.textContent?.trim() || '',
-                'CONTRATO': colunas[3]?.textContent?.trim() || '',
-                'Condominio': colunas[4]?.textContent?.trim() || '',
-                'ENDEREÇO': colunas[5]?.textContent?.trim() || '',
-                'Cidade': colunas[6]?.textContent?.trim() || '',
-                'PEP': colunas[7]?.textContent?.trim() || '',
+                CONTRATO: colunas[3]?.textContent?.trim() || '',
+                Condominio: colunas[4]?.textContent?.trim() || '',
+                ENDEREÇO: colunas[5]?.textContent?.trim() || '',
+                Cidade: colunas[6]?.textContent?.trim() || '',
+                PEP: colunas[7]?.textContent?.trim() || '',
                 'COD IMOVEL GED': colunas[8]?.textContent?.trim() || '',
                 'NODE GERENCIAL': colunas[9]?.textContent?.trim() || '',
                 'Área Técnica': colunas[10]?.textContent?.trim() || '',
-                'HP': colunas[11]?.textContent?.trim() || '',
-                'ANDAR': colunas[12]?.textContent?.trim() || '',
+                HP: colunas[11]?.textContent?.trim() || '',
+                ANDAR: colunas[12]?.textContent?.trim() || '',
                 'DATA RECEBIMENTO': colunas[13]?.textContent?.trim() || '',
                 'DATA INICIO': colunas[14]?.textContent?.trim() || '',
                 'DATA FINAL': colunas[15]?.textContent?.trim() || '',
-                'EQUIPE': colunas[16]?.textContent?.trim() || '',
-                'Supervisor': colunas[17]?.textContent?.trim() || '',
-                'Status': colunas[18]?.textContent?.trim() || '',
-                'RDO': colunas[19]?.textContent?.trim() || '',
-                'BOOK': colunas[20]?.textContent?.trim() || '',
-                'PROJETO': colunas[21]?.textContent?.trim() || '',
-                'JUSTIFICATIVA': colunas[22]?.textContent?.trim() || '',
-                'Observação': colunas[23]?.textContent?.trim() || '',
-                'Observação2': colunas[24]?.textContent?.trim() || ''
+                EQUIPE: colunas[16]?.textContent?.trim() || '',
+                Supervisor: colunas[17]?.textContent?.trim() || '',
+                Status: colunas[18]?.textContent?.trim() || '',
+                RDO: colunas[19]?.textContent?.trim() || '',
+                BOOK: colunas[20]?.textContent?.trim() || '',
+                PROJETO: colunas[21]?.textContent?.trim() || '',
+                JUSTIFICATIVA: colunas[22]?.textContent?.trim() || '',
+                Observação: colunas[23]?.textContent?.trim() || '',
+                Observação2: colunas[24]?.textContent?.trim() || ''
             });
         }
     });
-    
+
     return dados;
 }
 
 function preencherNovosFiltros(dados) {
     console.log('📝 [NOVO-FILTRO] Preenchendo filtros com dados da tabela');
-    
+
     // Projetos
     const projetos = [...new Set(dados.map(item => item['Projeto']).filter(p => p))].sort();
     criarNovoDropdown('infraFilterProjeto', projetos, 'Projetos');
-    
+
     // Sub Projetos
     const subProjetos = [...new Set(dados.map(item => item['Sub Projeto']).filter(p => p))].sort();
     criarNovoDropdown('infraFilterSubProjeto', subProjetos, 'Sub-Projetos');
-    
+
     // Equipes
     const equipes = [...new Set(dados.map(item => item['EQUIPE']).filter(e => e))].sort();
     criarNovoDropdown('infraFilterEquipe', equipes, 'Equipes');
-    
+
     // Status
     const status = [...new Set(dados.map(item => item['Status']).filter(s => s))].sort();
     criarNovoDropdown('infraFilterStatus', status, 'Status');
-    
+
     // Cidades
     const cidades = [...new Set(dados.map(item => item['Cidade']).filter(c => c))].sort();
     criarNovoDropdown('infraFilterCidade', cidades, 'Cidades');
-    
+
     // Supervisores
     const supervisores = [...new Set(dados.map(item => item['Supervisor']).filter(s => s))].sort();
     criarNovoDropdown('infraFilterSupervisor', supervisores, 'Supervisores');
-    
+
     // Tipos de Ação
     const tiposAcao = [...new Set(dados.map(item => item['Tipo de Ação']).filter(t => t))].sort();
     criarNovoDropdown('infraFilterTipoAcao', tiposAcao, 'Tipos de Ação');
-    
+
     // Condomínios
     const condominios = [...new Set(dados.map(item => item['Condominio']).filter(c => c))].sort();
     criarNovoDropdown('infraFilterCondominio', condominios, 'Condomínios');
@@ -1330,19 +1425,22 @@ function criarNovoDropdown(selectId, options, label) {
         console.warn(`⚠️ [NOVO-FILTRO] Select não encontrado: ${selectId}`);
         return;
     }
-    
-    console.log(`📝 [NOVO-FILTRO] Criando ${label} com ${options.length} opções:`, options.slice(0, 5));
-    
+
+    console.log(
+        `📝 [NOVO-FILTRO] Criando ${label} com ${options.length} opções:`,
+        options.slice(0, 5)
+    );
+
     // Destruir instância anterior se existir
     if (window.multiSelectInstances && window.multiSelectInstances[selectId]) {
         window.multiSelectInstances[selectId].destroy();
         delete window.multiSelectInstances[selectId];
     }
-    
+
     // Limpar e recriar o select
     select.innerHTML = '';
     select.setAttribute('multiple', 'multiple');
-    
+
     // Adicionar opções
     options.forEach(option => {
         const optionElement = document.createElement('option');
@@ -1350,7 +1448,7 @@ function criarNovoDropdown(selectId, options, label) {
         optionElement.textContent = option;
         select.appendChild(optionElement);
     });
-    
+
     // Criar nova instância do dropdown com z-index forçado
     setTimeout(() => {
         if (window.initializeMultiSelect) {
@@ -1361,28 +1459,28 @@ function criarNovoDropdown(selectId, options, label) {
                 closeOnSelect: false,
                 showCounter: true
             });
-            
+
             // Forçar z-index alto após criação
             setTimeout(() => {
                 const dropdown = document.getElementById(`${selectId}_dropdown`);
                 if (dropdown) {
                     dropdown.style.zIndex = '999999999';
                     dropdown.style.position = 'relative';
-                    
+
                     const content = dropdown.querySelector('.checkbox-dropdown-content');
                     if (content) {
                         content.style.zIndex = '999999999999';
                         content.style.position = 'absolute';
                         content.style.background = 'white';
                         content.style.color = '#000000';
-                        
+
                         // Forçar cor preta para todos os elementos dentro
                         const items = content.querySelectorAll('*');
                         items.forEach(item => {
                             item.style.color = '#000000';
                         });
                     }
-                    
+
                     // Adicionar evento para forçar z-index quando abrir
                     dropdown.addEventListener('click', () => {
                         setTimeout(() => {
@@ -1394,7 +1492,7 @@ function criarNovoDropdown(selectId, options, label) {
                     });
                 }
             }, 100);
-            
+
             console.log(`✅ [NOVO-FILTRO] ${label} criado com ${options.length} opções`);
         }
     }, 200);
@@ -1403,26 +1501,28 @@ function criarNovoDropdown(selectId, options, label) {
 // ============= OBSERVADOR DE MUDANÇAS NA TABELA =============
 function observarMudancasNaTabela() {
     const tbody = document.getElementById('enderecoTableBody');
-    if (!tbody) return;
-    
+    if (!tbody) {
+        return;
+    }
+
     console.log('👁️ [NOVO-FILTRO] Configurando observador de mudanças na tabela');
-    
+
     // Observar mudanças no conteúdo da tabela
-    const observer = new MutationObserver((mutations) => {
+    const observer = new MutationObserver(mutations => {
         let tabelaMudou = false;
-        
-        mutations.forEach((mutation) => {
+
+        mutations.forEach(mutation => {
             if (mutation.type === 'childList' || mutation.type === 'subtree') {
                 tabelaMudou = true;
             }
         });
-        
+
         if (tabelaMudou) {
             console.log('🔄 [NOVO-FILTRO] Tabela modificada, recarregando filtros...');
             setTimeout(() => configurarFiltros(), 1000);
         }
     });
-    
+
     // Configurar observador
     observer.observe(tbody, {
         childList: true,
@@ -1432,34 +1532,38 @@ function observarMudancasNaTabela() {
 }
 
 // Função global para recarregar filtros manualmente
-window.recarregarFiltrosDashboard = function() {
+window.recarregarFiltrosDashboard = function () {
     console.log('🔄 [NOVO-FILTRO] Recarregando filtros manualmente...');
     configurarFiltros();
 };
 
 function getFilterLabel(selectId) {
     const labels = {
-        'infraFilterProjeto': 'Projetos',
-        'infraFilterSubProjeto': 'Sub Projetos', 
-        'infraFilterEquipe': 'Equipes',
-        'infraFilterStatus': 'Status',
-        'infraFilterCidade': 'Cidades',
-        'infraFilterSupervisor': 'Supervisores',
-        'infraFilterTipoAcao': 'Tipos de Ação',
-        'infraFilterCondominio': 'Condomínios'
+        infraFilterProjeto: 'Projetos',
+        infraFilterSubProjeto: 'Sub Projetos',
+        infraFilterEquipe: 'Equipes',
+        infraFilterStatus: 'Status',
+        infraFilterCidade: 'Cidades',
+        infraFilterSupervisor: 'Supervisores',
+        infraFilterTipoAcao: 'Tipos de Ação',
+        infraFilterCondominio: 'Condomínios'
     };
     return labels[selectId] || 'itens';
 }
 
 // ============= APLICAR FILTROS =============
 function applyInfraFilters() {
-    console.log('🚫 [DASHBOARD-INTEGRATION] applyInfraFilters() DESABILITADA - usando sistema unificado');
+    console.log(
+        '🚫 [DASHBOARD-INTEGRATION] applyInfraFilters() DESABILITADA - usando sistema unificado'
+    );
     // FUNÇÃO DESABILITADA - Sistema unificado de filtros está ativo
     return;
 }
 
 function clearInfraFilters() {
-    console.log('🚫 [DASHBOARD-INTEGRATION] clearInfraFilters() DESABILITADA - usando sistema unificado');
+    console.log(
+        '🚫 [DASHBOARD-INTEGRATION] clearInfraFilters() DESABILITADA - usando sistema unificado'
+    );
     // FUNÇÃO DESABILITADA - Sistema unificado de filtros está ativo
     return;
 }
@@ -1467,8 +1571,10 @@ function clearInfraFilters() {
 // ============= FUNÇÕES AUXILIARES =============
 function getSelectValues(selectId) {
     const select = document.getElementById(selectId);
-    if (!select) return [];
-    
+    if (!select) {
+        return [];
+    }
+
     // VERIFICAR SE É UM MULTI-SELECT DROPDOWN
     if (select.dataset.multiSelectActive === 'true' || select.hasAttribute('data-multi-select')) {
         // Buscar pelos valores selecionados no multi-select customizado
@@ -1484,7 +1590,7 @@ function getSelectValues(selectId) {
             console.log(`🎯 [DASHBOARD-INTEGRATION] Multi-select ${selectId}:`, selectedValues);
             return selectedValues;
         }
-        
+
         // Fallback: buscar pela instância do MultiSelectDropdown
         if (window.multiSelectInstances && window.multiSelectInstances[selectId]) {
             const instance = window.multiSelectInstances[selectId];
@@ -1493,7 +1599,7 @@ function getSelectValues(selectId) {
             return values;
         }
     }
-    
+
     // SELECT NORMAL
     const values = Array.from(select.selectedOptions).map(option => option.value);
     console.log(`📋 [DASHBOARD-INTEGRATION] Select normal ${selectId}:`, values);
@@ -1502,23 +1608,33 @@ function getSelectValues(selectId) {
 
 function gerarCores(quantidade) {
     const cores = [
-        '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
-        '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
+        '#3b82f6',
+        '#10b981',
+        '#f59e0b',
+        '#ef4444',
+        '#8b5cf6',
+        '#06b6d4',
+        '#84cc16',
+        '#f97316',
+        '#ec4899',
+        '#6366f1'
     ];
-    
+
     const resultado = [];
     for (let i = 0; i < quantidade; i++) {
         resultado.push(cores[i % cores.length]);
     }
-    
+
     return resultado;
 }
 
 function extrairMesAno(dataString) {
     try {
         const data = new Date(dataString);
-        if (isNaN(data.getTime())) return null;
-        
+        if (isNaN(data.getTime())) {
+            return null;
+        }
+
         const mes = data.getMonth() + 1;
         const ano = data.getFullYear();
         return `${mes.toString().padStart(2, '0')}/${ano}`;
@@ -1534,18 +1650,28 @@ window.carregarDadosEnderecos = carregarDadosEnderecos;
 window.inicializarDashboard = inicializarDashboard;
 
 // ============= FUNÇÕES DE DEBUG =============
-window.debugDashboard = function() {
+window.debugDashboard = function () {
     console.log('🔍 [DEBUG] Iniciando diagnóstico completo do dashboard...');
-    
+
     // 1. Verificar se Chart.js está disponível
     console.log('📊 [DEBUG] Chart.js disponível:', typeof Chart !== 'undefined');
     if (typeof Chart !== 'undefined') {
         console.log('📊 [DEBUG] Versão Chart.js:', Chart.version);
-        console.log('📊 [DEBUG] Charts registrados:', Object.keys(Chart.registry.controllers.items));
+        console.log(
+            '📊 [DEBUG] Charts registrados:',
+            Object.keys(Chart.registry.controllers.items)
+        );
     }
-    
+
     // 2. Verificar canvas elements
-    const canvasIds = ['projetosChart', 'subProjetosChart', 'cidadesChart', 'hpProjetosChart', 'recebimentosChart', 'supervisorStatusChart'];
+    const canvasIds = [
+        'projetosChart',
+        'subProjetosChart',
+        'cidadesChart',
+        'hpProjetosChart',
+        'recebimentosChart',
+        'supervisorStatusChart'
+    ];
     console.log('🎨 [DEBUG] Verificando canvas elements...');
     canvasIds.forEach(id => {
         const canvas = document.getElementById(id);
@@ -1557,13 +1683,21 @@ window.debugDashboard = function() {
             context: canvas ? !!canvas.getContext('2d') : false
         });
     });
-    
+
     // 3. Verificar dados
     console.log('📊 [DEBUG] Dados do dashboard:');
-    console.log('📊 [DEBUG] dashboardData:', dashboardData ? dashboardData.length : 'undefined', 'registros');
-    console.log('📊 [DEBUG] filteredData:', filteredData ? filteredData.length : 'undefined', 'registros');
+    console.log(
+        '📊 [DEBUG] dashboardData:',
+        dashboardData ? dashboardData.length : 'undefined',
+        'registros'
+    );
+    console.log(
+        '📊 [DEBUG] filteredData:',
+        filteredData ? filteredData.length : 'undefined',
+        'registros'
+    );
     console.log('📊 [DEBUG] Exemplo de dados:', dashboardData ? dashboardData[0] : 'N/A');
-    
+
     // 4. Verificar charts existentes
     console.log('📊 [DEBUG] Charts armazenados:', Object.keys(charts));
     Object.keys(charts).forEach(key => {
@@ -1577,17 +1711,21 @@ window.debugDashboard = function() {
             });
         }
     });
-    
+
     // 5. Tentar recarregar dados do FirebaseTableSystem
     console.log('🔄 [DEBUG] Tentando recarregar dados...');
     if (window.FirebaseTableSystem && typeof window.FirebaseTableSystem.getData === 'function') {
         const data = window.FirebaseTableSystem.getData();
-        console.log('🔄 [DEBUG] Dados do FirebaseTableSystem:', data ? data.length : 'null', 'registros');
+        console.log(
+            '🔄 [DEBUG] Dados do FirebaseTableSystem:',
+            data ? data.length : 'null',
+            'registros'
+        );
         if (data && data.length > 0) {
             dashboardData = data;
             filteredData = [...data];
             console.log('🔄 [DEBUG] Dados recarregados com sucesso!');
-            
+
             // Tentar gerar gráficos novamente
             setTimeout(() => {
                 console.log('🔄 [DEBUG] Tentando regenerar gráficos...');
@@ -1595,22 +1733,24 @@ window.debugDashboard = function() {
             }, 1000);
         }
     }
-    
+
     // 6. Verificar erros de console
     console.log('⚠️ [DEBUG] Verifique o console para erros JavaScript');
-    console.log('⚠️ [DEBUG] Se houver erros de CORS ou 404, isso pode impedir o carregamento dos gráficos');
-    
+    console.log(
+        '⚠️ [DEBUG] Se houver erros de CORS ou 404, isso pode impedir o carregamento dos gráficos'
+    );
+
     return {
         chartJs: typeof Chart !== 'undefined',
-        canvasElements: canvasIds.map(id => ({id, element: document.getElementById(id)})),
-        data: {dashboardData: dashboardData?.length, filteredData: filteredData?.length},
+        canvasElements: canvasIds.map(id => ({ id, element: document.getElementById(id) })),
+        data: { dashboardData: dashboardData?.length, filteredData: filteredData?.length },
         charts: Object.keys(charts)
     };
 };
 
-window.forceUpdateCharts = function() {
+window.forceUpdateCharts = function () {
     console.log('🔄 [DEBUG] Forçando atualização completa dos gráficos...');
-    
+
     // 1. Destruir todos os gráficos existentes
     Object.keys(charts).forEach(key => {
         if (charts[key]) {
@@ -1619,25 +1759,32 @@ window.forceUpdateCharts = function() {
             charts[key] = null;
         }
     });
-    
+
     // 2. Limpar referências
     charts = {};
-    
+
     // 3. Aguardar um pouco para o DOM se atualizar
     setTimeout(() => {
         console.log('🔄 [DEBUG] Regenerando todos os gráficos...');
-        
+
         // 4. Verificar dados antes de gerar
         if (!dashboardData || dashboardData.length === 0) {
             console.warn('⚠️ [DEBUG] Sem dados para gerar gráficos');
-            
+
             // Tentar obter dados do FirebaseTableSystem
-            if (window.FirebaseTableSystem && typeof window.FirebaseTableSystem.getData === 'function') {
+            if (
+                window.FirebaseTableSystem &&
+                typeof window.FirebaseTableSystem.getData === 'function'
+            ) {
                 const data = window.FirebaseTableSystem.getData();
                 if (data && data.length > 0) {
                     dashboardData = data;
                     filteredData = [...data];
-                    console.log('✅ [DEBUG] Dados obtidos do FirebaseTableSystem:', data.length, 'registros');
+                    console.log(
+                        '✅ [DEBUG] Dados obtidos do FirebaseTableSystem:',
+                        data.length,
+                        'registros'
+                    );
                 } else {
                     console.error('❌ [DEBUG] FirebaseTableSystem não retornou dados');
                     return;
@@ -1647,7 +1794,7 @@ window.forceUpdateCharts = function() {
                 return;
             }
         }
-        
+
         // 5. Gerar gráficos
         try {
             gerarGraficos();
@@ -1659,33 +1806,35 @@ window.forceUpdateCharts = function() {
 };
 
 // Função para testar um gráfico específico
-window.testSingleChart = function(chartId) {
+window.testSingleChart = function (chartId) {
     console.log(`🧪 [DEBUG] Testando gráfico individual: ${chartId}`);
-    
+
     const canvas = document.getElementById(chartId);
     if (!canvas) {
         console.error(`❌ [DEBUG] Canvas não encontrado: ${chartId}`);
         return;
     }
-    
+
     // Destruir gráfico existente se houver
     if (charts[chartId.replace('Chart', '')]) {
         charts[chartId.replace('Chart', '')].destroy();
     }
-    
+
     // Criar gráfico de teste simples
     const ctx = canvas.getContext('2d');
     const testChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: ['Teste 1', 'Teste 2', 'Teste 3'],
-            datasets: [{
-                label: 'Dados de Teste',
-                data: [12, 19, 3],
-                backgroundColor: 'rgba(59, 130, 246, 0.6)',
-                borderColor: 'rgba(59, 130, 246, 1)',
-                borderWidth: 2
-            }]
+            datasets: [
+                {
+                    label: 'Dados de Teste',
+                    data: [12, 19, 3],
+                    backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 2
+                }
+            ]
         },
         options: {
             responsive: true,
@@ -1697,10 +1846,12 @@ window.testSingleChart = function(chartId) {
             }
         }
     });
-    
+
     console.log(`✅ [DEBUG] Gráfico de teste criado para ${chartId}`);
     return testChart;
 };
 
 console.log('✅ [DASHBOARD-INTEGRATION] Sistema de integração carregado');
-console.log('🔧 [DEBUG] Funções de debug disponíveis: debugDashboard(), forceUpdateCharts(), testSingleChart(id)');
+console.log(
+    '🔧 [DEBUG] Funções de debug disponíveis: debugDashboard(), forceUpdateCharts(), testSingleChart(id)'
+);
