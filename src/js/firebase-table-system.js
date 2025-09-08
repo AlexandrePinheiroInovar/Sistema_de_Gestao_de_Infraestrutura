@@ -4815,6 +4815,158 @@ function gerarDetalhesExclusao(log) {
     return '';
 }
 
+// Função para gerar detalhes específicos dos campos por operação
+function gerarDetalhesOperacaoCampos(log) {
+    const operacao = log.tipoOperacao?.toLowerCase() || 'unknown';
+    
+    switch(operacao) {
+        case 'delete':
+        case 'deletar':
+        case 'excluir':
+            return gerarCamposExcluidos(log);
+        case 'create':
+        case 'criar':
+            return gerarCamposCriados(log);
+        case 'duplicate':
+        case 'duplicar':
+            return gerarCamposDuplicados(log);
+        case 'edit':
+        case 'editar':
+        default:
+            return gerarCamposEditados(log);
+    }
+}
+
+// Função para gerar lista de campos excluídos
+function gerarCamposExcluidos(log) {
+    const dados = log.dadosCompletos?.antes || {};
+    if (!dados || Object.keys(dados).length === 0) {
+        return '<div style="color: #6b7280;">Nenhum dado disponível do registro excluído</div>';
+    }
+    
+    const camposExcluidos = [];
+    Object.keys(dados).forEach(campo => {
+        if (!['id', 'createdAt', 'updatedAt'].includes(campo)) {
+            const valor = dados[campo];
+            if (valor !== null && valor !== undefined && String(valor).trim()) {
+                camposExcluidos.push({
+                    campo: campo,
+                    valor: formatarValorCampo(valor)
+                });
+            }
+        }
+    });
+    
+    if (camposExcluidos.length === 0) {
+        return '<div style="color: #6b7280;">Registro excluído sem dados detalhados</div>';
+    }
+    
+    return `<div><strong>🗑️ ${camposExcluidos.length} campos excluídos:</strong></div>
+            <ul style="margin: 8px 0; padding-left: 20px; font-size: 12px;">
+                ${camposExcluidos.map(({campo, valor}) => `
+                    <li style="margin-bottom: 4px;">
+                        <strong>${traduzirNomeCampo(campo)}:</strong> 
+                        <span style="color: #6b7280;">vazio</span>
+                        → 
+                        <span style="color: #ef4444; text-decoration: line-through;">${valor}</span>
+                    </li>
+                `).join('')}
+            </ul>`;
+}
+
+// Função para gerar lista de campos criados
+function gerarCamposCriados(log) {
+    const dados = log.dadosCompletos?.depois || {};
+    if (!dados || Object.keys(dados).length === 0) {
+        return '<div style="color: #6b7280;">Nenhum dado disponível do registro criado</div>';
+    }
+    
+    const camposCriados = [];
+    Object.keys(dados).forEach(campo => {
+        if (!['id', 'createdAt', 'updatedAt'].includes(campo)) {
+            const valor = dados[campo];
+            if (valor !== null && valor !== undefined && String(valor).trim()) {
+                camposCriados.push({
+                    campo: campo,
+                    valor: formatarValorCampo(valor)
+                });
+            }
+        }
+    });
+    
+    if (camposCriados.length === 0) {
+        return '<div style="color: #6b7280;">Registro criado sem dados detalhados</div>';
+    }
+    
+    return `<div><strong>✨ ${camposCriados.length} campos criados:</strong></div>
+            <ul style="margin: 8px 0; padding-left: 20px; font-size: 12px;">
+                ${camposCriados.map(({campo, valor}) => `
+                    <li style="margin-bottom: 4px;">
+                        <strong>${traduzirNomeCampo(campo)}:</strong> 
+                        <span style="color: #6b7280;">vazio</span>
+                        → 
+                        <span style="color: #059669;">${valor}</span>
+                    </li>
+                `).join('')}
+            </ul>`;
+}
+
+// Função para gerar lista de campos duplicados
+function gerarCamposDuplicados(log) {
+    const dados = log.dadosCompletos?.depois || {};
+    if (!dados || Object.keys(dados).length === 0) {
+        return '<div style="color: #6b7280;">Nenhum dado disponível do registro duplicado</div>';
+    }
+    
+    const camposDuplicados = [];
+    Object.keys(dados).forEach(campo => {
+        if (!['id', 'createdAt', 'updatedAt'].includes(campo)) {
+            const valor = dados[campo];
+            if (valor !== null && valor !== undefined && String(valor).trim()) {
+                camposDuplicados.push({
+                    campo: campo,
+                    valor: formatarValorCampo(valor)
+                });
+            }
+        }
+    });
+    
+    if (camposDuplicados.length === 0) {
+        return '<div style="color: #6b7280;">Registro duplicado sem dados detalhados</div>';
+    }
+    
+    return `<div><strong>📄 ${camposDuplicados.length} campos duplicados:</strong></div>
+            <ul style="margin: 8px 0; padding-left: 20px; font-size: 12px;">
+                ${camposDuplicados.map(({campo, valor}) => `
+                    <li style="margin-bottom: 4px;">
+                        <strong>${traduzirNomeCampo(campo)}:</strong> 
+                        <span style="color: #6b7280;">vazio</span>
+                        → 
+                        <span style="color: #8b5cf6;">${valor}</span>
+                    </li>
+                `).join('')}
+            </ul>`;
+}
+
+// Função para gerar lista de campos editados (original)
+function gerarCamposEditados(log) {
+    if (log.camposAlterados && log.camposAlterados.length > 0) {
+        return `<div><strong>📝 ${log.camposAlterados.length} campos alterados:</strong></div>
+                <ul style="margin: 8px 0; padding-left: 20px; font-size: 12px;">
+                    ${log.camposAlterados.map(campo => `
+                        <li style="margin-bottom: 4px;">
+                            <strong>${traduzirNomeCampo(campo.campo)}:</strong> 
+                            <span style="color: #dc2626; text-decoration: line-through;">${formatarValorCampo(campo.valorAntigo || campo.valorAnterior) || 'vazio'}</span>
+                            → 
+                            <span style="color: #059669;">${formatarValorCampo(campo.valorNovo) || 'vazio'}</span>
+                        </li>
+                    `).join('')}
+                </ul>`;
+    } else {
+        return '<div style="color: #6b7280;">Operação sem campos específicos alterados</div>';
+    }
+}
+
 // Função para salvar log de alteração
 async function salvarLogAlteracao(recordId, dadosAntigos, dadosNovos, tipoOperacao = 'edit') {
     if (!firebase || !firebase.firestore) {
@@ -5139,20 +5291,8 @@ function gerarHTMLHistoricoGeral(logDocs) {
                     ${gerarDetalhesOperacao(log)}
                 </div>
                 <div class="historico-campos-alterados" style="margin-top: 10px;">
-                    ${log.camposAlterados && log.camposAlterados.length > 0 ? 
-                        `<div><strong>📋 ${log.camposAlterados.length} campos alterados:</strong></div>
-                         <ul style="margin: 8px 0; padding-left: 20px; font-size: 12px;">
-                            ${log.camposAlterados.map(campo => `
-                                <li style="margin-bottom: 4px;">
-                                    <strong>${traduzirNomeCampo(campo.campo)}:</strong> 
-                                    <span style="color: #dc2626; text-decoration: line-through;">${formatarValorCampo(campo.valorAntigo || campo.valorAnterior) || 'vazio'}</span>
-                                    → 
-                                    <span style="color: #059669;">${formatarValorCampo(campo.valorNovo) || 'vazio'}</span>
-                                </li>
-                            `).join('')}
-                         </ul>` 
-                        : (log.tipoOperacao?.toLowerCase() !== 'delete' ? '<div style="color: #6b7280;">Operação sem campos específicos alterados</div>' : '')
-                    }
+                    ${gerarDetalhesOperacaoCampos(log)}
+                </div>
                     ${log.ip && log.ip !== 'IP não identificado' ? 
                         `<div style="font-size: 11px; color: #9ca3af; margin-top: 8px;">IP: ${log.ip}</div>` 
                         : ''
