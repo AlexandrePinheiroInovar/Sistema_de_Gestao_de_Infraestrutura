@@ -5119,65 +5119,63 @@ async function visualizarHistorico(recordId) {
 
 // Função para criar modal de histórico
 function criarModalHistorico(logDocs, recordId) {
-    // Remover modal existente se houver
-    const modalExistente = document.getElementById('historicoModal');
-    if (modalExistente) {
-        modalExistente.remove();
-    }
+    // Remover TODOS os modais existentes
+    const modaisExistentes = document.querySelectorAll('#historicoModal, .modal[id*="historico"]');
+    modaisExistentes.forEach(modal => modal.remove());
     
-    // Criar HTML do modal
+    // Remover listeners de eventos antigos
+    document.querySelectorAll('[data-modal-listener]').forEach(el => el.remove());
+    
+    // Criar HTML do modal com CSS simplificado
     const modalHTML = `
-        <div id="historicoModal" class="modal" style="
-            display: block; 
-            z-index: 9999; 
+        <div id="historicoModal" style="
             position: fixed; 
             top: 0; 
             left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background-color: rgba(0,0,0,0.5); 
-            overflow: hidden;
+            width: 100vw; 
+            height: 100vh; 
+            background: rgba(0,0,0,0.5); 
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         ">
-            <div class="modal-content" style="
-                position: relative;
-                background-color: white;
-                margin: 2% auto;
-                padding: 0;
+            <div style="
+                background: white;
                 border-radius: 8px;
-                width: 90%;
+                width: 85%;
                 max-width: 1000px;
-                height: 85vh;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                height: 80vh;
                 display: flex;
                 flex-direction: column;
-                overflow: hidden;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
             ">
-                <div class="modal-header" style="
+                <div style="
                     padding: 20px;
-                    border-bottom: 1px solid #e5e7eb;
-                    flex-shrink: 0;
-                    background-color: #f9fafb;
+                    border-bottom: 1px solid #ddd;
+                    background: #f8f9fa;
+                    border-radius: 8px 8px 0 0;
+                    position: relative;
                 ">
-                    <h3 style="margin: 0; color: #1f2937;">📋 Histórico de Alterações</h3>
-                    <div style="font-size: 14px; color: #6b7280; margin-top: 5px;">
+                    <h3 style="margin: 0;">📋 Histórico de Alterações</h3>
+                    <p style="margin: 5px 0 0; color: #666; font-size: 14px;">
                         ${logDocs.length > 0 ? gerarDescricaoAmigavel(logDocs[0].data().dadosCompletos?.depois || logDocs[0].data().dadosCompletos?.antes || {}) : 'Registro'}
-                    </div>
-                    <span class="close" onclick="document.getElementById('historicoModal').remove()" style="
+                    </p>
+                    <button onclick="document.getElementById('historicoModal').remove()" style="
                         position: absolute;
                         top: 15px;
                         right: 20px;
-                        color: #6b7280;
-                        float: right;
-                        font-size: 28px;
-                        font-weight: bold;
+                        background: none;
+                        border: none;
+                        font-size: 24px;
                         cursor: pointer;
-                        line-height: 1;
-                    ">&times;</span>
+                        color: #999;
+                    ">&times;</button>
                 </div>
-                <div class="historico-content" style="
+                <div style="
                     flex: 1;
                     overflow-y: auto;
-                    padding: 0;
+                    padding: 20px;
                 ">
                     ${gerarHTMLHistorico(logDocs)}
                 </div>
@@ -5255,65 +5253,63 @@ function gerarHTMLHistorico(logDocs) {
 
 // Função para criar modal de histórico geral
 function criarModalHistoricoGeral(logDocs) {
-    // Remover modal existente se houver
-    const modalExistente = document.getElementById('historicoModal');
-    if (modalExistente) {
-        modalExistente.remove();
-    }
+    // Remover TODOS os modais existentes
+    const modaisExistentes = document.querySelectorAll('#historicoModal, .modal[id*="historico"]');
+    modaisExistentes.forEach(modal => modal.remove());
     
-    // Criar HTML do modal
+    // Remover listeners de eventos antigos
+    document.querySelectorAll('[data-modal-listener]').forEach(el => el.remove());
+    
+    // Criar HTML do modal com CSS simplificado
     const modalHTML = `
-        <div id="historicoModal" class="modal" style="
-            display: block; 
-            z-index: 9999; 
+        <div id="historicoModal" style="
             position: fixed; 
             top: 0; 
             left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background-color: rgba(0,0,0,0.5); 
-            overflow: hidden;
+            width: 100vw; 
+            height: 100vh; 
+            background: rgba(0,0,0,0.5); 
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         ">
-            <div class="modal-content" style="
-                position: relative;
-                background-color: white;
-                margin: 2% auto;
-                padding: 0;
+            <div style="
+                background: white;
                 border-radius: 8px;
-                width: 95%;
+                width: 90%;
                 max-width: 1200px;
-                height: 90vh;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                height: 85vh;
                 display: flex;
                 flex-direction: column;
-                overflow: hidden;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
             ">
-                <div class="modal-header" style="
+                <div style="
                     padding: 20px;
-                    border-bottom: 1px solid #e5e7eb;
-                    flex-shrink: 0;
-                    background-color: #f9fafb;
+                    border-bottom: 1px solid #ddd;
+                    background: #f8f9fa;
+                    border-radius: 8px 8px 0 0;
+                    position: relative;
                 ">
-                    <h3 style="margin: 0; color: #1f2937;">📋 Histórico Geral do Sistema</h3>
-                    <div style="font-size: 14px; color: #6b7280; margin-top: 5px;">
-                        ${logDocs.length} alterações encontradas (últimas 100)
-                    </div>
-                    <span class="close" onclick="document.getElementById('historicoModal').remove()" style="
+                    <h3 style="margin: 0;">📋 Histórico Geral do Sistema</h3>
+                    <p style="margin: 5px 0 0; color: #666; font-size: 14px;">
+                        ${logDocs.length} alterações encontradas
+                    </p>
+                    <button onclick="document.getElementById('historicoModal').remove()" style="
                         position: absolute;
                         top: 15px;
                         right: 20px;
-                        color: #6b7280;
-                        float: right;
-                        font-size: 28px;
-                        font-weight: bold;
+                        background: none;
+                        border: none;
+                        font-size: 24px;
                         cursor: pointer;
-                        line-height: 1;
-                    ">&times;</span>
+                        color: #999;
+                    ">&times;</button>
                 </div>
-                <div class="historico-content" style="
+                <div style="
                     flex: 1;
                     overflow-y: auto;
-                    padding: 0;
+                    padding: 20px;
                 ">
                     ${gerarHTMLHistoricoGeral(logDocs)}
                 </div>
@@ -5346,7 +5342,7 @@ function criarModalHistoricoGeral(logDocs) {
 
 // Função para gerar HTML do histórico geral
 function gerarHTMLHistoricoGeral(logDocs) {
-    let html = '<div class="historico-timeline" style="padding: 20px; max-height: none;">';
+    let html = '<div style="padding: 0;">';
     
     logDocs.forEach((doc, index) => {
         const log = doc.data();
