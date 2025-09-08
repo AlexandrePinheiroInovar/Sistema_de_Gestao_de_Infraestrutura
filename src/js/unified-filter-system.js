@@ -134,7 +134,7 @@ class UnifiedFilterSystem {
             // 3. Criar interface visual
             this.createFilterInterface();
 
-            // 4. Aplicar filtros iniciais
+            // 4. Aplicar filtros iniciais (isso vai garantir que os dados corretos sejam exibidos)
             this.applyFilters();
 
             console.log('✅ [UNIFIED-FILTER] Sistema inicializado com sucesso');
@@ -647,24 +647,33 @@ class UnifiedFilterSystem {
     applyFilters() {
         console.log('🎯 [UNIFIED-FILTER] Aplicando filtros:', this.currentFilters);
 
-        // Filtrar dados
-        this.filteredData = this.allData.filter(item => {
-            return this.filterConfig.every(config => {
-                const filterValues = this.currentFilters[config.name];
-                if (!filterValues || filterValues.length === 0) {
-                    return true; // Sem filtro = passa
-                }
+        // Verificar se há filtros ativos
+        const hasActiveFilters = Object.values(this.currentFilters).some(values => values && values.length > 0);
+        
+        if (!hasActiveFilters) {
+            // Se não há filtros ativos, usar todos os dados
+            this.filteredData = [...this.allData];
+            console.log('📋 [UNIFIED-FILTER] Nenhum filtro ativo - usando todos os dados:', this.filteredData.length);
+        } else {
+            // Filtrar dados
+            this.filteredData = this.allData.filter(item => {
+                return this.filterConfig.every(config => {
+                    const filterValues = this.currentFilters[config.name];
+                    if (!filterValues || filterValues.length === 0) {
+                        return true; // Sem filtro = passa
+                    }
 
-                // Filtro especial para período de recebimento (datas)
-                if (config.name === 'periodoRecebimento' && config.dateColumns) {
-                    return this.applyDateFilter(item, config.dateColumns, filterValues);
-                }
+                    // Filtro especial para período de recebimento (datas)
+                    if (config.name === 'periodoRecebimento' && config.dateColumns) {
+                        return this.applyDateFilter(item, config.dateColumns, filterValues);
+                    }
 
-                // Filtros normais (texto)
-                const itemValue = item[config.column];
-                return filterValues.includes(itemValue);
+                    // Filtros normais (texto)
+                    const itemValue = item[config.column];
+                    return filterValues.includes(itemValue);
+                });
             });
-        });
+        }
 
         console.log(
             '✅ [UNIFIED-FILTER] Filtros aplicados:',
@@ -901,10 +910,10 @@ class UnifiedFilterSystem {
             window.FirebaseTableSystem.updateTable(this.filteredData);
         }
 
-        // ⚠️ IMPORTANTE: Usar APENAS uma fonte de atualização de cards para evitar conflitos
-        // Prioridade: FirebaseTableSystem.updateCards > dashboard-integration > outras funções
+        // Atualizar cards usando múltiplos sistemas (necessário para funcionamento correto)
         let cardsUpdated = false;
         
+        // 1. Tentar FirebaseTableSystem primeiro
         if (window.FirebaseTableSystem && window.FirebaseTableSystem.updateCards) {
             console.log('📈 [UNIFIED-FILTER] Atualizando cards via FirebaseTableSystem...');
             try {
@@ -918,14 +927,33 @@ class UnifiedFilterSystem {
             }
         }
 
-        // Se FirebaseTableSystem não funcionou, tentar dashboard-integration
-        if (!cardsUpdated && typeof window.atualizarCardsEstatisticosIntegrado === 'function') {
+        // 2. Tentar dashboard-integration como backup/complemento
+        if (typeof window.atualizarCardsEstatisticosIntegrado === 'function') {
             console.log('📈 [UNIFIED-FILTER] Atualizando cards via atualizarCardsEstatisticosIntegrado...');
             try {
                 window.atualizarCardsEstatisticosIntegrado(this.filteredData);
                 cardsUpdated = true;
             } catch (error) {
                 console.warn('⚠️ [UNIFIED-FILTER] Erro ao atualizar cards integrados:', error);
+            }
+        } else if (typeof window.atualizarCardsEstatisticos === 'function') {
+            console.log('📈 [UNIFIED-FILTER] Atualizando cards via atualizarCardsEstatisticos...');
+            try {
+                window.atualizarCardsEstatisticos(this.filteredData);
+                cardsUpdated = true;
+            } catch (error) {
+                console.warn('⚠️ [UNIFIED-FILTER] Erro ao atualizar cards estatísticos:', error);
+            }
+        }
+        
+        // 3. Fallback para outras funções de estatísticas
+        if (typeof window.atualizarEstatisticas === 'function') {
+            console.log('📈 [UNIFIED-FILTER] Atualizando via atualizarEstatisticas...');
+            try {
+                window.atualizarEstatisticas(this.filteredData);
+                cardsUpdated = true;
+            } catch (error) {
+                console.warn('⚠️ [UNIFIED-FILTER] Erro ao atualizar estatísticas:', error);
             }
         }
 
