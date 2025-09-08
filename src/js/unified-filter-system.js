@@ -286,34 +286,55 @@ class UnifiedFilterSystem {
     // Criar filtro de data especial para período de recebimento
     createDateFilter(config) {
         console.log('📅 [UNIFIED-FILTER] Criando filtro de data para:', config.label);
+        console.log('📅 [UNIFIED-FILTER] Colunas de data configuradas:', config.dateColumns);
 
         // Buscar os inputs de data existentes
         const dataInicio = document.getElementById('infraFilterDataInicio');
         const dataFim = document.getElementById('infraFilterDataFim');
 
         if (dataInicio && dataFim) {
+            // Limpar listeners anteriores
+            const oldUpdateDateFilter = dataInicio.updateDateFilter || dataFim.updateDateFilter;
+            if (oldUpdateDateFilter) {
+                dataInicio.removeEventListener('change', oldUpdateDateFilter);
+                dataFim.removeEventListener('change', oldUpdateDateFilter);
+            }
+
             // Adicionar listeners para capturar mudanças
             const updateDateFilter = () => {
                 const inicio = dataInicio.value;
                 const fim = dataFim.value;
 
+                console.log('📅 [DATE-INPUT] Valores dos inputs:', { inicio, fim });
+
                 if (inicio || fim) {
                     this.currentFilters[config.name] = [inicio, fim];
+                    console.log('📅 [DATE-INPUT] Filtro de data definido:', this.currentFilters[config.name]);
                 } else {
                     delete this.currentFilters[config.name];
+                    console.log('📅 [DATE-INPUT] Filtro de data removido');
                 }
 
-                console.log('📅 [UNIFIED-FILTER] Filtro de data atualizado:', inicio, 'até', fim);
                 this.applyFilters();
             };
+
+            // Guardar referência do listener para poder remover depois
+            dataInicio.updateDateFilter = updateDateFilter;
+            dataFim.updateDateFilter = updateDateFilter;
 
             dataInicio.addEventListener('change', updateDateFilter);
             dataFim.addEventListener('change', updateDateFilter);
 
-            console.log('✅ [UNIFIED-FILTER] Filtro de data configurado');
+            // Também escutar eventos de input para mudanças em tempo real
+            dataInicio.addEventListener('input', updateDateFilter);
+            dataFim.addEventListener('input', updateDateFilter);
+
+            console.log('✅ [UNIFIED-FILTER] Filtro de data configurado com eventos');
         } else {
             console.warn(
-                '⚠️ [UNIFIED-FILTER] Inputs de data não encontrados: infraFilterDataInicio, infraFilterDataFim'
+                '⚠️ [UNIFIED-FILTER] Inputs de data não encontrados:',
+                'dataInicio:', !!dataInicio,
+                'dataFim:', !!dataFim
             );
         }
     }
@@ -660,34 +681,39 @@ class UnifiedFilterSystem {
             return true;
         }
 
-        console.log(`📅 [DATE-FILTER] Aplicando filtro de data:`, {
-            dataInicio,
-            dataFim,
+        console.log(`📅 [DATE-FILTER] Filtrando item:`, {
+            dataInicio, 
+            dataFim, 
             dateColumns,
-            itemKeys: Object.keys(item),
-            itemDates: dateColumns.map(col => ({ [col]: item[col] }))
+            availableKeys: Object.keys(item).filter(key => key.includes('DATA'))
         });
 
-        // Verificar qualquer uma das três colunas de data
-        return dateColumns.some(column => {
+        // Verificar qualquer uma das colunas de data disponíveis
+        const hasValidDate = dateColumns.some(column => {
             const itemDate = item[column];
-            console.log(`📅 [DATE-FILTER] Verificando coluna '${column}':`, itemDate);
             
             if (!itemDate) {
-                console.log(`📅 [DATE-FILTER] Sem data na coluna '${column}'`);
-                return false;
+                return false; // Sem data nesta coluna, tentar próxima
             }
 
             // Converter para formato de data comparável
             let itemDateObj;
             try {
                 // Tentar múltiplos formatos de data
-                if (itemDate.toDate && typeof itemDate.toDate === 'function') {
+                if (itemDate && typeof itemDate === 'object' && itemDate.toDate) {
                     // Firebase Timestamp
                     itemDateObj = itemDate.toDate();
                 } else if (typeof itemDate === 'string') {
-                    // String de data
+                    // String de data - diversos formatos
                     itemDateObj = new Date(itemDate);
+                    // Se não funcionou, tentar formato brasileiro DD/MM/YYYY
+                    if (isNaN(itemDateObj.getTime()) && itemDate.includes('/')) {
+                        const parts = itemDate.split('/');
+                        if (parts.length === 3) {
+                            // Assumir DD/MM/YYYY e converter para MM/DD/YYYY
+                            itemDateObj = new Date(`${parts[1]}/${parts[0]}/${parts[2]}`);
+                        }
+                    }
                 } else if (itemDate instanceof Date) {
                     // Já é um objeto Date
                     itemDateObj = itemDate;
@@ -696,7 +722,7 @@ class UnifiedFilterSystem {
                     itemDateObj = new Date(itemDate);
                 }
             } catch (error) {
-                console.warn(`📅 [DATE-FILTER] Erro ao converter data '${itemDate}':`, error);
+                console.warn(`📅 [DATE-FILTER] Erro ao converter '${itemDate}' da coluna '${column}':`, error);
                 return false;
             }
             
@@ -705,29 +731,34 @@ class UnifiedFilterSystem {
                 return false;
             }
 
+            // Aplicar filtros de data
             let passesFilter = true;
 
             if (dataInicio) {
                 const inicioObj = new Date(dataInicio);
                 if (!isNaN(inicioObj.getTime())) {
-                    const passes = itemDateObj >= inicioObj;
-                    console.log(`📅 [DATE-FILTER] ${itemDateObj.toISOString()} >= ${inicioObj.toISOString()}? ${passes}`);
-                    passesFilter = passesFilter && passes;
+                    passesFilter = passesFilter && itemDateObj >= inicioObj;
                 }
             }
 
             if (dataFim) {
                 const fimObj = new Date(dataFim);
                 if (!isNaN(fimObj.getTime())) {
-                    const passes = itemDateObj <= fimObj;
-                    console.log(`📅 [DATE-FILTER] ${itemDateObj.toISOString()} <= ${fimObj.toISOString()}? ${passes}`);
-                    passesFilter = passesFilter && passes;
+                    // Adicionar 23:59:59 ao fim do dia para incluir todo o dia
+                    fimObj.setHours(23, 59, 59, 999);
+                    passesFilter = passesFilter && itemDateObj <= fimObj;
                 }
             }
 
-            console.log(`📅 [DATE-FILTER] Resultado final para coluna '${column}':`, passesFilter);
+            if (passesFilter) {
+                console.log(`✅ [DATE-FILTER] Data válida encontrada na coluna '${column}': ${itemDateObj.toLocaleDateString()}`);
+            }
+            
             return passesFilter;
         });
+
+        console.log(`📅 [DATE-FILTER] Resultado final:`, hasValidDate);
+        return hasValidDate;
     }
 
     clearAllFilters() {
