@@ -681,6 +681,9 @@ window.deleteFirebaseTableRecord = async function(id) {
         const doc = await firestore.collection('enderecos').doc(id).get();
         const dadosAntigos = doc.exists ? doc.data() : {};
         
+        console.log('🔍 [DEBUG] Dados antes da exclusão:', dadosAntigos);
+        console.log('🔍 [DEBUG] Descrição gerada:', gerarDescricaoAmigavel(dadosAntigos));
+        
         await firestore.collection('enderecos').doc(id).delete();
         
         // Salvar log de exclusão no histórico
@@ -4641,7 +4644,35 @@ function gerarDescricaoAmigavel(dados) {
 // Função para gerar detalhes específicos da operação
 function gerarDetalhesOperacao(log) {
     const operacao = log.tipoOperacao?.toLowerCase() || 'unknown';
-    const descricao = log.descricaoRegistro || gerarDescricaoAmigavel(log.dadosCompletos?.depois || log.dadosCompletos?.antes || {});
+    
+    // Tentar diferentes fontes para a descrição
+    let descricao = log.descricaoRegistro;
+    
+    if (!descricao || descricao === 'Registro não identificado' || descricao === 'Registro do sistema') {
+        // Tentar dados completos
+        const dados = log.dadosCompletos?.depois || log.dadosCompletos?.antes || {};
+        if (Object.keys(dados).length > 0) {
+            descricao = gerarDescricaoAmigavel(dados);
+        }
+    }
+    
+    // Se ainda não temos descrição, tentar os campos alterados
+    if (!descricao || descricao === 'Registro não identificado' || descricao === 'Registro do sistema') {
+        if (log.camposAlterados && log.camposAlterados.length > 0) {
+            const primeiroCampo = log.camposAlterados[0];
+            const valor = primeiroCampo.valorNovo || primeiroCampo.valorAnterior || primeiroCampo.valorAntigo;
+            if (valor) {
+                descricao = `${traduzirNomeCampo(primeiroCampo.campo)}: "${valor}"`;
+            }
+        }
+    }
+    
+    // Fallback final
+    if (!descricao || descricao === 'Registro não identificado' || descricao === 'Registro do sistema') {
+        descricao = `Registro ID: ${log.recordId || 'desconhecido'}`;
+    }
+    
+    console.log(`🔍 [DEBUG-DETALHES] Operação: ${operacao}, Descrição final: ${descricao}`);
     
     switch(operacao) {
         case 'create':
@@ -4815,6 +4846,14 @@ async function visualizarHistoricoGeral() {
             .orderBy('timestamp', 'desc')
             .limit(100)
             .get();
+            
+        console.log(`🔍 [HISTORICO-GERAL] Encontrados ${logs.docs.length} logs`);
+        logs.docs.forEach((doc, index) => {
+            if (index < 5) { // Log apenas os primeiros 5 para debug
+                const data = doc.data();
+                console.log(`🔍 [DEBUG-LOG ${index}] Operação: ${data.tipoOperacao}, Descrição: ${data.descricaoRegistro || 'N/A'}`);
+            }
+        });
             
         if (logs.empty) {
             alert('📄 Nenhum histórico encontrado no sistema');
