@@ -817,6 +817,12 @@ class UnifiedFilterSystem {
             firstItem: this.filteredData[0]
         });
 
+        // Restaurar dados originais na tabela
+        if (window.FirebaseTableSystem && window.FirebaseTableSystem.restoreOriginalData) {
+            window.FirebaseTableSystem.restoreOriginalData();
+            console.log('🔄 [UNIFIED-FILTER] Dados originais restaurados na tabela');
+        }
+
         // Limpar localStorage
         localStorage.removeItem(this.storageKey);
     }

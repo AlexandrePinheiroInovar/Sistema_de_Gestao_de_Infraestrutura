@@ -3354,6 +3354,44 @@ window.reloadCompleteInterface = async function() {
     await loadFirebaseTableData();
 };
 
+// ============= FUNÇÃO PARA ATUALIZAR TABELA COM DADOS FILTRADOS =============
+window.FirebaseTableSystem.updateTable = function(filteredData) {
+    console.log('🔄 [FIREBASE-TABLE] Atualizando tabela com dados filtrados:', filteredData.length);
+    
+    try {
+        const tbody = document.getElementById('enderecoTableBody');
+        if (!tbody) {
+            console.warn('⚠️ [FIREBASE-TABLE] Elemento enderecoTableBody não encontrado');
+            return;
+        }
+        
+        // Atualizar variável global temporariamente para paginação funcionar
+        const originalData = window.currentFirebaseData;
+        window.currentFirebaseData = filteredData;
+        
+        // Renderizar tabela com dados filtrados
+        renderTableBody(tbody, filteredData);
+        
+        // Atualizar estatísticas
+        updateTableStats(filteredData.length);
+        
+        console.log('✅ [FIREBASE-TABLE] Tabela atualizada com filtros aplicados');
+        
+        // Callback para restaurar dados originais quando filtros forem limpos
+        window.FirebaseTableSystem.restoreOriginalData = function() {
+            if (originalData && tbody) {
+                window.currentFirebaseData = originalData;
+                renderTableBody(tbody, originalData);
+                updateTableStats(originalData.length);
+                console.log('🔄 [FIREBASE-TABLE] Dados originais restaurados na tabela');
+            }
+        };
+        
+    } catch (error) {
+        console.error('❌ [FIREBASE-TABLE] Erro ao atualizar tabela:', error);
+    }
+};
+
 // ============= FUNÇÃO DE DEBUG PARA DIAGNOSTICAR PROBLEMA =============
 window.debugTableData = function() {
     console.log('🔍 [DEBUG] Diagnosticando problema da tabela...');

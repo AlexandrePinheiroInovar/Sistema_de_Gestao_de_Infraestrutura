@@ -525,4 +525,28 @@ window.addEventListener('firebaseSystemReady', function (event) {
     }
 });
 
+// ============= ESCUTAR FILTROS UNIFICADOS =============
+document.addEventListener('unifiedFiltersChanged', function(event) {
+    console.log('🔍 [CHARTS-NOVO] Filtros unificados alterados:', event.detail);
+    
+    // Verificar se há dados filtrados
+    if (event.detail.filteredData && event.detail.filteredData.length >= 0) {
+        console.log('📊 [CHARTS-NOVO] Atualizando gráficos com dados filtrados:', event.detail.filteredData.length);
+        
+        // Reinicializar gráficos com dados filtrados
+        ChartsDashboard.data = event.detail.filteredData;
+        ChartsDashboard.hasData = event.detail.filteredData.length > 0;
+        
+        if (ChartsDashboard.hasData) {
+            // Recriar todos os gráficos
+            ChartsDashboard.criarTodosGraficos();
+            console.log('✅ [CHARTS-NOVO] Gráficos atualizados com filtros');
+        } else {
+            // Se não há dados filtrados, destruir gráficos
+            ChartsDashboard.destruirGraficos();
+            console.log('🧹 [CHARTS-NOVO] Gráficos destruídos (nenhum dado filtrado)');
+        }
+    }
+});
+
 console.log('✅ [CHARTS-NOVO] Sistema base carregado. Carregando implementações dos gráficos...');
