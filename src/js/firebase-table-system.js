@@ -641,7 +641,8 @@ window.duplicateFirebaseTableRecord = async function(id) {
             duplicateData.condominio += ' - CÓPIA';
         }
         
-        // Adicionar timestamps
+        // Adicionar timestamps como strings para evitar erro do Firebase
+        const now = new Date().toISOString();
         duplicateData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
         duplicateData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
         
@@ -4693,7 +4694,8 @@ function gerarDetalhesOperacao(log) {
         case 'deletar':
         case 'excluir':
             return `<div style="color: #ef4444; font-weight: 500;">🗑️ <strong>EXCLUÍDO:</strong> ${descricao}</div>
-                    <div style="color: #dc2626; font-size: 11px; margin-top: 4px;">⚠️ Este registro foi removido permanentemente do sistema</div>`;
+                    <div style="color: #dc2626; font-size: 11px; margin-top: 4px;">⚠️ Este registro foi removido permanentemente do sistema</div>
+                    ${gerarDetalhesExclusao(log)}`;
             
         default:
             return `<div style="color: #6b7280; font-weight: 500;">❓ <strong>OPERAÇÃO:</strong> ${operacao.toUpperCase()} - ${descricao}</div>`;
@@ -4754,6 +4756,65 @@ function formatarValorCampo(valor) {
     return valor;
 }
 
+// Função para limpar timestamps do Firebase dos dados
+function limparTimestampsFirebase(dados) {
+    if (!dados || typeof dados !== 'object') return dados;
+    
+    const dadosLimpos = {};
+    for (const [key, value] of Object.entries(dados)) {
+        // Pular campos com timestamps do Firebase
+        if (key === 'createdAt' || key === 'updatedAt' || key === 'timestamp') {
+            if (value && typeof value === 'object' && value.seconds) {
+                // Converter Firebase Timestamp para string
+                dadosLimpos[key] = new Date(value.seconds * 1000).toISOString();
+            } else if (value instanceof Date) {
+                dadosLimpos[key] = value.toISOString();
+            } else {
+                dadosLimpos[key] = String(value);
+            }
+        } else {
+            dadosLimpos[key] = value;
+        }
+    }
+    return dadosLimpos;
+}
+
+// Função para gerar detalhes específicos da exclusão
+function gerarDetalhesExclusao(log) {
+    const dados = log.dadosCompletos?.antes || {};
+    if (!dados || Object.keys(dados).length === 0) {
+        return '';
+    }
+    
+    // Campos mais importantes para mostrar na exclusão
+    const camposImportantes = [
+        { campo: 'projeto', label: '📋 Projeto' },
+        { campo: 'subProjeto', label: '📂 Sub-Projeto' },
+        { campo: 'tipoAcao', label: '⚡ Tipo' },
+        { campo: 'equipe', label: '👥 Equipe' },
+        { campo: 'supervisor', label: '👨‍💼 Supervisor' },
+        { campo: 'status', label: '📊 Status' },
+        { campo: 'dataRecebimento', label: '📅 Recebimento' },
+        { campo: 'hp', label: '💪 HP' }
+    ];
+    
+    const detalhes = [];
+    camposImportantes.forEach(({campo, label}) => {
+        if (dados[campo] && String(dados[campo]).trim()) {
+            detalhes.push(`<span style="color: #6b7280;">${label}: <strong>${dados[campo]}</strong></span>`);
+        }
+    });
+    
+    if (detalhes.length > 0) {
+        return `<div style="background: #fef2f2; padding: 8px; border-radius: 4px; margin-top: 8px; font-size: 11px;">
+                    <strong>📝 Dados que foram excluídos:</strong><br>
+                    ${detalhes.join(' • ')}
+                </div>`;
+    }
+    
+    return '';
+}
+
 // Função para salvar log de alteração
 async function salvarLogAlteracao(recordId, dadosAntigos, dadosNovos, tipoOperacao = 'edit') {
     if (!firebase || !firebase.firestore) {
@@ -4774,14 +4835,18 @@ async function salvarLogAlteracao(recordId, dadosAntigos, dadosNovos, tipoOperac
         // Gerar descrição amigável do registro
         const descricaoRegistro = gerarDescricaoAmigavel(dadosNovos || dadosAntigos || {});
         
+        // Limpar timestamps do Firebase dos dados para evitar erro
+        const dadosAntigosLimpos = limparTimestampsFirebase(dadosAntigos || {});
+        const dadosNovosLimpos = limparTimestampsFirebase(dadosNovos || {});
+        
         // Identificar campos alterados
         const camposAlterados = [];
-        for (const campo in dadosNovos) {
-            if (dadosAntigos[campo] !== dadosNovos[campo]) {
+        for (const campo in dadosNovosLimpos) {
+            if (dadosAntigosLimpos[campo] !== dadosNovosLimpos[campo]) {
                 camposAlterados.push({
                     campo: campo,
-                    valorAnterior: dadosAntigos[campo] || '',
-                    valorNovo: dadosNovos[campo] || ''
+                    valorAnterior: dadosAntigosLimpos[campo] || '',
+                    valorNovo: dadosNovosLimpos[campo] || ''
                 });
             }
         }
@@ -4796,8 +4861,8 @@ async function salvarLogAlteracao(recordId, dadosAntigos, dadosNovos, tipoOperac
             camposAlterados: camposAlterados,
             totalCamposAlterados: camposAlterados.length,
             dadosCompletos: {
-                antes: dadosAntigos,
-                depois: dadosNovos
+                antes: dadosAntigosLimpos,
+                depois: dadosNovosLimpos
             },
             ip: await obterIPUsuario(),
             userAgent: navigator.userAgent,
