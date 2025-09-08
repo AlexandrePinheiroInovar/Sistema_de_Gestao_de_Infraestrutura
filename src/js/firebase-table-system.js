@@ -4546,36 +4546,181 @@ function extrairDadosUnicosDaTabela() {
 function gerarDescricaoAmigavel(dados) {
     if (!dados) return 'Registro desconhecido';
     
-    // Para endereços
+    // Para endereços - mais detalhado
     if (dados.condominio || dados.endereco) {
         const partes = [];
-        if (dados.condominio) partes.push(`"${dados.condominio}"`);
-        if (dados.endereco) partes.push(dados.endereco);
-        if (dados.cidade) partes.push(`(${dados.cidade})`);
-        if (dados.projeto) partes.push(`- ${dados.projeto}`);
         
-        return partes.length > 0 ? partes.join(' ') : 'Endereço';
+        // Sempre começar com o condomínio se disponível
+        if (dados.condominio) {
+            partes.push(`🏢 "${dados.condominio}"`);
+        }
+        
+        // Adicionar endereço se disponível e diferente do condomínio
+        if (dados.endereco && dados.endereco !== dados.condominio) {
+            partes.push(`📍 ${dados.endereco}`);
+        }
+        
+        // Adicionar cidade
+        if (dados.cidade) {
+            partes.push(`🌆 ${dados.cidade}`);
+        }
+        
+        // Adicionar projeto
+        if (dados.projeto) {
+            partes.push(`📋 ${dados.projeto}`);
+        }
+        
+        // Adicionar equipe se disponível
+        if (dados.equipe) {
+            partes.push(`👥 Equipe: ${dados.equipe}`);
+        }
+        
+        return partes.length > 0 ? partes.join(' • ') : 'Endereço';
     }
     
-    // Para projetos/gestão
+    // Para projetos/gestão - identificar melhor o tipo
     if (dados.nome) {
-        return `"${dados.nome}"`;
+        // Tentar identificar o tipo baseado em propriedades específicas
+        let tipo = 'Item';
+        
+        if (dados.cliente) {
+            tipo = 'Projeto';
+        } else if (dados.projetoPrincipal) {
+            tipo = 'Sub-Projeto';
+        } else if (dados.categoria) {
+            tipo = 'Tipo de Ação';
+        } else if (dados.email) {
+            tipo = 'Supervisor';
+        } else if (dados.especialidade || dados.lider) {
+            tipo = 'Equipe';
+        } else if (dados.estado || dados.regiao) {
+            tipo = 'Cidade';
+        }
+        
+        return `${tipo}: "${dados.nome}"`;
     }
     
     // Para outros tipos
     if (dados.titulo) {
-        return `"${dados.titulo}"`;
+        return `📄 "${dados.titulo}"`;
     }
     
-    // Fallback genérico
-    const campos = ['projeto', 'subProjeto', 'tipoAcao', 'equipe', 'supervisor'];
-    for (const campo of campos) {
+    // Fallback mais inteligente
+    const camposImportantes = [
+        { campo: 'condominio', prefixo: '🏢 Condomínio' },
+        { campo: 'endereco', prefixo: '📍 Endereço' },
+        { campo: 'projeto', prefixo: '📋 Projeto' },
+        { campo: 'subProjeto', prefixo: '📂 Sub-Projeto' },
+        { campo: 'tipoAcao', prefixo: '⚡ Tipo de Ação' },
+        { campo: 'equipe', prefixo: '👥 Equipe' },
+        { campo: 'supervisor', prefixo: '👨‍💼 Supervisor' },
+        { campo: 'cidade', prefixo: '🌆 Cidade' }
+    ];
+    
+    for (const {campo, prefixo} of camposImportantes) {
         if (dados[campo]) {
-            return `${campo}: "${dados[campo]}"`;
+            return `${prefixo}: "${dados[campo]}"`;
         }
     }
     
-    return 'Registro do sistema';
+    // Último recurso - mostrar qualquer campo não-técnico disponível
+    const camposDescritivos = Object.keys(dados).filter(key => 
+        !['id', 'createdAt', 'updatedAt', 'timestamp', 'autoSaved', 'source', 'tabId'].includes(key)
+    );
+    
+    if (camposDescritivos.length > 0) {
+        const primeiroValor = dados[camposDescritivos[0]];
+        if (primeiroValor) {
+            return `${camposDescritivos[0]}: "${primeiroValor}"`;
+        }
+    }
+    
+    return 'Registro não identificado';
+}
+
+// Função para gerar detalhes específicos da operação
+function gerarDetalhesOperacao(log) {
+    const operacao = log.tipoOperacao?.toLowerCase() || 'unknown';
+    const descricao = log.descricaoRegistro || gerarDescricaoAmigavel(log.dadosCompletos?.depois || log.dadosCompletos?.antes || {});
+    
+    switch(operacao) {
+        case 'create':
+        case 'criar':
+            return `<div style="color: #059669; font-weight: 500;">✨ <strong>CRIADO:</strong> ${descricao}</div>`;
+            
+        case 'edit':
+        case 'editar':
+            return `<div style="color: #3b82f6; font-weight: 500;">📝 <strong>EDITADO:</strong> ${descricao}</div>`;
+            
+        case 'duplicate':
+        case 'duplicar':
+            const observacao = log.observacao || '';
+            return `<div style="color: #8b5cf6; font-weight: 500;">📄 <strong>DUPLICADO:</strong> ${descricao}</div>
+                    ${observacao ? `<div style="color: #6b7280; font-size: 11px; margin-top: 4px;">${observacao}</div>` : ''}`;
+            
+        case 'delete':
+        case 'deletar':
+        case 'excluir':
+            return `<div style="color: #ef4444; font-weight: 500;">🗑️ <strong>EXCLUÍDO:</strong> ${descricao}</div>
+                    <div style="color: #dc2626; font-size: 11px; margin-top: 4px;">⚠️ Este registro foi removido permanentemente do sistema</div>`;
+            
+        default:
+            return `<div style="color: #6b7280; font-weight: 500;">❓ <strong>OPERAÇÃO:</strong> ${operacao.toUpperCase()} - ${descricao}</div>`;
+    }
+}
+
+// Função para traduzir nomes de campos para português
+function traduzirNomeCampo(campo) {
+    const traducoes = {
+        'condominio': '🏢 Condomínio',
+        'endereco': '📍 Endereço',
+        'cidade': '🌆 Cidade',
+        'projeto': '📋 Projeto',
+        'subProjeto': '📂 Sub-Projeto',
+        'tipoAcao': '⚡ Tipo de Ação',
+        'contrato': '📄 Contrato',
+        'pep': '🔧 PEP',
+        'codImovelGed': '🏷️ Código GED',
+        'nodeGerencial': '🌐 Node Gerencial',
+        'areaTecnica': '⚙️ Área Técnica',
+        'hp': '💪 HP',
+        'andar': '🏗️ Andar',
+        'dataRecebimento': '📅 Data Recebimento',
+        'dataInicio': '🚀 Data Início',
+        'dataFinal': '🏁 Data Final',
+        'equipe': '👥 Equipe',
+        'supervisor': '👨‍💼 Supervisor',
+        'status': '📊 Status',
+        'rdo': '📋 RDO',
+        'book': '📖 Book',
+        'projetoStatus': '📈 Status do Projeto',
+        'situacao': '📋 Situação',
+        'justificativa': '📝 Justificativa',
+        'observacao': '💭 Observação',
+        'nome': '📛 Nome',
+        'descricao': '📝 Descrição',
+        'cliente': '🏢 Cliente',
+        'categoria': '📂 Categoria',
+        'email': '✉️ Email',
+        'telefone': '📞 Telefone',
+        'area': '🎯 Área',
+        'especialidade': '🎯 Especialidade',
+        'lider': '👑 Líder',
+        'membros': '👥 Membros',
+        'estado': '🗺️ Estado',
+        'regiao': '🌎 Região'
+    };
+    
+    return traducoes[campo] || campo.charAt(0).toUpperCase() + campo.slice(1);
+}
+
+// Função para formatar valores de campos
+function formatarValorCampo(valor) {
+    if (!valor) return 'vazio';
+    if (typeof valor === 'string' && valor.length > 50) {
+        return valor.substring(0, 47) + '...';
+    }
+    return valor;
 }
 
 // Função para salvar log de alteração
@@ -4887,19 +5032,22 @@ function gerarHTMLHistoricoGeral(logDocs) {
                     </span>
                 </div>
                 <div class="historico-detalhes">
+                    ${gerarDetalhesOperacao(log)}
+                </div>
+                <div class="historico-campos-alterados" style="margin-top: 10px;">
                     ${log.camposAlterados && log.camposAlterados.length > 0 ? 
-                        `<div><strong>${log.camposAlterados.length} campos alterados:</strong></div>
+                        `<div><strong>📋 ${log.camposAlterados.length} campos alterados:</strong></div>
                          <ul style="margin: 8px 0; padding-left: 20px; font-size: 12px;">
                             ${log.camposAlterados.map(campo => `
                                 <li style="margin-bottom: 4px;">
-                                    <strong>${campo.campo}:</strong> 
-                                    <span style="color: #dc2626; text-decoration: line-through;">${campo.valorAntigo || 'vazio'}</span>
+                                    <strong>${traduzirNomeCampo(campo.campo)}:</strong> 
+                                    <span style="color: #dc2626; text-decoration: line-through;">${formatarValorCampo(campo.valorAntigo || campo.valorAnterior) || 'vazio'}</span>
                                     → 
-                                    <span style="color: #059669;">${campo.valorNovo || 'vazio'}</span>
+                                    <span style="color: #059669;">${formatarValorCampo(campo.valorNovo) || 'vazio'}</span>
                                 </li>
                             `).join('')}
                          </ul>` 
-                        : '<div style="color: #6b7280;">Nenhuma alteração específica registrada</div>'
+                        : (log.tipoOperacao?.toLowerCase() !== 'delete' ? '<div style="color: #6b7280;">Operação sem campos específicos alterados</div>' : '')
                     }
                     ${log.ip && log.ip !== 'IP não identificado' ? 
                         `<div style="font-size: 11px; color: #9ca3af; margin-top: 8px;">IP: ${log.ip}</div>` 
