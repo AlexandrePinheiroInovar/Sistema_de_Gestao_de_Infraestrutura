@@ -160,6 +160,20 @@ class UnifiedFilterSystem {
                     this.allData.length,
                     'registros'
                 );
+                
+                // DEBUG: Mostrar estrutura de dados para análise
+                if (this.allData.length > 0) {
+                    console.log('🔍 [UNIFIED-FILTER] Amostra de dados (primeiro registro):', this.allData[0]);
+                    console.log('🔍 [UNIFIED-FILTER] Chaves disponíveis:', Object.keys(this.allData[0]));
+                    
+                    // Verificar especificamente as colunas de data
+                    const dateColumns = ['DATA RECEBIMENTO', 'DATA INICIO', 'DATA FINAL'];
+                    dateColumns.forEach(col => {
+                        const value = this.allData[0][col];
+                        console.log(`🔍 [UNIFIED-FILTER] Coluna '${col}':`, typeof value, value);
+                    });
+                }
+                
                 this.createFilterInterface();
                 return;
             }
@@ -232,6 +246,10 @@ class UnifiedFilterSystem {
         this.filterConfig.forEach(config => {
             // Tratamento especial para filtro de período (datas)
             if (config.name === 'periodoRecebimento' && config.dateColumns) {
+                // Detectar automaticamente as colunas corretas
+                const detectedColumns = this.detectDateColumns();
+                config.dateColumns = detectedColumns;
+                console.log('📅 [UNIFIED-FILTER] Colunas de data atualizadas:', detectedColumns);
                 this.createDateFilter(config);
                 return;
             }
@@ -642,16 +660,48 @@ class UnifiedFilterSystem {
             return true;
         }
 
+        console.log(`📅 [DATE-FILTER] Aplicando filtro de data:`, {
+            dataInicio,
+            dataFim,
+            dateColumns,
+            itemKeys: Object.keys(item),
+            itemDates: dateColumns.map(col => ({ [col]: item[col] }))
+        });
+
         // Verificar qualquer uma das três colunas de data
         return dateColumns.some(column => {
             const itemDate = item[column];
+            console.log(`📅 [DATE-FILTER] Verificando coluna '${column}':`, itemDate);
+            
             if (!itemDate) {
+                console.log(`📅 [DATE-FILTER] Sem data na coluna '${column}'`);
                 return false;
             }
 
             // Converter para formato de data comparável
-            const itemDateObj = new Date(itemDate);
+            let itemDateObj;
+            try {
+                // Tentar múltiplos formatos de data
+                if (itemDate.toDate && typeof itemDate.toDate === 'function') {
+                    // Firebase Timestamp
+                    itemDateObj = itemDate.toDate();
+                } else if (typeof itemDate === 'string') {
+                    // String de data
+                    itemDateObj = new Date(itemDate);
+                } else if (itemDate instanceof Date) {
+                    // Já é um objeto Date
+                    itemDateObj = itemDate;
+                } else {
+                    // Tentar conversão direta
+                    itemDateObj = new Date(itemDate);
+                }
+            } catch (error) {
+                console.warn(`📅 [DATE-FILTER] Erro ao converter data '${itemDate}':`, error);
+                return false;
+            }
+            
             if (isNaN(itemDateObj.getTime())) {
+                console.warn(`📅 [DATE-FILTER] Data inválida '${itemDate}' na coluna '${column}'`);
                 return false;
             }
 
@@ -660,23 +710,33 @@ class UnifiedFilterSystem {
             if (dataInicio) {
                 const inicioObj = new Date(dataInicio);
                 if (!isNaN(inicioObj.getTime())) {
-                    passesFilter = passesFilter && itemDateObj >= inicioObj;
+                    const passes = itemDateObj >= inicioObj;
+                    console.log(`📅 [DATE-FILTER] ${itemDateObj.toISOString()} >= ${inicioObj.toISOString()}? ${passes}`);
+                    passesFilter = passesFilter && passes;
                 }
             }
 
             if (dataFim) {
                 const fimObj = new Date(dataFim);
                 if (!isNaN(fimObj.getTime())) {
-                    passesFilter = passesFilter && itemDateObj <= fimObj;
+                    const passes = itemDateObj <= fimObj;
+                    console.log(`📅 [DATE-FILTER] ${itemDateObj.toISOString()} <= ${fimObj.toISOString()}? ${passes}`);
+                    passesFilter = passesFilter && passes;
                 }
             }
 
+            console.log(`📅 [DATE-FILTER] Resultado final para coluna '${column}':`, passesFilter);
             return passesFilter;
         });
     }
 
     clearAllFilters() {
         console.log('🧹 [UNIFIED-FILTER] Limpando todos os filtros');
+        console.log('🔍 [UNIFIED-FILTER] Dados ANTES de limpar:', {
+            dataCount: this.allData.length,
+            firstItem: this.allData[0],
+            hasDateColumns: this.allData.length > 0 ? ['DATA RECEBIMENTO', 'DATA INICIO', 'DATA FINAL'].map(col => ({ [col]: this.allData[0][col] })) : 'no data'
+        });
 
         // Limpar estado interno
         this.currentFilters = {};
@@ -699,12 +759,64 @@ class UnifiedFilterSystem {
 
         // Aplicar filtros (vazios)
         this.applyFilters();
+        
+        console.log('🔍 [UNIFIED-FILTER] Dados APÓS limpar e aplicar filtros:', {
+            dataCount: this.filteredData.length,
+            firstItem: this.filteredData[0]
+        });
 
         // Limpar localStorage
         localStorage.removeItem(this.storageKey);
     }
 
     // ============= UTILITÁRIOS =============
+    
+    // Detectar automaticamente os nomes corretos das colunas de data
+    detectDateColumns() {
+        if (!this.allData || this.allData.length === 0) {
+            return ['DATA RECEBIMENTO', 'DATA INICIO', 'DATA FINAL'];
+        }
+        
+        const firstItem = this.allData[0];
+        const allKeys = Object.keys(firstItem);
+        
+        // Possíveis variações dos nomes das colunas de data
+        const dateColumnVariations = {
+            recebimento: [
+                'DATA RECEBIMENTO', 'Data Recebimento', 'data_recebimento', 'dataRecebimento',
+                'DATA_RECEBIMENTO', 'data recebimento', 'Data_Recebimento'
+            ],
+            inicio: [
+                'DATA INICIO', 'Data Inicio', 'DATA INÍCIO', 'Data Início', 
+                'data_inicio', 'dataInicio', 'DATA_INICIO', 'data inicio', 'Data_Inicio'
+            ],
+            final: [
+                'DATA FINAL', 'Data Final', 'data_final', 'dataFinal',
+                'DATA_FINAL', 'data final', 'Data_Final'
+            ]
+        };
+        
+        const detectedColumns = [];
+        
+        // Detectar cada tipo de coluna
+        ['recebimento', 'inicio', 'final'].forEach(type => {
+            const variations = dateColumnVariations[type];
+            const foundColumn = variations.find(variation => allKeys.includes(variation));
+            if (foundColumn) {
+                detectedColumns.push(foundColumn);
+                console.log(`✅ [DATE-DETECTION] Coluna de ${type} detectada: '${foundColumn}'`);
+            } else {
+                console.warn(`⚠️ [DATE-DETECTION] Coluna de ${type} não encontrada. Tentativas:`, variations);
+            }
+        });
+        
+        console.log('🔍 [DATE-DETECTION] Colunas detectadas:', detectedColumns);
+        console.log('🔍 [DATE-DETECTION] Todas as chaves disponíveis:', allKeys);
+        
+        // Retornar colunas detectadas ou usar padrão se não encontrar
+        return detectedColumns.length > 0 ? detectedColumns : ['DATA RECEBIMENTO', 'DATA INICIO', 'DATA FINAL'];
+    }
+
     getUniqueValues(columnName) {
         if (!columnName || !this.allData || this.allData.length === 0) {
             return [];
