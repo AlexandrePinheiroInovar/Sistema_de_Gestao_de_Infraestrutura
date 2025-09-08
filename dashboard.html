@@ -297,12 +297,30 @@
                                 </select>
                             </div>
                             
+                            <div class="filter-group">
+                                <label for="infraFilterJustificativa">Justificativa</label>
+                                <select id="infraFilterJustificativa" multiple>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="infraFilterNodeGerencial">Node Gerencial</label>
+                                <select id="infraFilterNodeGerencial" multiple>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="infraFilterAreaTecnica">Área Técnica</label>
+                                <select id="infraFilterAreaTecnica" multiple>
+                                </select>
+                            </div>
+                            
                             <div class="filter-group periodo-filter">
                                 <label for="infraFilterDataRecebimento">Período de Recebimento</label>
                                 <div class="periodo-inputs">
-                                    <input type="date" id="infraFilterDataInicio" placeholder="Data Início" onchange="applyInfraFilters()">
+                                    <input type="date" id="infraFilterDataInicio" placeholder="Data Início">
                                     <span class="periodo-separator">até</span>
-                                    <input type="date" id="infraFilterDataFim" placeholder="Data Fim" onchange="applyInfraFilters()">
+                                    <input type="date" id="infraFilterDataFim" placeholder="Data Fim">
                                 </div>
                             </div>
                         </div>

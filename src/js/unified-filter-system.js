@@ -39,6 +39,24 @@ class UnifiedFilterSystem {
             { id: 'infraFilterEquipe', name: 'equipe', label: 'Equipe', column: 'EQUIPE' },
             { id: 'infraFilterStatus', name: 'status', label: 'Status', column: 'Status' },
             { id: 'infraFilterCidade', name: 'cidade', label: 'Cidade', column: 'Cidade' },
+            { 
+                id: 'infraFilterJustificativa', 
+                name: 'justificativa', 
+                label: 'Justificativa', 
+                column: 'JUSTIFICATIVA' 
+            },
+            { 
+                id: 'infraFilterNodeGerencial', 
+                name: 'nodeGerencial', 
+                label: 'Node Gerencial', 
+                column: 'NODE GERENCIAL' 
+            },
+            { 
+                id: 'infraFilterAreaTecnica', 
+                name: 'areaTecnica', 
+                label: 'Área Técnica', 
+                column: 'Área Técnica' 
+            },
             {
                 id: 'infraFilterPeriodoRecebimento',
                 name: 'periodoRecebimento',
