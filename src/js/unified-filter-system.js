@@ -172,6 +172,18 @@ class UnifiedFilterSystem {
                         const value = this.allData[0][col];
                         console.log(`🔍 [UNIFIED-FILTER] Coluna '${col}':`, typeof value, value);
                     });
+                    
+                    // DEBUG: Analisar dados de produtividade no carregamento inicial
+                    const produtivos = this.allData.filter(item => {
+                        const status = (item['Status'] || '').toUpperCase();
+                        return status === 'PRODUTIVA' || status.includes('PRODUTIVA');
+                    }).length;
+                    const produtividade = Math.round((produtivos / this.allData.length) * 100);
+                    console.log('🔍 [UNIFIED-FILTER] Análise de produtividade no carregamento INICIAL:', {
+                        total: this.allData.length,
+                        produtivos: produtivos,
+                        produtividade: produtividade + '%'
+                    });
                 }
                 
                 this.createFilterInterface();
@@ -865,24 +877,55 @@ class UnifiedFilterSystem {
         console.log(
             '🔄 [UNIFIED-FILTER] Atualizando interface com',
             this.filteredData.length,
+            'de',
+            this.allData.length,
             'registros filtrados'
         );
+
+        // DEBUG: Verificar dados de produtividade
+        if (this.filteredData.length > 0) {
+            const produtivos = this.filteredData.filter(item => {
+                const status = (item['Status'] || '').toUpperCase();
+                return status === 'PRODUTIVA' || status.includes('PRODUTIVA');
+            }).length;
+            const produtividade = Math.round((produtivos / this.filteredData.length) * 100);
+            console.log('📊 [UNIFIED-FILTER] Análise de produtividade dos dados filtrados:', {
+                total: this.filteredData.length,
+                produtivos: produtivos,
+                produtividade: produtividade + '%'
+            });
+        }
 
         // Atualizar tabela se existir
         if (window.FirebaseTableSystem && window.FirebaseTableSystem.updateTable) {
             window.FirebaseTableSystem.updateTable(this.filteredData);
         }
 
-        // Tentar forçar atualização dos cards usando o sistema do FirebaseTableSystem
+        // ⚠️ IMPORTANTE: Usar APENAS uma fonte de atualização de cards para evitar conflitos
+        // Prioridade: FirebaseTableSystem.updateCards > dashboard-integration > outras funções
+        let cardsUpdated = false;
+        
         if (window.FirebaseTableSystem && window.FirebaseTableSystem.updateCards) {
             console.log('📈 [UNIFIED-FILTER] Atualizando cards via FirebaseTableSystem...');
             try {
                 window.FirebaseTableSystem.updateCards(this.filteredData);
+                cardsUpdated = true;
             } catch (error) {
                 console.warn(
                     '⚠️ [UNIFIED-FILTER] Erro ao atualizar cards via FirebaseTableSystem:',
                     error
                 );
+            }
+        }
+
+        // Se FirebaseTableSystem não funcionou, tentar dashboard-integration
+        if (!cardsUpdated && typeof window.atualizarCardsEstatisticosIntegrado === 'function') {
+            console.log('📈 [UNIFIED-FILTER] Atualizando cards via atualizarCardsEstatisticosIntegrado...');
+            try {
+                window.atualizarCardsEstatisticosIntegrado(this.filteredData);
+                cardsUpdated = true;
+            } catch (error) {
+                console.warn('⚠️ [UNIFIED-FILTER] Erro ao atualizar cards integrados:', error);
             }
         }
 
@@ -899,45 +942,6 @@ class UnifiedFilterSystem {
             }
         }
 
-        // Fallback: tentar outras funções de gráficos
-        if (typeof window.criarTodosGraficos === 'function') {
-            console.log('📊 [UNIFIED-FILTER] Atualizando gráficos via criarTodosGraficos...');
-            try {
-                window.criarTodosGraficos();
-            } catch (error) {
-                console.warn(
-                    '⚠️ [UNIFIED-FILTER] Erro ao atualizar gráficos via criarTodosGraficos:',
-                    error
-                );
-            }
-        }
-
-        // Atualizar cards/estatísticas
-        if (typeof window.atualizarCardsEstatisticosIntegrado === 'function') {
-            console.log(
-                '📈 [UNIFIED-FILTER] Atualizando cards via atualizarCardsEstatisticosIntegrado...'
-            );
-            try {
-                window.atualizarCardsEstatisticosIntegrado(this.filteredData);
-            } catch (error) {
-                console.warn('⚠️ [UNIFIED-FILTER] Erro ao atualizar cards integrados:', error);
-            }
-        } else if (typeof window.atualizarCardsEstatisticos === 'function') {
-            console.log('📈 [UNIFIED-FILTER] Atualizando cards via atualizarCardsEstatisticos...');
-            try {
-                window.atualizarCardsEstatisticos(this.filteredData);
-            } catch (error) {
-                console.warn('⚠️ [UNIFIED-FILTER] Erro ao atualizar cards estatísticos:', error);
-            }
-        } else if (typeof window.atualizarEstatisticas === 'function') {
-            console.log('📈 [UNIFIED-FILTER] Atualizando estatísticas...');
-            try {
-                window.atualizarEstatisticas(this.filteredData);
-            } catch (error) {
-                console.warn('⚠️ [UNIFIED-FILTER] Erro ao atualizar estatísticas:', error);
-            }
-        }
-
         // Disparar evento customizado
         const event = new CustomEvent('unifiedFiltersChanged', {
             detail: {
@@ -949,7 +953,7 @@ class UnifiedFilterSystem {
         });
         document.dispatchEvent(event);
 
-        console.log('✅ [UNIFIED-FILTER] Interface atualizada com sucesso');
+        console.log(`✅ [UNIFIED-FILTER] Interface atualizada com sucesso (cards: ${cardsUpdated ? 'sim' : 'não'})`);
     }
 
     // ============= PERSISTÊNCIA =============
