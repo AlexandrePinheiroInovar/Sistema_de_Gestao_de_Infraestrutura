@@ -905,72 +905,41 @@ class UnifiedFilterSystem {
             });
         }
 
+        // TESTE DIRETO: Atualizar cards diretamente sem intermediários
+        console.log('🔧 [UNIFIED-FILTER] TESTE - Atualizando card de produtividade diretamente...');
+        const cardElement = document.getElementById('infraStatProdutividade');
+        if (cardElement && this.filteredData.length > 0) {
+            const produtivos = this.filteredData.filter(item => {
+                const status = (item['Status'] || '').toUpperCase();
+                return status === 'PRODUTIVA' || status.includes('PRODUTIVA');
+            }).length;
+            const produtividade = Math.round((produtivos / this.filteredData.length) * 100);
+            const newValue = `${produtividade}%`;
+            
+            console.log('🔧 [UNIFIED-FILTER] TESTE - Definindo valor:', newValue, 'no elemento:', cardElement);
+            cardElement.textContent = newValue;
+        }
+
         // Atualizar tabela se existir
         if (window.FirebaseTableSystem && window.FirebaseTableSystem.updateTable) {
+            console.log('📋 [UNIFIED-FILTER] Atualizando tabela via FirebaseTableSystem...');
             window.FirebaseTableSystem.updateTable(this.filteredData);
         }
 
-        // Atualizar cards usando múltiplos sistemas (necessário para funcionamento correto)
-        let cardsUpdated = false;
-        
-        // 1. Tentar FirebaseTableSystem primeiro
-        if (window.FirebaseTableSystem && window.FirebaseTableSystem.updateCards) {
-            console.log('📈 [UNIFIED-FILTER] Atualizando cards via FirebaseTableSystem...');
-            try {
-                window.FirebaseTableSystem.updateCards(this.filteredData);
-                cardsUpdated = true;
-            } catch (error) {
-                console.warn(
-                    '⚠️ [UNIFIED-FILTER] Erro ao atualizar cards via FirebaseTableSystem:',
-                    error
-                );
-            }
-        }
-
-        // 2. Tentar dashboard-integration como backup/complemento
+        // Tentar usar sistema original do dashboard-integration
         if (typeof window.atualizarCardsEstatisticosIntegrado === 'function') {
-            console.log('📈 [UNIFIED-FILTER] Atualizando cards via atualizarCardsEstatisticosIntegrado...');
+            console.log('📈 [UNIFIED-FILTER] Tentando atualizarCardsEstatisticosIntegrado...');
+            console.log('📈 [UNIFIED-FILTER] Dados sendo passados:', this.filteredData.length, 'registros');
             try {
                 window.atualizarCardsEstatisticosIntegrado(this.filteredData);
-                cardsUpdated = true;
             } catch (error) {
-                console.warn('⚠️ [UNIFIED-FILTER] Erro ao atualizar cards integrados:', error);
+                console.error('❌ [UNIFIED-FILTER] Erro em atualizarCardsEstatisticosIntegrado:', error);
             }
-        } else if (typeof window.atualizarCardsEstatisticos === 'function') {
-            console.log('📈 [UNIFIED-FILTER] Atualizando cards via atualizarCardsEstatisticos...');
-            try {
-                window.atualizarCardsEstatisticos(this.filteredData);
-                cardsUpdated = true;
-            } catch (error) {
-                console.warn('⚠️ [UNIFIED-FILTER] Erro ao atualizar cards estatísticos:', error);
-            }
-        }
-        
-        // 3. Fallback para outras funções de estatísticas
-        if (typeof window.atualizarEstatisticas === 'function') {
-            console.log('📈 [UNIFIED-FILTER] Atualizando via atualizarEstatisticas...');
-            try {
-                window.atualizarEstatisticas(this.filteredData);
-                cardsUpdated = true;
-            } catch (error) {
-                console.warn('⚠️ [UNIFIED-FILTER] Erro ao atualizar estatísticas:', error);
-            }
+        } else {
+            console.warn('⚠️ [UNIFIED-FILTER] atualizarCardsEstatisticosIntegrado não encontrada');
         }
 
-        // Atualizar gráficos usando ChartsDashboard
-        if (window.ChartsDashboard && typeof window.ChartsDashboard.atualizar === 'function') {
-            console.log('📊 [UNIFIED-FILTER] Atualizando gráficos via ChartsDashboard...');
-            try {
-                window.ChartsDashboard.atualizar(this.filteredData);
-            } catch (error) {
-                console.warn(
-                    '⚠️ [UNIFIED-FILTER] Erro ao atualizar gráficos via ChartsDashboard:',
-                    error
-                );
-            }
-        }
-
-        // Disparar evento customizado
+        // Disparar evento customizado para outros sistemas
         const event = new CustomEvent('unifiedFiltersChanged', {
             detail: {
                 filters: this.currentFilters,
@@ -981,7 +950,7 @@ class UnifiedFilterSystem {
         });
         document.dispatchEvent(event);
 
-        console.log(`✅ [UNIFIED-FILTER] Interface atualizada com sucesso (cards: ${cardsUpdated ? 'sim' : 'não'})`);
+        console.log('✅ [UNIFIED-FILTER] Interface atualizada');
     }
 
     // ============= PERSISTÊNCIA =============
