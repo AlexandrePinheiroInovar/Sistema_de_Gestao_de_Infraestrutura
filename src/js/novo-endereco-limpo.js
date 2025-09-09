@@ -198,6 +198,9 @@ NovoEndereco.carregarSeletores = async function () {
             <option value="">Selecione o status...</option>
             <option value="PRODUTIVA">PRODUTIVA</option>
             <option value="IMPRODUTIVA">IMPRODUTIVA</option>
+            <option value="EM ROTA">EM ROTA</option>
+            <option value="PAUSA">PAUSA</option>
+            <option value="PENDENTE">PENDENTE</option>
         `;
         console.log('✅ [NOVO-ENDERECO-LIMPO] Status: Opções fixas adicionadas');
     }
@@ -251,6 +254,9 @@ NovoEndereco.carregarSeletoresFallback = function () {
             <option value="">Selecione o status...</option>
             <option value="PRODUTIVA">PRODUTIVA</option>
             <option value="IMPRODUTIVA">IMPRODUTIVA</option>
+            <option value="EM ROTA">EM ROTA</option>
+            <option value="PAUSA">PAUSA</option>
+            <option value="PENDENTE">PENDENTE</option>
         `;
         console.log('✅ [NOVO-ENDERECO-LIMPO] Status: Opções fixas adicionadas (fallback)');
     }

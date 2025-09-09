@@ -4522,6 +4522,9 @@ function carregarSeletoresFallbackComPEP() {
             <option value="">Selecione o status...</option>
             <option value="PRODUTIVA" ${valorAtualStatus === 'PRODUTIVA' ? 'selected' : ''}>PRODUTIVA</option>
             <option value="IMPRODUTIVA" ${valorAtualStatus === 'IMPRODUTIVA' ? 'selected' : ''}>IMPRODUTIVA</option>
+            <option value="EM ROTA" ${valorAtualStatus === 'EM ROTA' ? 'selected' : ''}>EM ROTA</option>
+            <option value="PAUSA" ${valorAtualStatus === 'PAUSA' ? 'selected' : ''}>PAUSA</option>
+            <option value="PENDENTE" ${valorAtualStatus === 'PENDENTE' ? 'selected' : ''}>PENDENTE</option>
         `;
         console.log('✅ [EDIT-SELETORES] Status: Opções fixas adicionadas');
     }
