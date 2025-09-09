@@ -932,6 +932,12 @@ class UnifiedFilterSystem {
             window.FirebaseTableSystem.updateTable(this.filteredData);
         }
 
+        // Atualizar nova tabela filtrada - Versão 1.1
+        if (typeof window.updateFilteredTableData === 'function') {
+            console.log('📋 [UNIFIED-FILTER] Atualizando nova tabela filtrada v1.1...');
+            window.updateFilteredTableData(this.filteredData);
+        }
+
         // Tentar usar sistema original do dashboard-integration
         if (typeof window.atualizarCardsEstatisticosIntegrado === 'function') {
             console.log('📈 [UNIFIED-FILTER] Tentando atualizarCardsEstatisticosIntegrado...');

@@ -395,6 +395,89 @@
                         </div>
                     </div>
                     
+                    <!-- ============= TABELA DE DADOS FILTRADOS ============= -->
+                    <div class="filtered-data-section">
+                        <div class="section-header-table">
+                            <h3>📋 Resumo de Dados Filtrados</h3>
+                            <p>Visualize os dados de acordo com os filtros aplicados</p>
+                            <div class="table-actions">
+                                <button id="refreshFilteredData" class="btn-refresh" onclick="refreshFilteredTable()">
+                                    <i class="fas fa-sync-alt"></i>
+                                    Atualizar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="filtered-table-container">
+                            <div class="table-stats-info">
+                                <span id="filteredTableCount">0 registros encontrados</span>
+                                <span id="filteredTableStatus">Aguardando dados...</span>
+                            </div>
+                            
+                            <div class="filtered-table-wrapper">
+                                <table class="filtered-table" id="filteredDataTable">
+                                    <thead>
+                                        <tr>
+                                            <th class="sortable" data-column="pep" onclick="sortFilteredTable('pep')">
+                                                PEP <i class="fas fa-sort"></i>
+                                            </th>
+                                            <th class="sortable" data-column="nodeGerencial" onclick="sortFilteredTable('nodeGerencial')">
+                                                NODE GERENCIAL <i class="fas fa-sort"></i>
+                                            </th>
+                                            <th class="sortable" data-column="status" onclick="sortFilteredTable('status')">
+                                                STATUS <i class="fas fa-sort"></i>
+                                            </th>
+                                            <th class="sortable" data-column="observacao" onclick="sortFilteredTable('observacao')">
+                                                OBSERVAÇÃO <i class="fas fa-sort"></i>
+                                            </th>
+                                            <th class="sortable" data-column="justificativa" onclick="sortFilteredTable('justificativa')">
+                                                JUSTIFICATIVA <i class="fas fa-sort"></i>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="filteredTableBody">
+                                        <tr class="no-data-row">
+                                            <td colspan="5" class="no-data-cell">
+                                                <div class="no-data-content">
+                                                    <i class="fas fa-filter"></i>
+                                                    <p>Aplicue filtros para visualizar os dados</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Paginação da nova tabela -->
+                            <div class="filtered-table-pagination" id="filteredTablePagination" style="display: none;">
+                                <div class="pagination-info">
+                                    <span id="paginationInfo">Página 1 de 1</span>
+                                    <select id="pageSize" onchange="changePageSize()">
+                                        <option value="10">10 por página</option>
+                                        <option value="25" selected>25 por página</option>
+                                        <option value="50">50 por página</option>
+                                        <option value="100">100 por página</option>
+                                    </select>
+                                </div>
+                                <div class="pagination-controls">
+                                    <button id="firstPage" onclick="goToPage(1)" disabled>
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </button>
+                                    <button id="prevPage" onclick="goToPage(currentPage - 1)" disabled>
+                                        <i class="fas fa-angle-left"></i>
+                                    </button>
+                                    <span id="pageNumbers"></span>
+                                    <button id="nextPage" onclick="goToPage(currentPage + 1)" disabled>
+                                        <i class="fas fa-angle-right"></i>
+                                    </button>
+                                    <button id="lastPage" onclick="goToPage(totalPages)" disabled>
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- ============= ÁREA DE GRÁFICOS E RANKINGS - SISTEMA NOVO ============= -->
                     <div id="charts-rankings-container">
                         <!-- Conteúdo será inserido dinamicamente pelo novo sistema -->
@@ -1392,6 +1475,9 @@
     <!-- ============= SISTEMA UNIFICADO DE FILTROS ============= -->
     <script src="src/js/unified-filter-system.js?v=1.0&t=2025090115"></script>
     
+    <!-- ============= NOVA TABELA FILTRADA - VERSÃO 1.1 ============= -->
+    <script src="src/js/filtered-table-v1-1.js?v=1.1&t=2025090901"></script>
+    
     <!-- SISTEMAS ANTIGOS DE FILTROS - TEMPORARIAMENTE DESABILITADOS -->
     <!-- <script src="src/js/filter-state-manager.js?v=1.0&t=2025090115"></script> --> <!-- Substituído pelo sistema unificado -->
     <!-- <script src="src/js/filter-event-listeners.js?v=1.0&t=2025090115"></script> --> <!-- Substituído pelo sistema unificado -->
@@ -1569,8 +1655,16 @@
                                 if (window.inicializarDashboard) {
                                     window.inicializarDashboard();
                                 }
+                                // Tabela resume será atualizada automaticamente pelos eventos
                             }, 1000);
                         });
+                    } else {
+                        // Se não há FirebaseTableSystem, inicializar tabela diretamente
+                        setTimeout(() => {
+                            if (window.initFilteredTableFromDashboard) {
+                                window.initFilteredTableFromDashboard();
+                            }
+                        }, 2000);
                     }
                 }, 500);
             }
