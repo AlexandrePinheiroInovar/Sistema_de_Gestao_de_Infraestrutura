@@ -45,6 +45,9 @@ const GESTAO_NOVA_CONFIG = {
 let dadosExtraidos = [];
 let sistemaIniciado = false;
 
+// Exportar para janela global
+window.sistemaIniciado = false;
+
 // ============= INICIALIZAÇÃO =============
 document.addEventListener('DOMContentLoaded', function () {
     console.log('🔧 [GESTAO-NOVA] DOM carregado, aguardando Firebase...');
@@ -60,6 +63,7 @@ async function iniciarSistema() {
 
     console.log('✅ [GESTAO-NOVA] Firebase disponível, iniciando...');
     sistemaIniciado = true;
+    window.sistemaIniciado = true;
 
     // Substituir função principal
     window.showGestaoTab = mostrarNovaAba;
@@ -69,31 +73,15 @@ async function iniciarSistema() {
 
     console.log('✅ [GESTAO-NOVA] Sistema iniciado e função substituída!');
 
-    // TESTE DE DEBUG - verificar se dados estão disponíveis
-    setTimeout(() => {
-        console.log('🔍 [DEBUG-GESTAO] === TESTE DE FONTES DE DADOS ===');
-        console.log('🔍 [DEBUG-GESTAO] window.FirebaseTableSystem:', !!window.FirebaseTableSystem);
-        if (window.FirebaseTableSystem) {
-            console.log(
-                '🔍 [DEBUG-GESTAO] FirebaseTableSystem.getData:',
-                typeof window.FirebaseTableSystem.getData
-            );
-            const dados = window.FirebaseTableSystem.getData();
-            console.log(
-                '🔍 [DEBUG-GESTAO] Dados do FirebaseTableSystem:',
-                dados?.length || 'undefined'
-            );
+    // AUTO-EXECUTAR: Carregar automaticamente a aba projetos após 3 segundos
+    setTimeout(async () => {
+        console.log('🚀 [AUTO-EXEC] Carregando automaticamente aba projetos...');
+        try {
+            await mostrarNovaAba('projetos');
+        } catch (error) {
+            console.log('ℹ️ [AUTO-EXEC] Erro ao carregar projetos automaticamente:', error);
         }
-        console.log(
-            '🔍 [DEBUG-GESTAO] window.currentFirebaseData:',
-            window.currentFirebaseData?.length || 'undefined'
-        );
-        console.log(
-            '🔍 [DEBUG-GESTAO] window.firebaseTableData:',
-            window.firebaseTableData?.length || 'undefined'
-        );
-        console.log('🔍 [DEBUG-GESTAO] ================================');
-    }, 5000);
+    }, 3000);
 }
 
 // ============= VERIFICAR E CRIAR COLEÇÕES =============
@@ -319,7 +307,7 @@ async function carregarDadosAba(tabId) {
             ).length;
 
             const novoItem = {
-                id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+                id: `temp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
                 nome: valor,
                 descricao: 'Extraído automaticamente da tabela de endereços',
                 status: 'ATIVO',
@@ -337,7 +325,7 @@ async function carregarDadosAba(tabId) {
         console.log(
             `💾 [GESTAO-NOVA] Salvando automaticamente ${itensParaSalvar.length} itens na coleção ${config.collection}...`
         );
-        await salvarItensAutomaticamente(config, itensParaSalvar, tabId);
+        await salvarItensAutomaticamente(config, itensParaSalvar);
     } else {
         console.log(`ℹ️ [GESTAO-NOVA] Nenhum item novo para salvar automaticamente`);
     }
@@ -475,87 +463,30 @@ async function salvarItem(tabId, nome) {
     }
 }
 
-// ============= SALVAMENTO AUTOMÁTICO MELHORADO =============
-async function salvarItensAutomaticamente(config, itensParaSalvar, tabId) {
-    console.log(`🔄 [AUTO-SAVE] === INICIANDO SALVAMENTO AUTOMÁTICO ===`);
-    console.log(`📊 [AUTO-SAVE] Coleção: ${config.collection}`);
-    console.log(`📊 [AUTO-SAVE] Itens para salvar: ${itensParaSalvar.length}`);
-
-    let sucessos = 0;
-    let erros = 0;
-    let duplicatas = 0;
+// ============= SALVAMENTO AUTOMÁTICO DIRETO E SIMPLES =============
+async function salvarItensAutomaticamente(config, itensParaSalvar) {
+    console.log(`💾 [AUTO-SAVE] Salvando ${itensParaSalvar.length} itens em ${config.collection}`);
 
     for (const item of itensParaSalvar) {
         try {
-            console.log(`🔍 [AUTO-SAVE] Processando "${item.nome}"...`);
-
-            // Verificar se o item já existe no Firestore (evitar duplicatas)
-            const existingQuery = await firebase
-                .firestore()
-                .collection(config.collection)
-                .where('nome', '==', item.nome.trim())
-                .limit(1)
-                .get();
-
-            if (existingQuery.empty) {
-                // Criar documento no Firestore
-                const docData = {
-                    nome: item.nome.trim(),
-                    descricao: 'Extraído automaticamente da tabela de endereços',
-                    status: 'ATIVO',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    autoSaved: true,
-                    source: 'auto-extract',
-                    tabId: tabId,
-                    originalCount: item.count
-                };
-                
-                const docRef = await firebase.firestore().collection(config.collection).add(docData);
-
-                // Salvar log de criação
-                if (typeof window.salvarLogAlteracao === 'function') {
-                    await window.salvarLogAlteracao(docRef.id, {}, docData, 'create', `Auto-gerado da tabela de endereços`);
-                }
-
-                sucessos++;
-                console.log(
-                    `✅ [AUTO-SAVE] "${item.nome}" → ${config.collection} (ID: ${docRef.id})`
-                );
-            } else {
-                duplicatas++;
-                console.log(
-                    `🔄 [AUTO-SAVE] "${item.nome}" já existe na coleção ${config.collection}`
-                );
-            }
+            // Salvar diretamente no Firestore
+            const docData = {
+                nome: item.nome.trim(),
+                descricao: `Extraído da tabela de endereços - ${new Date().toLocaleString()}`,
+                status: 'ATIVO',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                autoSaved: true
+            };
+            
+            await firebase.firestore().collection(config.collection).add(docData);
+            console.log(`✅ Salvou: ${item.nome} → ${config.collection}`);
+            
         } catch (error) {
-            erros++;
-            console.error(
-                `❌ [AUTO-SAVE] Erro ao salvar "${item.nome}" na ${config.collection}:`,
-                error
-            );
+            console.error(`❌ Erro ao salvar ${item.nome}:`, error);
         }
     }
 
-    // Relatório final
-    console.log(`🎯 [AUTO-SAVE] === RELATÓRIO FINAL ===`);
-    console.log(`✅ Sucessos: ${sucessos}`);
-    console.log(`🔄 Duplicatas evitadas: ${duplicatas}`);
-    console.log(`❌ Erros: ${erros}`);
-    console.log(`📊 Total processado: ${sucessos + duplicatas + erros}`);
-
-    if (sucessos > 0) {
-        console.log(
-            `🎉 [AUTO-SAVE] Coleção ${config.collection} atualizada com ${sucessos} novos itens!`
-        );
-    }
-
-    // Aguardar e recarregar apenas se houve mudanças
-    if (sucessos > 0) {
-        setTimeout(() => {
-            console.log(`🔄 [AUTO-SAVE] Recarregando aba ${tabId} para mostrar itens salvos...`);
-            carregarDadosAba(tabId);
-        }, 1500);
-    }
+    console.log(`🎉 Salvamento concluído para ${config.collection}`);
 }
 
 async function editarItem(tabId, itemId) {

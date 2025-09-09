@@ -1,0 +1,123 @@
+module.exports = {
+    env: {
+        browser: true,
+        es2021: true,
+        node: true
+    },
+    extends: [
+        'eslint:recommended',
+        'prettier'
+    ],
+    plugins: [
+        'prettier'
+    ],
+    parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: 'module'
+    },
+    globals: {
+        // Firebase
+        firebase: 'readonly',
+        db: 'readonly',
+        auth: 'readonly',
+        
+        // Charts
+        Chart: 'readonly',
+        ChartDataLabels: 'readonly',
+        
+        // Libraries
+        XLSX: 'readonly',
+        Papa: 'readonly',
+        
+        // Custom globals - Sistema Principal
+        FirebaseTableSystem: 'readonly',
+        FirebaseAuthIsolated: 'readonly',
+        dashboardChartsV5: 'readonly',
+        ChartsDashboard: 'readonly',
+        
+        // Funções globais do Dashboard
+        showSection: 'writable',
+        showGestaoTab: 'writable',
+        mostrarNovaAba: 'writable',
+        logout: 'writable',
+        confirmLogout: 'writable',
+        
+        // Funções globais de Sistema
+        novoEnderecoLimpo: 'writable',
+        editarEndereco: 'writable',
+        excluirEndereco: 'writable',
+        closeModal: 'writable',
+        
+        // Funções de Debug/Teste
+        testarGestaoFinal: 'writable',
+        debugGestaoFinal: 'writable',
+        testarSistemaCompleto: 'writable',
+        
+        // Sistema de Filtros
+        applyInfraFilters: 'writable',
+        limparFiltros: 'writable',
+        
+        // Sistema de Dashboard
+        inicializarDashboard: 'writable',
+        loadStatistics: 'writable',
+        criarTodosGraficos: 'writable',
+        
+        // DOM Utilities
+        document: 'readonly',
+        window: 'readonly',
+        console: 'readonly',
+        alert: 'readonly',
+        prompt: 'readonly',
+        confirm: 'readonly',
+        setTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearTimeout: 'readonly',
+        clearInterval: 'readonly'
+    },
+    rules: {
+        // Error prevention - MAIS PERMISSIVO PARA DESENVOLVIMENTO
+        'no-unused-vars': ['warn', { 
+            argsIgnorePattern: '^_',
+            varsIgnorePattern: '^_',
+            ignoreRestSiblings: true
+        }],
+        'no-console': 'off', // Permitir console.log em desenvolvimento
+        'no-debugger': 'warn', // Apenas warning
+        'no-alert': 'off', // Permitir alerts
+        
+        // Code quality - MAIS FLEXÍVEL
+        'prefer-const': 'warn',
+        'no-var': 'warn',
+        'arrow-spacing': 'warn',
+        'comma-dangle': 'off', // Desabilitar
+        'semi': 'off', // Desabilitar semicolons obrigatórios
+        
+        // Best practices - MAIS PERMISSIVO
+        'eqeqeq': 'warn',
+        'curly': 'off',
+        'brace-style': 'off',
+        'indent': 'off', // Desabilitar indentação rígida
+        'quotes': 'off', // Permitir aspas simples e duplas
+        
+        // Firebase specific
+        'no-undef': 'warn', // Apenas warning, não error
+        
+        // Prettier integration - DESABILITADO TEMPORARIAMENTE
+        // 'prettier/prettier': 'off'
+    },
+    overrides: [
+        {
+            files: ['src/js/*.js'],
+            rules: {
+                'no-unused-vars': 'warn' // Mais permissivo para arquivos do projeto
+            }
+        },
+        {
+            files: ['server.js'],
+            env: {
+                node: true,
+                browser: false
+            }
+        }
+    ]
+};
