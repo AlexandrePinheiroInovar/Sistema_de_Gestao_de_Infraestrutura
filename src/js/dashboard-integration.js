@@ -56,7 +56,18 @@ document.addEventListener('DOMContentLoaded', function () {
     // Aguardar Firebase E firebase-table-system carregarem (método de fallback)
     setTimeout(() => {
         // Aguardar firebase-table-system estar pronto
+        let attempts = 0;
+        const maxAttempts = 30; // 30 segundos máximo
+        
         const waitForFirebaseTable = () => {
+            attempts++;
+            
+            if (attempts > maxAttempts) {
+                console.warn('⚠️ [DASHBOARD-INTEGRATION] Timeout aguardando FirebaseTableSystem. Inicializando sem dados.');
+                inicializarDashboard();
+                return;
+            }
+            
             if (window.FirebaseTableSystem && window.FirebaseTableSystem.isInitialized) {
                 if (window.FirebaseTableSystem.isInitialized()) {
                     // Verificar se já não foi inicializado pelo evento
@@ -69,15 +80,18 @@ document.addEventListener('DOMContentLoaded', function () {
                             dashboardData = data;
                             filteredData = [...data];
                             inicializarDashboard();
+                        } else {
+                            console.log('🔄 [DASHBOARD-INTEGRATION] Dados ainda vazios, tentando novamente...');
+                            setTimeout(waitForFirebaseTable, 1000);
                         }
                     }
                 } else {
-                    console.log('⏳ [DASHBOARD-INTEGRATION] Aguardando FirebaseTableSystem...');
+                    console.log(`⏳ [DASHBOARD-INTEGRATION] Aguardando FirebaseTableSystem... (${attempts}/${maxAttempts})`);
                     setTimeout(waitForFirebaseTable, 1000);
                 }
             } else {
                 console.log(
-                    '⏳ [DASHBOARD-INTEGRATION] Aguardando FirebaseTableSystem carregar...'
+                    `⏳ [DASHBOARD-INTEGRATION] Aguardando FirebaseTableSystem carregar... (${attempts}/${maxAttempts})`
                 );
                 setTimeout(waitForFirebaseTable, 1000);
             }

@@ -349,6 +349,31 @@ NovoEndereco.processarFormulario = async function (event) {
     event.preventDefault();
     console.log('💾 [NOVO-ENDERECO-LIMPO] Processando formulário...');
 
+    // Adicionar timeout geral para evitar travamento
+    const processamento = async () => {
+        try {
+            await this.executarProcessamento(event);
+        } catch (error) {
+            throw error;
+        }
+    };
+
+    try {
+        await Promise.race([
+            processamento(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout geral do processamento')), 30000))
+        ]);
+    } catch (error) {
+        console.error('❌ [NOVO-ENDERECO-LIMPO] Erro no processamento:', error);
+        if (typeof showNotification === 'function') {
+            showNotification('❌ Erro', 'Erro ao salvar: ' + error.message, 'error');
+        } else {
+            alert('❌ Erro ao salvar: ' + error.message);
+        }
+    }
+};
+
+NovoEndereco.executarProcessamento = async function (event) {
     try {
         const form = event.target;
         const formData = new FormData(form);
@@ -391,23 +416,63 @@ NovoEndereco.processarFormulario = async function (event) {
         console.log('🔥 [NOVO-ENDERECO-LIMPO] Salvando no Firebase...');
         const docRef = await this.firestore.collection('enderecos').add(endereco);
         
+        console.log('✅ [NOVO-ENDERECO-LIMPO] Documento salvo no Firebase com ID:', docRef.id);
+        
         // Salvar log de criação no histórico
-        if (typeof window.salvarLogAlteracao === 'function') {
-            console.log('📝 [NOVO-ENDERECO-LIMPO] Salvando log de criação...');
-            await window.salvarLogAlteracao(docRef.id, {}, endereco, 'create');
+        console.log('📝 [NOVO-ENDERECO-LIMPO] Tentando salvar log de criação...');
+        try {
+            if (typeof window.salvarLogAlteracao === 'function') {
+                await Promise.race([
+                    window.salvarLogAlteracao(docRef.id, {}, endereco, 'create'),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout log')), 5000))
+                ]);
+                console.log('✅ [NOVO-ENDERECO-LIMPO] Log de criação salvo com sucesso');
+            } else {
+                console.warn('⚠️ [NOVO-ENDERECO-LIMPO] Função salvarLogAlteracao não disponível');
+            }
+        } catch (error) {
+            console.error('❌ [NOVO-ENDERECO-LIMPO] Erro/timeout ao salvar log:', error.message);
+            // Continuar mesmo com erro de log
         }
 
         // Fechar modal
+        console.log('🔒 [NOVO-ENDERECO-LIMPO] Fechando modal...');
         const modal = document.getElementById(this.elements.modal);
         if (modal) {
             modal.style.display = 'none';
             modal.classList.remove('show');
+            console.log('✅ [NOVO-ENDERECO-LIMPO] Modal fechado');
+        } else {
+            console.warn('⚠️ [NOVO-ENDERECO-LIMPO] Modal não encontrado para fechar');
         }
 
-        // Recarregar tabela se existir função
-        if (typeof loadFirebaseTableData === 'function') {
-            console.log('🔄 [NOVO-ENDERECO-LIMPO] Recarregando tabela...');
-            await loadFirebaseTableData();
+        // Recarregar tabela e atualizar sistemas
+        console.log('🔄 [NOVO-ENDERECO-LIMPO] Tentando recarregar tabela e sistemas...');
+        try {
+            if (typeof loadFirebaseTableData === 'function') {
+                console.log('📊 [NOVO-ENDERECO-LIMPO] Recarregando tabela...');
+                await Promise.race([
+                    loadFirebaseTableData(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout loadFirebaseTableData')), 10000))
+                ]);
+                console.log('✅ [NOVO-ENDERECO-LIMPO] Tabela recarregada com sucesso');
+            } else {
+                console.warn('⚠️ [NOVO-ENDERECO-LIMPO] Função loadFirebaseTableData não disponível');
+            }
+
+            // Atualizar FirebaseTableSystem se existir
+            if (window.refreshTableData) {
+                console.log('🔄 [NOVO-ENDERECO-LIMPO] Atualizando FirebaseTableSystem...');
+                await Promise.race([
+                    window.refreshTableData(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout refreshTableData')), 8000))
+                ]);
+                console.log('✅ [NOVO-ENDERECO-LIMPO] FirebaseTableSystem atualizado');
+            }
+
+        } catch (error) {
+            console.error('❌ [NOVO-ENDERECO-LIMPO] Erro/timeout ao recarregar:', error.message);
+            // Continuar mesmo com erro
         }
 
         // Mostrar sucesso

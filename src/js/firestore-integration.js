@@ -309,8 +309,8 @@ window.FirestoreIntegration = (function () {
     function extractUniqueValues(data, mapping, fieldKey) {
         const columnName = mapping[fieldKey];
         if (!columnName) {
-return [];
-}
+            return [];
+        }
 
         const uniqueValues = new Set();
 
@@ -349,19 +349,17 @@ return [];
         const tipoLower = tipo.toLowerCase();
 
         if (tipoLower.includes('vistoria')) {
-return 'VISTORIA';
-}
+            return 'VISTORIA';
+        }
         if (tipoLower.includes('construção') || tipoLower.includes('construcao')) {
-        {
-return 'CONSTRUÇÃO';
-}
+            return 'CONSTRUÇÃO';
+        }
         if (tipoLower.includes('ativação') || tipoLower.includes('ativacao')) {
-return 'ATIVAÇÃO';
-}
+            return 'ATIVAÇÃO';
+        }
         if (tipoLower.includes('manutenção') || tipoLower.includes('manutencao')) {
-        {
-return 'MANUTENÇÃO';
-}
+            return 'MANUTENÇÃO';
+        }
 
         return 'OUTROS';
     }

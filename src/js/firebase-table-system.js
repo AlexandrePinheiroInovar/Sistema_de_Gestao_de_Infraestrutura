@@ -9,6 +9,9 @@ const paginationConfig = {
     totalPages: 0
 };
 
+// ============= VARIÁVEL GLOBAL PARA EDIÇÃO =============
+let currentEditingRecordId = null;
+
 // ============= SISTEMA DE GERENCIAMENTO FIREBASE - SINGLETON =============
 class FirebaseManager {
     constructor() {
@@ -592,19 +595,24 @@ window.editFirebaseTableRecord = async function(id) {
         // Buscar o registro no Firestore
         const doc = await firestore.collection('enderecos').doc(id).get();
         if (!doc.exists) {
-            alert('Registro não encontrado!');
+            alert('❌ Registro não encontrado!');
             return;
         }
         
         const data = doc.data();
-        console.log('📄 [FIREBASE-TABLE] Dados do registro:', data);
+        console.log('📄 [FIREBASE-TABLE] Dados do registro carregados:', data);
         
-        // Abrir modal de edição
-        openEditModal(id, data);
+        // Definir ID do registro sendo editado
+        currentEditingRecordId = id;
+        
+        // Abrir modal com dados preenchidos
+        await openEditModalWithData(id, data);
+        
+        console.log('✅ [FIREBASE-TABLE] Modal de edição aberto com dados preenchidos');
         
     } catch (error) {
         console.error('❌ [FIREBASE-TABLE] Erro ao carregar registro para edição:', error);
-        alert('Erro ao carregar registro: ' + error.message);
+        alert('❌ Erro ao carregar registro: ' + error.message);
     }
 };
 
@@ -3074,43 +3082,7 @@ function generateChartColors(count) {
     return result;
 }
 
-// ============= HOOK PARA INTEGRAÇÃO COM OUTROS SISTEMAS =============
-function integrateWithExistingSystems() {
-    // Integrar com sistema de estatísticas existente se disponível
-    if (window.FirestoreIntegration && window.FirestoreIntegration.getStatistics) {
-        // Substituir função de estatísticas existente
-        const originalGetStats = window.FirestoreIntegration.getStatistics;
-        window.FirestoreIntegration.getStatistics = async function() {
-            try {
-                return await getFirebaseTableStatistics();
-            } catch (error) {
-                console.warn('⚠️ Fallback para estatísticas originais:', error);
-                return await originalGetStats();
-            }
-        };
-    }
-    
-    // Integrar com dashboard handlers se disponível
-    if (window.loadStatistics) {
-        const originalLoadStats = window.loadStatistics;
-        window.loadStatistics = async function() {
-            try {
-                await updateDashboardCards();
-                
-                // Criar gráficos se disponível
-                if (typeof window.criarTodosGraficos === 'function') {
-                    await window.criarTodosGraficos();
-                    console.log('📊 [FIREBASE-TABLE] Gráficos criados após carregamento de dados');
-                }
-                
-                console.log('✅ [FIREBASE-TABLE] Estatísticas e gráficos atualizados via hook');
-            } catch (error) {
-                console.warn('⚠️ Fallback para carregamento original:', error);
-                await originalLoadStats();
-            }
-        };
-    }
-}
+// ============= INTEGRAÇÃO COM OUTROS SISTEMAS (duplicação removida) =============
 
 // ============= INTEGRAÇÃO TOTAL COM SISTEMAS EXISTENTES =============
 function integrateWithExistingSystems() {
@@ -4394,10 +4366,53 @@ window.debugFirebaseTable = function() {
 
 // ============= SISTEMA DE EDIÇÃO DE REGISTROS =============
 
-// Variável global para armazenar ID do registro sendo editado
-let currentEditingRecordId = null;
+// Função moderna para abrir modal com dados preenchidos
+async function openEditModalWithData(recordId, recordData) {
+    console.log('📝 [EDIT-MODAL] Abrindo modal de edição moderno para ID:', recordId);
+    console.log('📊 [EDIT-MODAL] Dados recebidos:', recordData);
+    
+    // Verificar se existe o modal do sistema novo-endereco-limpo
+    const modal = document.getElementById('crudModal');
+    if (!modal) {
+        alert('❌ Modal de edição não encontrado! Verifique se o sistema novo-endereco-limpo.js está carregado.');
+        return;
+    }
+    
+    // Definir título como edição
+    const modalTitle = document.getElementById('modalTitle');
+    if (modalTitle) {
+        modalTitle.textContent = '✏️ Editar Endereço';
+    }
+    
+    // Carregar seletores primeiro
+    console.log('📋 [EDIT-MODAL] Carregando seletores...');
+    try {
+        if (typeof window.NovoEndereco !== 'undefined' && window.NovoEndereco.carregarSeletores) {
+            await window.NovoEndereco.carregarSeletores();
+            console.log('✅ [EDIT-MODAL] Seletores carregados');
+        }
+    } catch (error) {
+        console.warn('⚠️ [EDIT-MODAL] Aviso ao carregar seletores:', error);
+    }
+    
+    // Aguardar um pouco para seletores carregarem
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Preencher formulário com dados existentes
+    preencherFormularioEdicao(recordData);
+    
+    // Configurar event listener do formulário para edição
+    setupEditFormSubmission();
+    
+    // Abrir modal
+    modal.style.display = 'block';
+    modal.classList.add('show');
+    modal.style.opacity = '1';
+    
+    console.log('✅ [EDIT-MODAL] Modal aberto com dados preenchidos');
+}
 
-// Função para abrir modal de edição
+// Função para abrir modal de edição (legada - mantida para compatibilidade)
 function openEditModal(recordId, recordData) {
     console.log('✏️ [EDIT-MODAL] Abrindo modal de edição para ID:', recordId);
     
@@ -5298,7 +5313,7 @@ function criarModalHistoricoGeral(logDocs) {
     // Remover listeners de eventos antigos
     document.querySelectorAll('[data-modal-listener]').forEach(el => el.remove());
     
-    // Criar HTML do modal com CSS simplificado
+    // Criar HTML do modal com layout fixo e organizado
     const modalHTML = `
         <div id="historicoModal" style="
             position: fixed; 
@@ -5306,50 +5321,78 @@ function criarModalHistoricoGeral(logDocs) {
             left: 0; 
             width: 100vw; 
             height: 100vh; 
-            background: rgba(0,0,0,0.5); 
+            background: rgba(0,0,0,0.7); 
             z-index: 10000;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
         ">
             <div style="
                 background: white;
-                border-radius: 8px;
-                width: 90%;
+                border-radius: 12px;
+                width: 100%;
                 max-width: 1200px;
-                height: 85vh;
+                height: 90vh;
                 display: flex;
                 flex-direction: column;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                overflow: hidden;
             ">
+                <!-- Header do Modal -->
                 <div style="
-                    padding: 20px;
-                    border-bottom: 1px solid #ddd;
-                    background: #f8f9fa;
-                    border-radius: 8px 8px 0 0;
+                    padding: 24px 32px;
+                    border-bottom: 2px solid #e5e7eb;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
                     position: relative;
+                    flex-shrink: 0;
                 ">
-                    <h3 style="margin: 0;">📋 Histórico Geral do Sistema</h3>
-                    <p style="margin: 5px 0 0; color: #666; font-size: 14px;">
-                        ${logDocs.length} alterações encontradas
-                    </p>
+                    <h2 style="
+                        margin: 0 0 8px 0;
+                        font-size: 24px;
+                        font-weight: 600;
+                    ">📋 Histórico Geral do Sistema</h2>
+                    <p style="
+                        margin: 0;
+                        opacity: 0.9;
+                        font-size: 14px;
+                    ">${logDocs.length} alterações encontradas nos últimos registros</p>
+                    
                     <button onclick="document.getElementById('historicoModal').remove()" style="
                         position: absolute;
-                        top: 15px;
-                        right: 20px;
-                        background: none;
+                        top: 20px;
+                        right: 24px;
+                        background: rgba(255,255,255,0.2);
                         border: none;
-                        font-size: 24px;
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 50%;
+                        font-size: 20px;
                         cursor: pointer;
-                        color: #999;
-                    ">&times;</button>
+                        color: white;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        transition: background-color 0.2s ease;
+                    " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">&times;</button>
                 </div>
+                
+                <!-- Conteúdo do Modal -->
                 <div style="
                     flex: 1;
                     overflow-y: auto;
-                    padding: 20px;
+                    background: #f8fafc;
+                    position: relative;
                 ">
-                    ${gerarHTMLHistoricoGeral(logDocs)}
+                    <div style="
+                        padding: 24px 32px;
+                        max-height: 100%;
+                        overflow-y: auto;
+                    ">
+                        ${gerarHTMLHistoricoGeral(logDocs)}
+                    </div>
                 </div>
             </div>
         </div>
@@ -5380,73 +5423,151 @@ function criarModalHistoricoGeral(logDocs) {
 
 // Função para gerar HTML do histórico geral
 function gerarHTMLHistoricoGeral(logDocs) {
-    let html = '<div style="padding: 0;">';
+    if (logDocs.length === 0) {
+        return `
+            <div style="
+                text-align: center; 
+                padding: 60px 20px; 
+                color: #6b7280;
+            ">
+                <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
+                <h3 style="margin: 0 0 8px 0; color: #374151;">Nenhum histórico encontrado</h3>
+                <p style="margin: 0; font-size: 14px;">Não há alterações registradas no sistema.</p>
+            </div>
+        `;
+    }
+    
+    let html = '<div style="display: grid; gap: 20px;">';
     
     logDocs.forEach((doc, index) => {
         const log = doc.data();
         const data = log.timestampLocal ? new Date(log.timestampLocal) : new Date();
         const dataFormatada = data.toLocaleString('pt-BR');
         
-        // Cor do border baseada no tipo de operação
-        let borderColor = '#3b82f6'; // padrão azul
+        // Determinar cor e ícone da operação
+        let borderColor = '#3b82f6';
+        let bgColor = '#eff6ff';
         let operationIcon = '✏️';
+        let operationText = 'EDIÇÃO';
         
         switch(log.tipoOperacao?.toLowerCase()) {
             case 'create':
             case 'criar':
-                borderColor = '#10b981'; // verde
+                borderColor = '#10b981';
+                bgColor = '#ecfdf5';
                 operationIcon = '➕';
+                operationText = 'CRIAÇÃO';
                 break;
             case 'delete':
             case 'deletar':
             case 'excluir':
-                borderColor = '#ef4444'; // vermelho
+                borderColor = '#ef4444';
+                bgColor = '#fef2f2';
                 operationIcon = '🗑️';
+                operationText = 'EXCLUSÃO';
                 break;
             case 'duplicate':
             case 'duplicar':
-                borderColor = '#8b5cf6'; // roxo
+                borderColor = '#8b5cf6';
+                bgColor = '#f5f3ff';
                 operationIcon = '📄';
+                operationText = 'DUPLICAÇÃO';
                 break;
-            case 'edit':
-            case 'editar':
             default:
-                borderColor = '#3b82f6'; // azul
-                operationIcon = '✏️';
+                operationText = 'EDIÇÃO';
                 break;
         }
         
+        const descricaoRegistro = log.descricaoRegistro || 
+                                gerarDescricaoAmigavel(log.dadosCompletos?.depois || log.dadosCompletos?.antes || {}) || 
+                                'Registro desconhecido';
+        
         html += `
-            <div class="historico-entry" style="border-left: 3px solid ${borderColor}; padding-left: 15px; margin-bottom: 20px; position: relative;">
-                <div class="historico-header" style="font-weight: bold; color: #1f2937; margin-bottom: 8px;">
-                    <span style="background: ${borderColor}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px;">
-                        ${operationIcon} ${log.tipoOperacao?.toUpperCase() || 'EDIT'}
-                    </span>
-                    <span style="margin-left: 10px;">${log.usuario || 'Usuário não identificado'}</span>
-                    <span style="float: right; font-size: 12px; color: #6b7280;">${dataFormatada}</span>
-                </div>
-                <div class="historico-record-info" style="margin-bottom: 8px;">
-                    <strong>Registro:</strong> 
-                    <span style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #1f2937;">
-                        ${log.descricaoRegistro || gerarDescricaoAmigavel(log.dadosCompletos?.depois || log.dadosCompletos?.antes || {}) || 'Registro desconhecido'}
-                    </span>
+            <div style="
+                background: white;
+                border-radius: 12px;
+                border-left: 4px solid ${borderColor};
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                overflow: hidden;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 16px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'">
+                
+                <!-- Header do card -->
+                <div style="
+                    background: ${bgColor};
+                    padding: 16px 20px;
+                    border-bottom: 1px solid #e5e7eb;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                ">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="
+                            background: ${borderColor}; 
+                            color: white; 
+                            padding: 6px 12px; 
+                            border-radius: 20px; 
+                            font-size: 12px;
+                            font-weight: 600;
+                        ">
+                            ${operationIcon} ${operationText}
+                        </span>
+                        <div>
+                            <div style="font-weight: 600; color: #374151; margin-bottom: 2px;">
+                                ${log.usuario || 'Usuário não identificado'}
+                            </div>
+                            <div style="font-size: 12px; color: #6b7280;">
+                                ${dataFormatada}
+                            </div>
+                        </div>
+                    </div>
+                    
                     ${log.tipoOperacao?.toLowerCase() === 'delete' ? 
-                        '<span style="color: #ef4444; margin-left: 10px; font-size: 11px;">(EXCLUÍDO)</span>' 
+                        '<span style="background: #fecaca; color: #dc2626; padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: 600;">EXCLUÍDO</span>' 
                         : ''
                     }
-                    <br>
-                    <span style="font-size: 10px; color: #9ca3af;">
-                        ID: ${log.recordId || 'N/A'}
-                    </span>
                 </div>
-                <div class="historico-detalhes">
-                    ${gerarDetalhesOperacao(log)}
-                </div>
-                <div class="historico-campos-alterados" style="margin-top: 10px;">
-                    ${gerarDetalhesOperacaoCampos(log)}
-                </div>
+                
+                <!-- Conteúdo do card -->
+                <div style="padding: 20px;">
+                    <div style="margin-bottom: 16px;">
+                        <label style="font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase;">Registro:</label>
+                        <div style="
+                            background: #f9fafb; 
+                            border: 1px solid #e5e7eb;
+                            border-radius: 8px; 
+                            padding: 12px; 
+                            margin-top: 4px;
+                        ">
+                            <div style="font-weight: 500; color: #374151; margin-bottom: 4px;">
+                                ${descricaoRegistro}
+                            </div>
+                            <div style="font-size: 11px; color: #9ca3af;">
+                                ID: ${log.recordId || 'N/A'}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Detalhes da operação -->
+                    <div style="margin-bottom: 16px;">
+                        ${gerarDetalhesOperacao(log)}
+                    </div>
+                    
+                    <!-- Campos alterados -->
+                    <div style="margin-bottom: 12px;">
+                        ${gerarDetalhesOperacaoCampos(log)}
+                    </div>
+                    
+                    <!-- IP (se disponível) -->
                     ${log.ip && log.ip !== 'IP não identificado' ? 
-                        `<div style="font-size: 11px; color: #9ca3af; margin-top: 8px;">IP: ${log.ip}</div>` 
+                        `<div style="
+                            font-size: 11px; 
+                            color: #9ca3af; 
+                            padding-top: 12px; 
+                            border-top: 1px solid #f3f4f6;
+                        ">
+                            <strong>IP:</strong> ${log.ip}
+                        </div>` 
                         : ''
                     }
                 </div>
@@ -5463,7 +5584,101 @@ window.visualizarHistorico = visualizarHistorico;
 window.visualizarHistoricoGeral = visualizarHistoricoGeral;
 window.salvarLogAlteracao = salvarLogAlteracao;
 
-// Função para preencher formulário com dados existentes
+// Função moderna para preencher formulário de edição
+function preencherFormularioEdicao(data) {
+    console.log('📋 [FORM-FILL] Preenchendo formulário com dados:', data);
+    
+    // Mapeamento completo dos campos
+    const fieldMapping = {
+        // Campos de texto
+        'projeto': data.Projeto || data.projeto || '',
+        'subProjeto': data['Sub Projeto'] || data.subProjeto || '',
+        'tipoAcao': data['Tipo de Ação'] || data.tipoAcao || '',
+        'contrato': data.CONTRATO || data.contrato || '',
+        'condominio': data.Condominio || data.condominio || '',
+        'endereco': data['ENDEREÇO'] || data.endereco || '',
+        'cidade': data.Cidade || data.cidade || '',
+        'pep': data.PEP || data.pep || '',
+        'codImovelGed': data['COD IMOVEL GED'] || data.codImovelGed || '',
+        'nodeGerencial': data['NODE GERENCIAL'] || data.nodeGerencial || '',
+        'areaTecnica': data['AREA TECNICA'] || data.areaTecnica || '',
+        'hp': data.HP || data.hp || '',
+        'andar': data.Andar || data.andar || '',
+        'supervisor': data.Supervisor || data.supervisor || '',
+        'equipe': data.EQUIPE || data.equipe || '',
+        'status': data.Status || data.status || '',
+        'observacoes': data.Observações || data.observacoes || '',
+        'comentarios': data.Comentários || data.comentarios || '',
+        'valorProduto': data['VALOR PRODUTO'] || data.valorProduto || '',
+        'valorServico': data['VALOR SERVIÇO'] || data.valorServico || '',
+        'valorTotal': data['VALOR TOTAL'] || data.valorTotal || '',
+        
+        // Campos de data
+        'dataRecebimento': data['DATA RECEBIMENTO'] || data.dataRecebimento || '',
+        'dataInicio': data['DATA INICIO'] || data.dataInicio || '',
+        'dataFinal': data['DATA FINAL'] || data.dataFinal || ''
+    };
+    
+    // Preencher campos de texto e selects
+    for (const [fieldId, value] of Object.entries(fieldMapping)) {
+        const field = document.getElementById(fieldId);
+        if (field && value) {
+            field.value = value;
+            console.log(`📝 [FORM-FILL] Campo ${fieldId} preenchido: ${value}`);
+        }
+    }
+    
+    // Tratar campos de data especiais
+    const dateFields = ['dataRecebimento', 'dataInicio', 'dataFinal'];
+    dateFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field && fieldMapping[fieldId]) {
+            // Converter timestamp ou string para formato de data
+            const dateValue = convertToDateInput(fieldMapping[fieldId]);
+            if (dateValue) {
+                field.value = dateValue;
+                console.log(`📅 [FORM-FILL] Data ${fieldId} preenchida: ${dateValue}`);
+            }
+        }
+    });
+    
+    console.log('✅ [FORM-FILL] Formulário preenchido completamente');
+}
+
+// Função auxiliar para converter data para input date
+function convertToDateInput(dateValue) {
+    if (!dateValue) return '';
+    
+    try {
+        let date;
+        
+        // Se for timestamp do Firebase
+        if (dateValue.seconds) {
+            date = new Date(dateValue.seconds * 1000);
+        }
+        // Se for string de data
+        else if (typeof dateValue === 'string') {
+            // Tentar diferentes formatos
+            date = new Date(dateValue);
+        }
+        // Se já for Date
+        else if (dateValue instanceof Date) {
+            date = dateValue;
+        }
+        
+        // Verificar se data é válida
+        if (date && !isNaN(date.getTime())) {
+            // Retornar no formato YYYY-MM-DD para input date
+            return date.toISOString().split('T')[0];
+        }
+    } catch (error) {
+        console.warn('⚠️ [DATE-CONVERT] Erro ao converter data:', dateValue, error);
+    }
+    
+    return '';
+}
+
+// Função para preencher formulário com dados existentes (legada - mantida para compatibilidade)
 function populateEditForm(data) {
     console.log('📝 [EDIT-FORM] Preenchendo formulário com dados:', data);
     
