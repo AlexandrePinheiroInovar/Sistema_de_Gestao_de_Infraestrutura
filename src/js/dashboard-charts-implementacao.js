@@ -850,4 +850,277 @@ ChartsDashboard.recriar = function () {
     this.inicializar(this.data);
 };
 
+// ============= 7. GRÁFICO DE NODE GERENCIAL POR ÁREA TÉCNICA =============
+ChartsDashboard.criarGraficoNodeGerencial = function () {
+    console.log('📊 [GRÁFICO-7] Criando Análise de NODE GERENCIAL...');
+
+    const canvas = document.getElementById('nodeGerencialChart');
+    if (!canvas) {
+        console.warn('⚠️ Canvas nodeGerencialChart não encontrado');
+        return;
+    }
+
+    // Filtrar dados pela Área Técnica se estiver nos filtros ativos
+    let dadosFiltrados = this.data;
+    
+    // Verificar se há filtro de Área Técnica ativo
+    let filtroAreaTecnica = null;
+    if (window.unifiedFilterSystem && window.unifiedFilterSystem.currentFilters) {
+        const filters = window.unifiedFilterSystem.currentFilters;
+        if (filters.areaTecnica && filters.areaTecnica.length > 0) {
+            filtroAreaTecnica = filters.areaTecnica;
+            dadosFiltrados = this.data.filter(item => {
+                const areaTecnica = obterCampo(item, 'areaTecnica');
+                return filtroAreaTecnica.includes(areaTecnica);
+            });
+        }
+    }
+
+    console.log('📊 [NODE-GERENCIAL] Dados filtrados por Área Técnica:', dadosFiltrados.length);
+
+    // Processar dados - contar por NODE GERENCIAL
+    const contadorNodes = {};
+    dadosFiltrados.forEach(item => {
+        const nodeGerencial = obterCampo(item, 'nodeGerencial') || 'Não especificado';
+        if (nodeGerencial.trim() !== '') {
+            contadorNodes[nodeGerencial] = (contadorNodes[nodeGerencial] || 0) + 1;
+        }
+    });
+
+    // Ordenar por quantidade (descendente) e pegar top 15
+    const entries = Object.entries(contadorNodes)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 15);
+
+    if (entries.length === 0) {
+        console.warn('⚠️ [NODE-GERENCIAL] Nenhum dado de NODE GERENCIAL encontrado');
+        return;
+    }
+
+    const labels = entries.map(([node]) => node);
+    const data = entries.map(([, count]) => count);
+
+    // Criar gráfico de barras horizontal
+    const ctx = canvas.getContext('2d');
+    this.instances.nodeGerencial = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Quantidade de Registros',
+                data: data,
+                backgroundColor: this.colors.gradiente.slice(0, data.length),
+                borderColor: this.colors.borda,
+                borderWidth: 1,
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'right',
+                    formatter: (value) => value,
+                    font: {
+                        weight: 'bold'
+                    },
+                    color: '#374151'
+                }
+            }]
+        },
+        options: {
+            indexAxis: 'y', // Torna o gráfico horizontal
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                title: {
+                    display: true,
+                    text: filtroAreaTecnica 
+                        ? `NODE GERENCIAL - Filtrado por: ${filtroAreaTecnica.join(', ')}`
+                        : 'NODE GERENCIAL - Todos os Dados',
+                    font: {
+                        size: 14,
+                        weight: 'bold'
+                    }
+                },
+                datalabels: {
+                    display: true
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Quantidade de Registros'
+                    },
+                    grid: {
+                        color: 'rgba(0,0,0,0.1)'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'NODE GERENCIAL'
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            layout: {
+                padding: 20
+            }
+        },
+        plugins: [ChartDataLabels]
+    });
+
+    // Atualizar indicador de filtro
+    const filterInfo = document.getElementById('areaTecnicaFilterInfo');
+    if (filterInfo) {
+        if (filtroAreaTecnica) {
+            filterInfo.style.display = 'block';
+            filterInfo.querySelector('span').textContent = 
+                `Filtrado por Área Técnica: ${filtroAreaTecnica.join(', ')}`;
+        } else {
+            filterInfo.style.display = 'none';
+        }
+    }
+
+    console.log('✅ [GRÁFICO-7] NODE GERENCIAL criado:', entries.length, 'nodes');
+};
+
+// ============= 8. GRÁFICO DE PEP (PIZZA) - VERSÃO NOVA LIMPA =============
+ChartsDashboard.criarGraficoPEP = function () {
+    console.log('📊 [PEP-NEW] Criando gráfico PEP completamente novo...');
+
+    const canvas = document.getElementById('pepChart');
+    if (!canvas) {
+        console.error('❌ [PEP-NEW] Canvas pepChart não encontrado');
+        return;
+    }
+
+    // Verificar dados
+    if (!this.data || this.data.length === 0) {
+        console.warn('⚠️ [PEP-NEW] Sem dados disponíveis');
+        return;
+    }
+
+    console.log('📊 [PEP-NEW] Processando', this.data.length, 'registros');
+
+    // SIMPLES: Contar cada PEP
+    const pepCount = {};
+    
+    this.data.forEach(item => {
+        // Tentar várias formas de obter o PEP
+        const pep = item['PEP'] || item['pep'] || item['Pep'] || 
+                   obterCampo(item, 'pep') || 'Sem PEP';
+        
+        const pepString = String(pep).trim();
+        
+        if (pepString && pepString !== '' && pepString !== 'null' && pepString !== 'undefined') {
+            pepCount[pepString] = (pepCount[pepString] || 0) + 1;
+        }
+    });
+
+    console.log('📊 [PEP-NEW] Contadores encontrados:', pepCount);
+
+    // Converter para array e ordenar
+    const pepArray = Object.entries(pepCount)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 12); // Top 12
+
+    if (pepArray.length === 0) {
+        console.warn('⚠️ [PEP-NEW] Nenhum PEP válido encontrado');
+        return;
+    }
+
+    console.log('📊 [PEP-NEW] PEPs finais:', pepArray);
+
+    // Dados para o gráfico
+    const labels = pepArray.map(([pep]) => pep);
+    const values = pepArray.map(([, count]) => count);
+    const total = values.reduce((a, b) => a + b, 0);
+
+    // Cores distintas
+    const colors = [
+        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+        '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF',
+        '#4BC0C0', '#FF6384', '#36A2EB', '#FFCE56'
+    ];
+
+    // Destruir gráfico existente se houver
+    if (this.instances.pep) {
+        this.instances.pep.destroy();
+    }
+
+    // Criar gráfico novo
+    const ctx = canvas.getContext('2d');
+    this.instances.pep = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: colors.slice(0, values.length),
+                borderColor: '#ffffff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: `Distribuição PEP (${total} registros total)`
+                },
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            return data.labels.map((label, i) => {
+                                const value = data.datasets[0].data[i];
+                                const percent = Math.round((value / total) * 100);
+                                return {
+                                    text: `${label}: ${value} (${percent}%)`,
+                                    fillStyle: data.datasets[0].backgroundColor[i],
+                                    strokeStyle: data.datasets[0].borderColor,
+                                    lineWidth: data.datasets[0].borderWidth,
+                                    index: i
+                                };
+                            });
+                        },
+                        font: {
+                            size: 11
+                        },
+                        padding: 10
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.parsed;
+                            const percent = Math.round((value / total) * 100);
+                            return `${context.label}: ${value} registros (${percent}%)`;
+                        }
+                    }
+                }
+            },
+            layout: {
+                padding: {
+                    top: 10,
+                    bottom: 20,
+                    left: 10,
+                    right: 10
+                }
+            }
+        }
+    });
+
+    console.log('✅ [PEP-NEW] Gráfico criado com', pepArray.length, 'PEPs');
+};
+
 console.log('✅ [CHARTS-IMPLEMENTACAO] Implementações carregadas com sucesso!');

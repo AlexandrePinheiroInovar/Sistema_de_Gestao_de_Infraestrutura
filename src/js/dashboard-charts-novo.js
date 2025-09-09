@@ -53,7 +53,10 @@ function obterCampo(item, campo) {
         supervisor: item['Supervisor'] || item['supervisor'] || '',
         equipe: item['EQUIPE'] || item['equipe'] || '',
         status: item['Status'] || item['status'] || item['STATUS'] || '',
-        tipoAcao: item['Tipo de Ação'] || item['tipoAcao'] || item['Tipo Ação'] || ''
+        tipoAcao: item['Tipo de Ação'] || item['tipoAcao'] || item['Tipo Ação'] || '',
+        nodeGerencial: item['NODE GERENCIAL'] || item['nodeGerencial'] || item['Node Gerencial'] || '',
+        areaTecnica: item['Área Técnica'] || item['areaTecnica'] || item['Area Tecnica'] || '',
+        pep: item['PEP'] || item['pep'] || item['Pep'] || ''
     };
 
     return mapeamentos[campo] || '';
@@ -138,6 +141,36 @@ function gerarHTMLCompleto() {
             <div class="analysis-content">
                 <div class="chart-container">
                     <canvas id="supervisorStatusChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. Análise de NODE GERENCIAL por Área Técnica -->
+        <div class="analysis-section">
+            <div class="analysis-header">
+                <h3>🔌 Análise de NODE GERENCIAL</h3>
+                <p>Distribuição por Área Técnica - Gráfico Horizontal</p>
+                <div class="filter-info" id="areaTecnicaFilterInfo">
+                    <i class="fas fa-filter"></i>
+                    <span>Filtragem por Área Técnica ativa nos filtros</span>
+                </div>
+            </div>
+            <div class="analysis-content">
+                <div class="chart-container chart-horizontal">
+                    <canvas id="nodeGerencialChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 8. Análise de PEP - Gráfico de Pizza -->
+        <div class="analysis-section">
+            <div class="analysis-header">
+                <h3>🥧 Análise de PEP</h3>
+                <p>Distribuição de Projetos por PEP - Gráfico de Pizza</p>
+            </div>
+            <div class="analysis-content">
+                <div class="chart-container chart-pie" style="height: 500px; min-height: 500px;">
+                    <canvas id="pepChart" width="400" height="500"></canvas>
                 </div>
             </div>
         </div>
@@ -380,6 +413,8 @@ ChartsDashboard.criarTodosGraficos = function () {
         this.criarGraficoHP();
         this.criarGraficoRecebimentos();
         this.criarGraficoSupervisores();
+        this.criarGraficoNodeGerencial();
+        this.criarGraficoPEP();
 
         console.log('✅ [CHARTS-NOVO] Todos os gráficos criados!');
     } catch (error) {

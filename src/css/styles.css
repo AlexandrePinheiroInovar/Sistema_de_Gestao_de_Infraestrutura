@@ -14335,3 +14335,29 @@ body.colorblind-mode .user-role-simple {
         font-size: 0.8rem;
     }
 }
+
+/* ============= GRÁFICO NODE GERENCIAL ============= */
+
+.chart-horizontal {
+    min-height: 400px;
+}
+
+.filter-info {
+    display: none;
+    background: #e0f2fe;
+    color: #01579b;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    margin-top: 10px;
+    border-left: 4px solid #0288d1;
+}
+
+.filter-info i {
+    margin-right: 6px;
+    color: #0288d1;
+}
+
+.filter-info span {
+    font-weight: 500;
+}
