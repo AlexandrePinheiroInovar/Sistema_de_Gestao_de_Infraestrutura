@@ -1123,4 +1123,292 @@ ChartsDashboard.criarGraficoPEP = function () {
     console.log('✅ [PEP-NEW] Gráfico criado com', pepArray.length, 'PEPs');
 };
 
+// ============= 9. GRÁFICO MENSAL DE RDO, BOOK E PROJETOS =============
+ChartsDashboard.criarGraficoMensalRdoBookProjetos = function () {
+    console.log('📊 [GRÁFICO-9] ============ INICIANDO ANÁLISE MENSAL RDO/BOOK/PROJETOS ============');
+
+    const canvas = document.getElementById('rdoBookProjetosChart');
+    if (!canvas) {
+        console.error('❌ Canvas rdoBookProjetosChart não encontrado no DOM!');
+        return;
+    }
+    console.log('✅ Canvas encontrado:', canvas);
+
+    // Verificar dados
+    if (!this.data || this.data.length === 0) {
+        console.warn('⚠️ [RDO-BOOK-PROJETOS] Sem dados disponíveis');
+        return;
+    }
+
+    console.log('📊 [RDO-BOOK-PROJETOS] Processando', this.data.length, 'registros');
+
+    // Função para obter mês/ano de uma data
+    const obterMesAno = (dataString) => {
+        // DEBUG: Log apenas se houver problema
+        if (dataString && typeof dataString !== 'string') {
+            console.log('🔍 [obterMesAno] Valor não-string recebido:', dataString, 'Tipo:', typeof dataString);
+        }
+        
+        // Tentar converter para string se não for uma string
+        let dataStringProcessada;
+        if (typeof dataString === 'string') {
+            dataStringProcessada = dataString;
+        } else if (dataString !== null && dataString !== undefined) {
+            // Tentar converter para string
+            dataStringProcessada = String(dataString);
+        } else {
+            return null;
+        }
+        
+        // Verificar se não é uma string vazia após trim
+        if (dataStringProcessada.trim() === '') return null;
+        
+        try {
+            let data;
+            
+            // Tentar diferentes formatos de data
+            if (dataStringProcessada.includes('/')) {
+                // Formato DD/MM/YYYY ou MM/DD/YYYY
+                const partes = dataStringProcessada.split('/');
+                if (partes.length >= 2) {
+                    data = new Date(partes[2] || new Date().getFullYear(), partes[1] - 1, partes[0]);
+                }
+            } else if (dataStringProcessada.includes('-')) {
+                // Formato YYYY-MM-DD
+                data = new Date(dataStringProcessada);
+            } else {
+                return null;
+            }
+
+            if (isNaN(data.getTime())) return null;
+            
+            const mes = data.getMonth() + 1;
+            const ano = data.getFullYear();
+            return `${mes.toString().padStart(2, '0')}/${ano}`;
+        } catch (e) {
+            return null;
+        }
+    };
+
+    // Contadores mensais
+    const dadosMensais = {};
+
+    this.data.forEach((item, index) => {
+        // Obter datas disponíveis (priorizar DATA FINAL, depois DATA INICIO, depois DATA RECEBIMENTO)
+        const dataFinal = obterCampo(item, 'dataFinal');
+        const dataInicio = obterCampo(item, 'dataInicio');
+        const dataRecebimento = obterCampo(item, 'dataRecebimento');
+        
+        // DEBUG: Log dos primeiros 3 registros
+        if (index < 3) {
+            console.log(`📊 [DEBUG-${index}] Registro:`, {
+                dataFinal: dataFinal,
+                dataFinalType: typeof dataFinal,
+                dataInicio: dataInicio,
+                dataInicioType: typeof dataInicio,
+                dataRecebimento: dataRecebimento,
+                dataRecebimentoType: typeof dataRecebimento,
+                rdo: obterCampo(item, 'rdo'),
+                book: obterCampo(item, 'book'),
+                projetoStatus: obterCampo(item, 'projetoStatus'),
+                item: item
+            });
+        }
+        
+        // Usar a primeira data disponível
+        const dataReferencia = dataFinal || dataInicio || dataRecebimento;
+        const mesAno = obterMesAno(dataReferencia);
+        
+        if (!mesAno) {
+            if (index < 3) console.log(`📊 [DEBUG-${index}] Sem data válida encontrada`);
+            return; // Pular se não conseguiu extrair data
+        }
+        
+        // Inicializar mês se não existir
+        if (!dadosMensais[mesAno]) {
+            dadosMensais[mesAno] = { RDO: 0, BOOK: 0, PROJETOS: 0 };
+        }
+        
+        // Verificar RDO (considerar "SIM", valores não vazios, ou qualquer valor que indique conclusão)
+        const rdo = obterCampo(item, 'rdo') || '';
+        if (rdo.toString().toUpperCase().includes('SIM') || 
+            rdo.toString().toUpperCase().includes('OK') ||
+            rdo.toString().toUpperCase().includes('CONCLUIDO') ||
+            rdo.toString().toUpperCase().includes('CONCLUÍDO') ||
+            (rdo.toString().trim() !== '' && !rdo.toString().toUpperCase().includes('NÃO') && !rdo.toString().toUpperCase().includes('NAO'))) {
+            dadosMensais[mesAno].RDO++;
+        }
+        
+        // Verificar BOOK (mesma lógica)
+        const book = obterCampo(item, 'book') || '';
+        if (book.toString().toUpperCase().includes('SIM') || 
+            book.toString().toUpperCase().includes('OK') ||
+            book.toString().toUpperCase().includes('CONCLUIDO') ||
+            book.toString().toUpperCase().includes('CONCLUÍDO') ||
+            (book.toString().trim() !== '' && !book.toString().toUpperCase().includes('NÃO') && !book.toString().toUpperCase().includes('NAO'))) {
+            dadosMensais[mesAno].BOOK++;
+        }
+        
+        // Verificar PROJETO (qualquer projeto listado/concluído)
+        const projeto = obterCampo(item, 'projetoStatus') || '';
+        if (projeto.toString().toUpperCase().includes('CONCLUIDO') ||
+            projeto.toString().toUpperCase().includes('CONCLUÍDO') ||
+            projeto.toString().toUpperCase().includes('FINALIZADO') ||
+            projeto.toString().toUpperCase().includes('OK') ||
+            (projeto.toString().trim() !== '' && 
+             !projeto.toString().toUpperCase().includes('PENDENTE') &&
+             !projeto.toString().toUpperCase().includes('CANCELADO') &&
+             !projeto.toString().toUpperCase().includes('EM ANDAMENTO'))) {
+            dadosMensais[mesAno].PROJETOS++;
+        }
+    });
+
+    console.log('📊 [RDO-BOOK-PROJETOS] Dados processados por mês:', dadosMensais);
+    console.log('📊 [RDO-BOOK-PROJETOS] Total de meses encontrados:', Object.keys(dadosMensais).length);
+
+    // Ordenar meses cronologicamente
+    const mesesOrdenados = Object.keys(dadosMensais).sort((a, b) => {
+        const [mesA, anoA] = a.split('/');
+        const [mesB, anoB] = b.split('/');
+        const dataA = new Date(anoA, mesA - 1);
+        const dataB = new Date(anoB, mesB - 1);
+        return dataA - dataB;
+    });
+
+    // Pegar últimos 12 meses ou todos os disponíveis
+    const mesesExibir = mesesOrdenados.slice(-12);
+    
+    if (mesesExibir.length === 0) {
+        console.warn('⚠️ [RDO-BOOK-PROJETOS] Nenhum mês com dados encontrado');
+        return;
+    }
+
+    // Preparar dados para o gráfico
+    const labels = mesesExibir.map(mesAno => {
+        const [mes, ano] = mesAno.split('/');
+        const nomesMeses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
+                           'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        return `${nomesMeses[parseInt(mes) - 1]}/${ano}`;
+    });
+
+    const dadosRDO = mesesExibir.map(mesAno => dadosMensais[mesAno].RDO);
+    const dadosBOOK = mesesExibir.map(mesAno => dadosMensais[mesAno].BOOK);
+    const dadosPROJETOS = mesesExibir.map(mesAno => dadosMensais[mesAno].PROJETOS);
+
+    // Destruir gráfico existente se houver
+    if (this.instances.rdoBookProjetos) {
+        this.instances.rdoBookProjetos.destroy();
+    }
+
+    // Criar gráfico
+    const ctx = canvas.getContext('2d');
+    this.instances.rdoBookProjetos = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'RDO',
+                    data: dadosRDO,
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderColor: '#3B82F6',
+                    borderWidth: 2,
+                    datalabels: {
+                        display: true,
+                        anchor: 'end',
+                        align: 'end',
+                        offset: 4,
+                        color: '#1E40AF',
+                        font: { weight: 'bold', size: 10 },
+                        formatter: value => value > 0 ? value : ''
+                    }
+                },
+                {
+                    label: 'BOOK',
+                    data: dadosBOOK,
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    borderColor: '#10B981',
+                    borderWidth: 2,
+                    datalabels: {
+                        display: true,
+                        anchor: 'end',
+                        align: 'end',
+                        offset: 4,
+                        color: '#047857',
+                        font: { weight: 'bold', size: 10 },
+                        formatter: value => value > 0 ? value : ''
+                    }
+                },
+                {
+                    label: 'PROJETOS',
+                    data: dadosPROJETOS,
+                    backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                    borderColor: '#F59E0B',
+                    borderWidth: 2,
+                    datalabels: {
+                        display: true,
+                        anchor: 'end',
+                        align: 'end',
+                        offset: 4,
+                        color: '#92400E',
+                        font: { weight: 'bold', size: 10 },
+                        formatter: value => value > 0 ? value : ''
+                    }
+                }
+            ]
+        },
+        plugins: [ChartDataLabels],
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Evolução Mensal - RDO, BOOK e Projetos',
+                    font: { size: 16, weight: 'bold' },
+                    padding: {
+                        bottom: 25
+                    }
+                },
+                legend: {
+                    display: true,
+                    position: 'top',
+                    padding: 20
+                },
+                datalabels: {
+                    display: false // Configuração individual por dataset
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Período (Mês/Ano)'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Quantidade'
+                    },
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            },
+            layout: {
+                padding: {
+                    top: 50,
+                    bottom: 10,
+                    left: 10,
+                    right: 10
+                }
+            }
+        }
+    });
+
+    console.log('✅ [GRÁFICO-9] RDO, BOOK e Projetos criado com', mesesExibir.length, 'meses');
+};
+
 console.log('✅ [CHARTS-IMPLEMENTACAO] Implementações carregadas com sucesso!');

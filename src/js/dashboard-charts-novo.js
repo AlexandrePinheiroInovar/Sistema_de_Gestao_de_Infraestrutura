@@ -56,7 +56,11 @@ function obterCampo(item, campo) {
         tipoAcao: item['Tipo de Ação'] || item['tipoAcao'] || item['Tipo Ação'] || '',
         nodeGerencial: item['NODE GERENCIAL'] || item['nodeGerencial'] || item['Node Gerencial'] || '',
         areaTecnica: item['Área Técnica'] || item['areaTecnica'] || item['Area Tecnica'] || '',
-        pep: item['PEP'] || item['pep'] || item['Pep'] || ''
+        rdo: item['RDO'] || item['rdo'] || '',
+        book: item['BOOK'] || item['book'] || '',
+        projetoStatus: item['PROJETO'] || item['projetoStatus'] || item['projeto'] || '',
+        pep: item['PEP'] || item['pep'] || item['Pep'] || '',
+        endereco: item['ENDEREÇO'] || item['ENDERECO'] || item['endereco'] || item['Endereço'] || item['Endereco'] || ''
     };
 
     return mapeamentos[campo] || '';
@@ -175,6 +179,19 @@ function gerarHTMLCompleto() {
             </div>
         </div>
 
+        <!-- ============= 9. GRÁFICO MENSAL RDO, BOOK E PROJETOS ============= -->
+        <div class="analysis-section">
+            <div class="analysis-header">
+                <h3>📈 Evolução Mensal</h3>
+                <p>Análise Temporal de RDO, BOOK e Projetos por Mês</p>
+            </div>
+            <div class="analysis-content">
+                <div class="chart-container" style="height: 400px; min-height: 400px;">
+                    <canvas id="rdoBookProjetosChart" width="400" height="350"></canvas>
+                </div>
+            </div>
+        </div>
+
         <!-- ============= RANKINGS DAS EQUIPES ============= -->
         <div class="analysis-section">
             <div class="analysis-header">
@@ -255,6 +272,58 @@ function gerarHTMLCompleto() {
                         </div>
                     </div>
                     
+                </div>
+            </div>
+        </div>
+
+        <!-- ============= TABELA DE ENDEREÇOS E HP ============= -->
+        <div class="analysis-section">
+            <div class="analysis-header">
+                <h3>🏠 Tabela de Endereços e HP</h3>
+                <p>Endereços e suas Quantidades de HP</p>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="ChartsDashboard.atualizarTabelaEnderecos()">
+                        <i class="fas fa-sync-alt"></i> Atualizar
+                    </button>
+                    <button class="btn btn-secondary" onclick="ChartsDashboard.exportarTabelaEnderecos()">
+                        <i class="fas fa-download"></i> Exportar (XLSX)
+                    </button>
+                </div>
+            </div>
+            <div class="analysis-content" style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; width: 80%; max-width: 800px; margin: 0 auto;">
+                    <table id="enderecosHpTable" class="ranking-table" style="width: 100%; margin: 0 auto;">
+                        <style>
+                            #enderecosHpTable tr:nth-child(1) td:first-child,
+                            #enderecosHpTable tr:nth-child(2) td:first-child,
+                            #enderecosHpTable tr:nth-child(3) td:first-child {
+                                background-color: transparent !important;
+                                color: inherit !important;
+                            }
+                            #enderecosHpTable tbody tr {
+                                background-color: transparent !important;
+                            }
+                            #enderecosHpTable tbody tr:hover {
+                                background-color: #f5f5f5 !important;
+                            }
+                        </style>
+                        <thead>
+                            <tr>
+                                <th>Id</th>
+                                <th>Endereço</th>
+                                <th>Quantidade HP</th>
+                            </tr>
+                        </thead>
+                        <tbody id="enderecosHpTableBody">
+                            <!-- Dados inseridos dinamicamente -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="total-row">
+                                <td colspan="2"><strong>Total Geral</strong></td>
+                                <td id="totalEnderecosQuantidade">0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
         </div>
@@ -357,7 +426,11 @@ ChartsDashboard.gerarDadosMock = function () {
             Status: 'PRODUTIVA',
             'DATA RECEBIMENTO': '2025-01-15',
             'DATA INICIO': '2025-01-20',
-            'DATA FINAL': '2025-01-25'
+            'DATA FINAL': '2025-01-25',
+            RDO: 'SIM',
+            BOOK: 'SIM',
+            PROJETO: 'CONCLUÍDO',
+            'ENDEREÇO': 'Rua das Flores, 123 - São Paulo/SP'
         },
         {
             Projeto: 'VIVO FIBER',
@@ -370,7 +443,11 @@ ChartsDashboard.gerarDadosMock = function () {
             Status: 'PRODUTIVA',
             'DATA RECEBIMENTO': '2025-01-16',
             'DATA INICIO': '2025-01-21',
-            'DATA FINAL': '2025-01-28'
+            'DATA FINAL': '2025-01-28',
+            RDO: 'SIM',
+            BOOK: 'OK',
+            PROJETO: 'CONCLUÍDO',
+            'ENDEREÇO': 'Av. Atlântica, 456 - Rio de Janeiro/RJ'
         },
         {
             Projeto: 'TIM ULTRA',
@@ -383,7 +460,11 @@ ChartsDashboard.gerarDadosMock = function () {
             Status: 'IMPRODUTIVA',
             'DATA RECEBIMENTO': '2025-01-17',
             'DATA INICIO': '2025-01-22',
-            'DATA FINAL': ''
+            'DATA FINAL': '',
+            RDO: 'NÃO',
+            BOOK: 'PENDENTE',
+            PROJETO: 'EM ANDAMENTO',
+            'ENDEREÇO': 'Rua das Palmeiras, 789 - Belo Horizonte/MG'
         },
         {
             Projeto: 'CLARO FIBRA',
@@ -396,7 +477,11 @@ ChartsDashboard.gerarDadosMock = function () {
             Status: 'PRODUTIVA',
             'DATA RECEBIMENTO': '2025-01-18',
             'DATA INICIO': '2025-01-23',
-            'DATA FINAL': '2025-01-30'
+            'DATA FINAL': '2025-01-30',
+            RDO: 'SIM',
+            BOOK: 'SIM',
+            PROJETO: 'FINALIZADO',
+            'ENDEREÇO': 'Rua das Flores, 123 - São Paulo/SP'
         },
         {
             Projeto: 'VIVO FIBER',
@@ -409,7 +494,11 @@ ChartsDashboard.gerarDadosMock = function () {
             Status: 'PRODUTIVA',
             'DATA RECEBIMENTO': '2025-01-19',
             'DATA INICIO': '2025-01-24',
-            'DATA FINAL': '2025-02-02'
+            'DATA FINAL': '2025-02-02',
+            RDO: 'OK',
+            BOOK: 'SIM',
+            PROJETO: 'CONCLUÍDO',
+            'ENDEREÇO': 'Av. JK, 321 - Brasília/DF'
         },
         {
             Projeto: 'TIM ULTRA',
@@ -422,7 +511,11 @@ ChartsDashboard.gerarDadosMock = function () {
             Status: 'IMPRODUTIVA',
             'DATA RECEBIMENTO': '2025-01-20',
             'DATA INICIO': '2025-01-25',
-            'DATA FINAL': ''
+            'DATA FINAL': '',
+            RDO: '',
+            BOOK: 'NÃO',
+            PROJETO: 'CANCELADO',
+            'ENDEREÇO': 'Rua das Palmeiras, 789 - Belo Horizonte/MG'
         }
     ];
 };
@@ -449,6 +542,7 @@ ChartsDashboard.criarTodosGraficos = function () {
         this.criarGraficoSupervisores();
         this.criarGraficoNodeGerencial();
         this.criarGraficoPEP();
+        this.criarGraficoMensalRdoBookProjetos();
 
         console.log('✅ [CHARTS-NOVO] Todos os gráficos criados!');
     } catch (error) {
@@ -542,10 +636,13 @@ ChartsDashboard.integrarComCards = function () {
             // Atualizar gráficos
             originalAtualizar(novosDados);
 
+            // Atualizar tabelas também
+            ChartsDashboard.criarTabelas();
+
             // Atualizar cards também
             try {
                 window.updateDashboardCards();
-                console.log('📊 [CHARTS-NOVO] Cards atualizados junto com gráficos');
+                console.log('📊 [CHARTS-NOVO] Cards e tabelas atualizados junto com gráficos');
             } catch (error) {
                 console.warn('⚠️ [CHARTS-NOVO] Erro ao atualizar cards:', error);
             }
@@ -617,5 +714,144 @@ document.addEventListener('unifiedFiltersChanged', function(event) {
         }
     }
 });
+
+// ============= CRIAR TABELAS =============
+ChartsDashboard.criarTabelas = function() {
+    console.log('📊 [CHARTS-NOVO] Criando tabelas...');
+    
+    // Criar tabela de endereços e HP
+    this.criarTabelaEnderecos();
+};
+
+// ============= CRIAR TABELA DE ENDEREÇOS E HP =============
+ChartsDashboard.criarTabelaEnderecos = function() {
+    console.log('🏠 [TABELA-ENDERECOS] Criando tabela de endereços...');
+    console.log('🏠 [TABELA-ENDERECOS] Dados disponíveis:', this.data?.length || 'null');
+    
+    const tableBody = document.getElementById('enderecosHpTableBody');
+    if (!tableBody) {
+        console.warn('⚠️ Tabela enderecosHpTableBody não encontrada');
+        return;
+    }
+
+    if (!this.data || this.data.length === 0) {
+        console.warn('⚠️ [TABELA-ENDERECOS] Sem dados - aguardando...');
+        tableBody.innerHTML = '<tr><td colspan="3">Carregando dados...</td></tr>';
+        
+        // Tentar novamente em 2 segundos se não há dados
+        setTimeout(() => {
+            if (this.data && this.data.length > 0) {
+                console.log('🔄 [TABELA-ENDERECOS] Dados carregados, tentando novamente...');
+                this.criarTabelaEnderecos();
+            }
+        }, 2000);
+        return;
+    }
+
+    // Processar dados - agrupar por endereço
+    const enderecos = {};
+    
+    this.data.forEach(item => {
+        const endereco = obterCampo(item, 'endereco') || 'Endereço não especificado';
+        
+        if (!enderecos[endereco]) {
+            enderecos[endereco] = {
+                quantidade: 0
+            };
+        }
+        
+        enderecos[endereco].quantidade += 1;
+    });
+
+    // Converter para array e ordenar por quantidade (decrescente)
+    const enderecosArray = Object.entries(enderecos)
+        .map(([endereco, dados]) => ({
+            endereco,
+            quantidade: dados.quantidade
+        }))
+        .sort((a, b) => b.quantidade - a.quantidade);
+
+    // Gerar HTML da tabela
+    let html = '';
+    let totalQuantidade = 0;
+
+    enderecosArray.forEach((item, index) => {
+        totalQuantidade += item.quantidade;
+        
+        html += `
+            <tr style="background-color: transparent !important;">
+                <td style="background-color: transparent !important; color: inherit !important;">${index + 1}</td>
+                <td style="background-color: transparent !important; color: inherit !important;" title="${item.endereco}">${item.endereco}</td>
+                <td style="background-color: transparent !important; color: inherit !important;">${item.quantidade}</td>
+            </tr>
+        `;
+    });
+
+    // Inserir dados na tabela
+    tableBody.innerHTML = html;
+
+    // Atualizar totais no rodapé
+    document.getElementById('totalEnderecosQuantidade').textContent = totalQuantidade;
+
+    console.log('✅ [TABELA-ENDERECOS] Tabela criada com', enderecosArray.length, 'endereços');
+};
+
+// ============= ATUALIZAR TABELA DE ENDEREÇOS =============
+ChartsDashboard.atualizarTabelaEnderecos = function() {
+    console.log('🔄 [TABELA-ENDERECOS] Atualizando tabela...');
+    this.criarTabelaEnderecos();
+};
+
+// ============= EXPORTAR TABELA DE ENDEREÇOS =============
+ChartsDashboard.exportarTabelaEnderecos = function() {
+    console.log('💾 [TABELA-ENDERECOS] Exportando tabela...');
+    
+    if (!this.data || this.data.length === 0) {
+        alert('Nenhum dado disponível para exportar');
+        return;
+    }
+
+    // Processar dados para exportação
+    const enderecos = {};
+    
+    this.data.forEach(item => {
+        const endereco = obterCampo(item, 'endereco') || 'Endereço não especificado';
+        
+        if (!enderecos[endereco]) {
+            enderecos[endereco] = {
+                quantidade: 0
+            };
+        }
+        
+        enderecos[endereco].quantidade += 1;
+    });
+
+    // Converter para formato de exportação
+    const dadosExportacao = Object.entries(enderecos)
+        .map(([endereco, dados]) => ({
+            'Endereço': endereco,
+            'Quantidade HP': dados.quantidade
+        }))
+        .sort((a, b) => b['Quantidade HP'] - a['Quantidade HP']);
+
+    // Usar a função de exportação existente se disponível
+    if (typeof exportarParaExcel === 'function') {
+        exportarParaExcel(dadosExportacao, 'enderecos-hp-' + new Date().toISOString().slice(0, 10));
+    } else {
+        console.warn('⚠️ Função de exportação não disponível');
+        // Fallback - copiar para clipboard como CSV
+        const csv = [
+            'Endereço,Quantidade HP',
+            ...dadosExportacao.map(row => `"${row['Endereço']}",${row['Quantidade HP']}`)
+        ].join('\n');
+        
+        navigator.clipboard.writeText(csv).then(() => {
+            alert('Dados copiados para a área de transferência em formato CSV!');
+        }).catch(() => {
+            console.log('CSV:', csv);
+            alert('Dados no console (F12) em formato CSV');
+        });
+    }
+};
 
 console.log('✅ [CHARTS-NOVO] Sistema base carregado. Carregando implementações dos gráficos...');
