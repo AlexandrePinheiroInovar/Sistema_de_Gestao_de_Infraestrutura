@@ -7,32 +7,26 @@ console.log('📊 [DASHBOARD-CHARTS-NOVO] Inicializando sistema de gráficos nov
 const ChartsDashboard = {
     // Armazenar instâncias dos gráficos
     instances: {},
-
+    
     // Configurações de cores (padrão azul do sistema)
     colors: {
-        principal: 'rgba(59, 130, 246, 0.8)', // blue-500
-        secundaria: 'rgba(30, 64, 175, 0.8)', // blue-700
-        clara: 'rgba(147, 197, 253, 0.8)', // blue-300
-        escura: 'rgba(29, 78, 216, 0.8)', // blue-600
-        linha: 'rgba(37, 99, 235, 1)', // blue-600 solid
-        borda: 'rgba(59, 130, 246, 1)', // blue-500 solid
-        produtiva: 'rgba(34, 197, 94, 0.8)', // green-500
-        improdutiva: 'rgba(239, 68, 68, 0.8)', // red-500
-        warning: 'rgba(251, 191, 36, 0.8)', // yellow-500
+        principal: 'rgba(59, 130, 246, 0.8)',     // blue-500
+        secundaria: 'rgba(30, 64, 175, 0.8)',     // blue-700  
+        clara: 'rgba(147, 197, 253, 0.8)',        // blue-300
+        escura: 'rgba(29, 78, 216, 0.8)',         // blue-600
+        linha: 'rgba(37, 99, 235, 1)',            // blue-600 solid
+        borda: 'rgba(59, 130, 246, 1)',           // blue-500 solid
+        produtiva: 'rgba(34, 197, 94, 0.8)',      // green-500
+        improdutiva: 'rgba(239, 68, 68, 0.8)',    // red-500
+        warning: 'rgba(251, 191, 36, 0.8)',       // yellow-500
         gradiente: [
-            'rgba(59, 130, 246, 0.8)',
-            'rgba(30, 64, 175, 0.8)',
-            'rgba(147, 197, 253, 0.8)',
-            'rgba(29, 78, 216, 0.8)',
-            'rgba(37, 99, 235, 0.8)',
-            'rgba(96, 165, 250, 0.8)',
-            'rgba(34, 197, 94, 0.8)',
-            'rgba(251, 191, 36, 0.8)',
-            'rgba(239, 68, 68, 0.8)',
+            'rgba(59, 130, 246, 0.8)', 'rgba(30, 64, 175, 0.8)', 'rgba(147, 197, 253, 0.8)', 
+            'rgba(29, 78, 216, 0.8)', 'rgba(37, 99, 235, 0.8)', 'rgba(96, 165, 250, 0.8)',
+            'rgba(34, 197, 94, 0.8)', 'rgba(251, 191, 36, 0.8)', 'rgba(239, 68, 68, 0.8)',
             'rgba(168, 85, 247, 0.8)'
         ]
     },
-
+    
     // Estado do sistema
     isInitialized: false,
     hasData: false,
@@ -42,23 +36,19 @@ const ChartsDashboard = {
 // ============= UTILITÁRIOS PARA MAPEAR CAMPOS =============
 function obterCampo(item, campo) {
     const mapeamentos = {
-        projeto: item['Projeto'] || item['projeto'] || '',
-        subProjeto: item['Sub Projeto'] || item['subProjeto'] || '',
-        cidade: item['Cidade'] || item['cidade'] || '',
-        hp: item['HP'] || item['hp'] || '',
-        dataRecebimento:
-            item['DATA RECEBIMENTO'] || item['dataRecebimento'] || item['Data Recebimento'] || '',
-        dataInicio: item['DATA INICIO'] || item['dataInicio'] || item['Data Início'] || '',
-        dataFinal: item['DATA FINAL'] || item['dataFinal'] || item['Data Final'] || '',
-        supervisor: item['Supervisor'] || item['supervisor'] || '',
-        equipe: item['EQUIPE'] || item['equipe'] || '',
-        status: item['Status'] || item['status'] || item['STATUS'] || '',
-        tipoAcao: item['Tipo de Ação'] || item['tipoAcao'] || item['Tipo Ação'] || '',
-        nodeGerencial: item['NODE GERENCIAL'] || item['nodeGerencial'] || item['Node Gerencial'] || '',
-        areaTecnica: item['Área Técnica'] || item['areaTecnica'] || item['Area Tecnica'] || '',
-        pep: item['PEP'] || item['pep'] || item['Pep'] || ''
+        'projeto': item['Projeto'] || item['projeto'] || '',
+        'subProjeto': item['Sub Projeto'] || item['subProjeto'] || '',  
+        'cidade': item['Cidade'] || item['cidade'] || '',
+        'hp': item['HP'] || item['hp'] || '',
+        'dataRecebimento': item['DATA RECEBIMENTO'] || item['dataRecebimento'] || item['Data Recebimento'] || '',
+        'dataInicio': item['DATA INICIO'] || item['dataInicio'] || item['Data Início'] || '',
+        'dataFinal': item['DATA FINAL'] || item['dataFinal'] || item['Data Final'] || '',
+        'supervisor': item['Supervisor'] || item['supervisor'] || '',
+        'equipe': item['EQUIPE'] || item['equipe'] || '',
+        'status': item['Status'] || item['status'] || item['STATUS'] || '',
+        'tipoAcao': item['Tipo de Ação'] || item['tipoAcao'] || item['Tipo Ação'] || ''
     };
-
+    
     return mapeamentos[campo] || '';
 }
 
@@ -141,36 +131,6 @@ function gerarHTMLCompleto() {
             <div class="analysis-content">
                 <div class="chart-container">
                     <canvas id="supervisorStatusChart" width="400" height="200"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- 7. Análise de NODE GERENCIAL por Área Técnica -->
-        <div class="analysis-section">
-            <div class="analysis-header">
-                <h3>🔌 Análise de NODE GERENCIAL</h3>
-                <p>Distribuição por Área Técnica - Gráfico Horizontal</p>
-                <div class="filter-info" id="areaTecnicaFilterInfo">
-                    <i class="fas fa-filter"></i>
-                    <span>Filtragem por Área Técnica ativa nos filtros</span>
-                </div>
-            </div>
-            <div class="analysis-content">
-                <div class="chart-container chart-horizontal">
-                    <canvas id="nodeGerencialChart" width="400" height="300"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- 8. Análise de PEP - Gráfico de Pizza -->
-        <div class="analysis-section">
-            <div class="analysis-header">
-                <h3>🥧 Análise de PEP</h3>
-                <p>Distribuição de Projetos por PEP - Gráfico de Pizza</p>
-            </div>
-            <div class="analysis-content">
-                <div class="chart-container chart-pie" style="height: 500px; min-height: 500px;">
-                    <canvas id="pepChart" width="400" height="500"></canvas>
                 </div>
             </div>
         </div>
@@ -262,9 +222,9 @@ function gerarHTMLCompleto() {
 }
 
 // ============= FUNÇÃO PRINCIPAL DE INICIALIZAÇÃO =============
-ChartsDashboard.inicializar = function (dados = null) {
+ChartsDashboard.inicializar = function(dados = null) {
     console.log('🚀 [CHARTS-NOVO] Inicializando sistema completo...');
-
+    
     try {
         // 1. Verificar Chart.js
         if (typeof Chart === 'undefined') {
@@ -272,174 +232,93 @@ ChartsDashboard.inicializar = function (dados = null) {
             setTimeout(() => this.inicializar(dados), 1000);
             return;
         }
-
-        // 2. Obter dados - MELHORADO PARA AGUARDAR DADOS REAIS
-        let dadosProcessar = dados;
         
-        // Tentar obter dados do FirebaseTableSystem
+        // 2. Obter dados
+        let dadosProcessar = dados;
         if (!dadosProcessar && window.FirebaseTableSystem && window.FirebaseTableSystem.getData) {
             dadosProcessar = window.FirebaseTableSystem.getData();
-            console.log('📊 [CHARTS-NOVO] Dados obtidos do FirebaseTableSystem:', dadosProcessar?.length || 'null');
         }
         
-        // Tentar obter dados do window.currentFirebaseData
-        if (!dadosProcessar && window.currentFirebaseData) {
-            dadosProcessar = window.currentFirebaseData;
-            console.log('📊 [CHARTS-NOVO] Dados obtidos do window.currentFirebaseData:', dadosProcessar?.length || 'null');
-        }
-        
-        // Tentar obter dados da variável global firebaseTableData
-        if (!dadosProcessar && window.firebaseTableData) {
-            dadosProcessar = window.firebaseTableData;
-            console.log('📊 [CHARTS-NOVO] Dados obtidos do window.firebaseTableData:', dadosProcessar?.length || 'null');
-        }
-
-        // Se ainda não há dados, aguardar mais ou usar mock apenas como último recurso
         if (!dadosProcessar || dadosProcessar.length === 0) {
-            // Se essa é a primeira tentativa, aguardar mais
-            if (!this.tentativasSemDados) {
-                this.tentativasSemDados = 1;
-                console.warn('⚠️ [CHARTS-NOVO] Primeira tentativa sem dados, aguardando 5s...');
-                setTimeout(() => this.inicializar(dados), 5000);
-                return;
-            } else if (this.tentativasSemDados < 3) {
-                this.tentativasSemDados++;
-                console.warn(`⚠️ [CHARTS-NOVO] Tentativa ${this.tentativasSemDados} sem dados, aguardando mais 3s...`);
-                setTimeout(() => this.inicializar(dados), 3000);
-                return;
-            } else {
-                console.warn('⚠️ [CHARTS-NOVO] Máximo de tentativas atingido, usando dados mock como fallback...');
-                dadosProcessar = this.gerarDadosMock();
-                // Resetar contador para futuras tentativas
-                this.tentativasSemDados = 0;
-            }
-        } else {
-            // Reset contador se encontrou dados
-            this.tentativasSemDados = 0;
+            console.warn('⚠️ [CHARTS-NOVO] Sem dados disponíveis, usando mock...');
+            dadosProcessar = this.gerarDadosMock();
         }
-
+        
         console.log('📊 [CHARTS-NOVO] Processando', dadosProcessar.length, 'registros');
-
+        
         // 3. Armazenar dados
         this.data = dadosProcessar;
         this.hasData = true;
-
+        
         // 4. Gerar HTML se necessário
         const container = document.getElementById('charts-rankings-container');
         if (container) {
             container.innerHTML = gerarHTMLCompleto();
         }
-
+        
         // 5. Aguardar DOM ser criado e criar gráficos
         setTimeout(() => {
             this.criarTodosGraficos();
             this.criarTabelas();
         }, 100);
-
+        
         this.isInitialized = true;
         console.log('✅ [CHARTS-NOVO] Sistema inicializado com sucesso!');
+        
     } catch (error) {
         console.error('❌ [CHARTS-NOVO] Erro na inicialização:', error);
     }
 };
 
 // ============= GERAR DADOS MOCK PARA TESTE =============
-ChartsDashboard.gerarDadosMock = function () {
+ChartsDashboard.gerarDadosMock = function() {
     return [
         {
-            Projeto: 'CLARO FIBRA',
-            'Sub Projeto': 'Residencial',
-            'Tipo de Ação': 'VISTORIA',
-            Cidade: 'São Paulo',
-            HP: '24',
-            EQUIPE: 'Equipe A',
-            Supervisor: 'João Silva',
-            Status: 'PRODUTIVA',
-            'DATA RECEBIMENTO': '2025-01-15',
-            'DATA INICIO': '2025-01-20',
-            'DATA FINAL': '2025-01-25'
+            'Projeto': 'CLARO FIBRA', 'Sub Projeto': 'Residencial', 'Tipo de Ação': 'VISTORIA',
+            'Cidade': 'São Paulo', 'HP': '24', 'EQUIPE': 'Equipe A', 'Supervisor': 'João Silva',
+            'Status': 'PRODUTIVA', 'DATA RECEBIMENTO': '2025-01-15', 'DATA INICIO': '2025-01-20', 'DATA FINAL': '2025-01-25'
         },
         {
-            Projeto: 'VIVO FIBER',
-            'Sub Projeto': 'Empresarial',
-            'Tipo de Ação': 'CONSTRUÇÃO',
-            Cidade: 'Rio de Janeiro',
-            HP: '48',
-            EQUIPE: 'Equipe B',
-            Supervisor: 'Maria Santos',
-            Status: 'PRODUTIVA',
-            'DATA RECEBIMENTO': '2025-01-16',
-            'DATA INICIO': '2025-01-21',
-            'DATA FINAL': '2025-01-28'
+            'Projeto': 'VIVO FIBER', 'Sub Projeto': 'Empresarial', 'Tipo de Ação': 'CONSTRUÇÃO',
+            'Cidade': 'Rio de Janeiro', 'HP': '48', 'EQUIPE': 'Equipe B', 'Supervisor': 'Maria Santos',  
+            'Status': 'PRODUTIVA', 'DATA RECEBIMENTO': '2025-01-16', 'DATA INICIO': '2025-01-21', 'DATA FINAL': '2025-01-28'
         },
         {
-            Projeto: 'TIM ULTRA',
-            'Sub Projeto': 'Residencial',
-            'Tipo de Ação': 'ATIVAÇÃO',
-            Cidade: 'Belo Horizonte',
-            HP: '12',
-            EQUIPE: 'Equipe C',
-            Supervisor: 'Carlos Lima',
-            Status: 'IMPRODUTIVA',
-            'DATA RECEBIMENTO': '2025-01-17',
-            'DATA INICIO': '2025-01-22',
-            'DATA FINAL': ''
+            'Projeto': 'TIM ULTRA', 'Sub Projeto': 'Residencial', 'Tipo de Ação': 'ATIVAÇÃO',
+            'Cidade': 'Belo Horizonte', 'HP': '12', 'EQUIPE': 'Equipe C', 'Supervisor': 'Carlos Lima',
+            'Status': 'IMPRODUTIVA', 'DATA RECEBIMENTO': '2025-01-17', 'DATA INICIO': '2025-01-22', 'DATA FINAL': ''
         },
         {
-            Projeto: 'CLARO FIBRA',
-            'Sub Projeto': 'Comercial',
-            'Tipo de Ação': 'VISTORIA',
-            Cidade: 'Salvador',
-            HP: '36',
-            EQUIPE: 'Equipe A',
-            Supervisor: 'João Silva',
-            Status: 'PRODUTIVA',
-            'DATA RECEBIMENTO': '2025-01-18',
-            'DATA INICIO': '2025-01-23',
-            'DATA FINAL': '2025-01-30'
+            'Projeto': 'CLARO FIBRA', 'Sub Projeto': 'Comercial', 'Tipo de Ação': 'VISTORIA', 
+            'Cidade': 'Salvador', 'HP': '36', 'EQUIPE': 'Equipe A', 'Supervisor': 'João Silva',
+            'Status': 'PRODUTIVA', 'DATA RECEBIMENTO': '2025-01-18', 'DATA INICIO': '2025-01-23', 'DATA FINAL': '2025-01-30'
         },
         {
-            Projeto: 'VIVO FIBER',
-            'Sub Projeto': 'Residencial',
-            'Tipo de Ação': 'CONSTRUÇÃO',
-            Cidade: 'Brasília',
-            HP: '60',
-            EQUIPE: 'Equipe D',
-            Supervisor: 'Ana Costa',
-            Status: 'PRODUTIVA',
-            'DATA RECEBIMENTO': '2025-01-19',
-            'DATA INICIO': '2025-01-24',
-            'DATA FINAL': '2025-02-02'
+            'Projeto': 'VIVO FIBER', 'Sub Projeto': 'Residencial', 'Tipo de Ação': 'CONSTRUÇÃO',
+            'Cidade': 'Brasília', 'HP': '60', 'EQUIPE': 'Equipe D', 'Supervisor': 'Ana Costa',
+            'Status': 'PRODUTIVA', 'DATA RECEBIMENTO': '2025-01-19', 'DATA INICIO': '2025-01-24', 'DATA FINAL': '2025-02-02'
         },
         {
-            Projeto: 'TIM ULTRA',
-            'Sub Projeto': 'Empresarial',
-            'Tipo de Ação': 'ATIVAÇÃO',
-            Cidade: 'Fortaleza',
-            HP: '18',
-            EQUIPE: 'Equipe B',
-            Supervisor: 'Maria Santos',
-            Status: 'IMPRODUTIVA',
-            'DATA RECEBIMENTO': '2025-01-20',
-            'DATA INICIO': '2025-01-25',
-            'DATA FINAL': ''
+            'Projeto': 'TIM ULTRA', 'Sub Projeto': 'Empresarial', 'Tipo de Ação': 'ATIVAÇÃO',
+            'Cidade': 'Fortaleza', 'HP': '18', 'EQUIPE': 'Equipe B', 'Supervisor': 'Maria Santos',
+            'Status': 'IMPRODUTIVA', 'DATA RECEBIMENTO': '2025-01-20', 'DATA INICIO': '2025-01-25', 'DATA FINAL': ''
         }
     ];
 };
 
 // ============= FUNÇÃO PARA CRIAR TODOS OS GRÁFICOS =============
-ChartsDashboard.criarTodosGraficos = function () {
+ChartsDashboard.criarTodosGraficos = function() {
     console.log('📊 [CHARTS-NOVO] Criando todos os gráficos...');
-
+    
     if (!this.hasData) {
         console.warn('⚠️ [CHARTS-NOVO] Sem dados para gráficos');
         return;
     }
-
+    
     try {
         // Destruir gráficos existentes
         this.destruirGraficos();
-
+        
         // Criar cada gráfico
         this.criarGraficoProjetos();
         this.criarGraficoSubProjetos();
@@ -447,17 +326,16 @@ ChartsDashboard.criarTodosGraficos = function () {
         this.criarGraficoHP();
         this.criarGraficoRecebimentos();
         this.criarGraficoSupervisores();
-        this.criarGraficoNodeGerencial();
-        this.criarGraficoPEP();
-
+        
         console.log('✅ [CHARTS-NOVO] Todos os gráficos criados!');
+        
     } catch (error) {
         console.error('❌ [CHARTS-NOVO] Erro ao criar gráficos:', error);
     }
 };
 
 // ============= DESTRUIR GRÁFICOS EXISTENTES =============
-ChartsDashboard.destruirGraficos = function () {
+ChartsDashboard.destruirGraficos = function() {
     Object.values(this.instances).forEach(chart => {
         if (chart && typeof chart.destroy === 'function') {
             chart.destroy();
@@ -470,23 +348,17 @@ ChartsDashboard.destruirGraficos = function () {
 // Este arquivo será completado com todas as funções de criação de gráficos
 
 // ============= INTEGRAÇÃO COM FILTROS DO DASHBOARD =============
-ChartsDashboard.setupFilterIntegration = function () {
+ChartsDashboard.setupFilterIntegration = function() {
     console.log('🔗 [CHARTS-NOVO] Configurando integração com filtros...');
-
+    
     // Escutar evento de filtros aplicados
-    window.addEventListener('dashboardFiltersApplied', event => {
-        console.log(
-            '🔍 [CHARTS-NOVO] Filtros aplicados:',
-            event.detail.filterCount,
-            'de',
-            event.detail.originalCount,
-            'registros'
-        );
-
+    window.addEventListener('dashboardFiltersApplied', (event) => {
+        console.log('🔍 [CHARTS-NOVO] Filtros aplicados:', event.detail.filterCount, 'de', event.detail.originalCount, 'registros');
+        
         if (event.detail.filteredData && event.detail.filteredData.length >= 0) {
             console.log('📊 [CHARTS-NOVO] Atualizando gráficos com dados filtrados...');
             this.atualizar(event.detail.filteredData);
-
+            
             // Também notificar sistema de cards para atualizar
             if (window.updateDashboardCards) {
                 try {
@@ -498,15 +370,15 @@ ChartsDashboard.setupFilterIntegration = function () {
             }
         }
     });
-
+    
     // Escutar evento de filtros limpos
-    window.addEventListener('dashboardFiltersCleared', event => {
+    window.addEventListener('dashboardFiltersCleared', (event) => {
         console.log('🧹 [CHARTS-NOVO] Filtros limpos:', event.detail.count, 'registros');
-
+        
         if (event.detail.data && event.detail.data.length > 0) {
             console.log('📊 [CHARTS-NOVO] Restaurando gráficos com todos os dados...');
             this.atualizar(event.detail.data);
-
+            
             // Também atualizar cards
             if (window.updateDashboardCards) {
                 try {
@@ -518,30 +390,30 @@ ChartsDashboard.setupFilterIntegration = function () {
             }
         }
     });
-
+    
     // Escutar mudanças na tabela do firebase-table-system
-    window.addEventListener('firebaseTableDataLoaded', event => {
+    window.addEventListener('firebaseTableDataLoaded', (event) => {
         console.log('📢 [CHARTS-NOVO] Novos dados carregados:', event.detail.length, 'registros');
         if (event.detail.data && event.detail.data.length > 0) {
             this.atualizar(event.detail.data);
         }
     });
-
+    
     console.log('✅ [CHARTS-NOVO] Integração com filtros configurada');
 };
 
 // ============= FUNÇÃO PARA INTEGRAR COM SISTEMA DE CARDS =============
-ChartsDashboard.integrarComCards = function () {
+ChartsDashboard.integrarComCards = function() {
     // Tentar encontrar e integrar com o sistema de cards do dashboard
     if (window.updateDashboardCards) {
         console.log('📊 [CHARTS-NOVO] Sistema de cards encontrado, integrando...');
-
+        
         // Sobrescrever função de atualização para incluir cards
         const originalAtualizar = this.atualizar.bind(this);
-        this.atualizar = function (novosDados) {
+        this.atualizar = function(novosDados) {
             // Atualizar gráficos
             originalAtualizar(novosDados);
-
+            
             // Atualizar cards também
             try {
                 window.updateDashboardCards();
@@ -559,7 +431,7 @@ ChartsDashboard.integrarComCards = function () {
 window.ChartsDashboard = ChartsDashboard;
 
 // ============= CONFIGURAÇÃO AUTOMÁTICA DE EVENTOS =============
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function() {
     // Configurar integração com filtros assim que o DOM carregar
     setTimeout(() => {
         if (ChartsDashboard.setupFilterIntegration) {
@@ -570,51 +442,23 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // ============= ESCUTAR SISTEMA FIREBASE GLOBAL =============
-window.addEventListener('firebaseSystemReady', function (event) {
+window.addEventListener('firebaseSystemReady', function(event) {
     console.log('📊 [CHARTS-NOVO] Sistema Firebase pronto globalmente:', event.detail);
-
+    
     // Se há dados disponíveis, inicializar gráficos automaticamente
     if (event.detail.dataLength > 0) {
         setTimeout(() => {
             console.log('🚀 [CHARTS-NOVO] Auto-inicializando com dados globais...');
-
+            
             // Tentar obter dados do sistema Firebase
             if (window.FirebaseTableSystem && window.FirebaseTableSystem.getData) {
                 const dados = window.FirebaseTableSystem.getData();
                 if (dados && dados.length > 0) {
                     ChartsDashboard.inicializar(dados);
-                    console.log(
-                        '✅ [CHARTS-NOVO] Gráficos inicializados com',
-                        dados.length,
-                        'registros'
-                    );
+                    console.log('✅ [CHARTS-NOVO] Gráficos inicializados com', dados.length, 'registros');
                 }
             }
         }, 500);
-    }
-});
-
-// ============= ESCUTAR FILTROS UNIFICADOS =============
-document.addEventListener('unifiedFiltersChanged', function(event) {
-    console.log('🔍 [CHARTS-NOVO] Filtros unificados alterados:', event.detail);
-    
-    // Verificar se há dados filtrados
-    if (event.detail.filteredData && event.detail.filteredData.length >= 0) {
-        console.log('📊 [CHARTS-NOVO] Atualizando gráficos com dados filtrados:', event.detail.filteredData.length);
-        
-        // Reinicializar gráficos com dados filtrados
-        ChartsDashboard.data = event.detail.filteredData;
-        ChartsDashboard.hasData = event.detail.filteredData.length > 0;
-        
-        if (ChartsDashboard.hasData) {
-            // Recriar todos os gráficos
-            ChartsDashboard.criarTodosGraficos();
-            console.log('✅ [CHARTS-NOVO] Gráficos atualizados com filtros');
-        } else {
-            // Se não há dados filtrados, destruir gráficos
-            ChartsDashboard.destruirGraficos();
-            console.log('🧹 [CHARTS-NOVO] Gráficos destruídos (nenhum dado filtrado)');
-        }
     }
 });
 

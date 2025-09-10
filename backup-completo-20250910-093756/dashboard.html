@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="src/css/checkbox-dropdown.css?v=1.3&t=2025081813">
     <link rel="stylesheet" href="src/css/gestao-renovada.css?v=1.0&t=2025082121">
     <link rel="stylesheet" href="src/css/user-dropdown.css?v=1.0&t=2025082921">
-    <link rel="stylesheet" href="src/css/dropdown-fix.css?v=1.0">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="src/assets/images/Inovar-Telecom-Logo-Site_.png">
 </head>
@@ -403,10 +402,8 @@
                             <p>Visualize os dados de acordo com os filtros aplicados</p>
                             <div class="table-actions">
                                 <button id="refreshFilteredData" class="btn-refresh" onclick="refreshFilteredTable()">
-                                    <i class="fas fa-filter"></i>
-                                </button>
-                                <button id="syncFilteredData" class="btn-secondary" onclick="forcarSincronizacaoFiltros()" title="Forçar sincronização com filtros ativos">
-                                    <i class="fas fa-filter"></i>
+                                    <i class="fas fa-sync-alt"></i>
+                                    Atualizar
                                 </button>
                             </div>
                         </div>
@@ -486,17 +483,6 @@
                         <!-- Conteúdo será inserido dinamicamente pelo novo sistema -->
                         <div class="loading-charts">
                             <p>📊 Carregando gráficos e rankings...</p>
-                            <div style="margin-top: 15px;">
-                                <button onclick="forcarGraficos()" style="background: #3B82F6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px;">
-                                    🔥 Forçar Gráficos
-                                </button>
-                                <button onclick="inicializarGraficosStandalone()" style="background: #10B981; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
-                                    📊 Gráficos Alternativos
-                                </button>
-                            </div>
-                            <p style="font-size: 12px; color: #666; margin-top: 10px;">
-                                Se os gráficos não aparecerem em 10 segundos, clique em um dos botões acima
-                            </p>
                         </div>
                     </div>
 
@@ -628,16 +614,19 @@
                 </div>
 
 
-                <!-- SEÇÃO DE GESTÃO DE PROJETOS -->
+                <!-- Seção de Gestão de Projetos -->
                 <div id="gestao-projetos" class="section">
                     <div class="gestao-hero">
                         <div class="gestao-hero-content">
-                            <div class="gestao-hero-icon">🗂️</div>
+                            <div class="gestao-hero-icon">
+                                🗂️
+                            </div>
                             <div class="gestao-hero-text">
                                 <h1 class="gestao-hero-title">Gestão de Projetos</h1>
-                                <p class="gestao-hero-desc">Gerencie projetos, supervisores, equipes e configurações extraídos automaticamente dos endereços cadastrados</p>
+                                <p class="gestao-hero-desc">Gerencie projetos, clientes e configurações do sistema</p>
                             </div>
                         </div>
+
                     </div>
 
                     <div class="gestao-tabs">
@@ -672,36 +661,29 @@
                         <div class="gestao-header">
                             <div class="gestao-title">
                                 <h2><i class="fas fa-building"></i> Projetos</h2>
-                                <p>Gerencie os projetos principais extraídos dos endereços cadastrados</p>
+                                <p>Gerencie os projetos principais</p>
                             </div>
                             <div class="gestao-actions">
-                                <button class="btn-primary" onclick="adicionarNovoItem('projetos')">
+                                <button class="btn-primary" onclick="adicionarItem('projetos')">
                                     <i class="fas fa-plus"></i> Novo Projeto
-                                </button>
-                                <button class="btn-secondary" onclick="sincronizarDados('projetos')">
-                                    <i class="fas fa-sync"></i> Sincronizar
                                 </button>
                             </div>
                         </div>
+
                         <div class="crud-table-container">
                             <table class="crud-table">
                                 <thead>
                                     <tr>
                                         <th>#</th>
                                         <th>Nome</th>
-                                        <th>Origem</th>
-                                        <th>Usos</th>
+                                        <th>Descrição</th>
+                                        <th>Data Criação</th>
                                         <th>Status</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="projetosTableBody">
-                                    <tr class="empty-state">
-                                        <td colspan="6" style="text-align:center;padding:30px;color:#6b7280;">
-                                            <div style="font-size:16px;margin-bottom:10px;">📊</div>
-                                            <div>Carregando dados dos projetos...</div>
-                                        </td>
-                                    </tr>
+                                    <!-- Dados serão carregados dinamicamente -->
                                 </tbody>
                             </table>
                         </div>
@@ -712,36 +694,27 @@
                         <div class="gestao-header">
                             <div class="gestao-title">
                                 <h2><i class="fas fa-sitemap"></i> Sub Projetos</h2>
-                                <p>Gerencie os sub projetos extraídos dos endereços cadastrados</p>
+                                <p>Gerencie os sub projetos dentro de cada projeto principal</p>
                             </div>
-                            <div class="gestao-actions">
-                                <button class="btn-primary" onclick="adicionarNovoItem('subprojetos')">
-                                    <i class="fas fa-plus"></i> Novo Sub Projeto
-                                </button>
-                                <button class="btn-secondary" onclick="sincronizarDados('subprojetos')">
-                                    <i class="fas fa-sync"></i> Sincronizar
-                                </button>
-                            </div>
+                            <button class="btn-primary" onclick="adicionarItem('subprojetos')">
+                                <i class="fas fa-plus"></i> Novo Sub Projeto
+                            </button>
                         </div>
+
                         <div class="crud-table-container">
                             <table class="crud-table">
                                 <thead>
                                     <tr>
                                         <th>#</th>
                                         <th>Nome</th>
-                                        <th>Origem</th>
-                                        <th>Usos</th>
+                                        <th>Descrição</th>
+                                        <th>Data Criação</th>
                                         <th>Status</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="subprojetosTableBody">
-                                    <tr class="empty-state">
-                                        <td colspan="6" style="text-align:center;padding:30px;color:#6b7280;">
-                                            <div style="font-size:16px;margin-bottom:10px;">📊</div>
-                                            <div>Carregando dados dos sub projetos...</div>
-                                        </td>
-                                    </tr>
+                                    <!-- Dados serão carregados dinamicamente -->
                                 </tbody>
                             </table>
                         </div>
@@ -752,36 +725,27 @@
                         <div class="gestao-header">
                             <div class="gestao-title">
                                 <h2><i class="fas fa-tasks"></i> Tipos de Ação</h2>
-                                <p>Gerencie os tipos de ação extraídos dos endereços cadastrados</p>
+                                <p>Gerencie os tipos de ação disponíveis (Vistoria, Construção, etc.)</p>
                             </div>
-                            <div class="gestao-actions">
-                                <button class="btn-primary" onclick="adicionarNovoItem('tipos-acao')">
-                                    <i class="fas fa-plus"></i> Novo Tipo de Ação
-                                </button>
-                                <button class="btn-secondary" onclick="sincronizarDados('tipos-acao')">
-                                    <i class="fas fa-sync"></i> Sincronizar
-                                </button>
-                            </div>
+                            <button class="btn-primary" onclick="adicionarItem('tipos-acao')">
+                                <i class="fas fa-plus"></i> Novo Tipo de Ação
+                            </button>
                         </div>
+
                         <div class="crud-table-container">
                             <table class="crud-table">
                                 <thead>
                                     <tr>
                                         <th>#</th>
                                         <th>Nome</th>
-                                        <th>Origem</th>
-                                        <th>Usos</th>
+                                        <th>Descrição</th>
+                                        <th>Data Criação</th>
                                         <th>Status</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tiposAcaoTableBody">
-                                    <tr class="empty-state">
-                                        <td colspan="6" style="text-align:center;padding:30px;color:#6b7280;">
-                                            <div style="font-size:16px;margin-bottom:10px;">📊</div>
-                                            <div>Carregando dados dos tipos de ação...</div>
-                                        </td>
-                                    </tr>
+                                    <!-- Dados serão carregados dinamicamente -->
                                 </tbody>
                             </table>
                         </div>
@@ -792,36 +756,27 @@
                         <div class="gestao-header">
                             <div class="gestao-title">
                                 <h2><i class="fas fa-user-tie"></i> Supervisores</h2>
-                                <p>Gerencie os supervisores extraídos dos endereços cadastrados</p>
+                                <p>Gerencie os supervisores responsáveis pelos projetos</p>
                             </div>
-                            <div class="gestao-actions">
-                                <button class="btn-primary" onclick="adicionarNovoItem('supervisores')">
-                                    <i class="fas fa-plus"></i> Novo Supervisor
-                                </button>
-                                <button class="btn-secondary" onclick="sincronizarDados('supervisores')">
-                                    <i class="fas fa-sync"></i> Sincronizar
-                                </button>
-                            </div>
+                            <button class="btn-primary" onclick="adicionarItem('supervisores')">
+                                <i class="fas fa-plus"></i> Novo Supervisor
+                            </button>
                         </div>
+
                         <div class="crud-table-container">
                             <table class="crud-table">
                                 <thead>
                                     <tr>
                                         <th>#</th>
                                         <th>Nome</th>
-                                        <th>Origem</th>
-                                        <th>Usos</th>
+                                        <th>Descrição</th>
+                                        <th>Data Criação</th>
                                         <th>Status</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="supervisoresTableBody">
-                                    <tr class="empty-state">
-                                        <td colspan="6" style="text-align:center;padding:30px;color:#6b7280;">
-                                            <div style="font-size:16px;margin-bottom:10px;">📊</div>
-                                            <div>Carregando dados dos supervisores...</div>
-                                        </td>
-                                    </tr>
+                                    <!-- Dados serão carregados dinamicamente -->
                                 </tbody>
                             </table>
                         </div>
@@ -832,36 +787,27 @@
                         <div class="gestao-header">
                             <div class="gestao-title">
                                 <h2><i class="fas fa-users"></i> Equipes</h2>
-                                <p>Gerencie as equipes extraídas dos endereços cadastrados</p>
+                                <p>Gerencie as equipes de trabalho</p>
                             </div>
-                            <div class="gestao-actions">
-                                <button class="btn-primary" onclick="adicionarNovoItem('equipes')">
-                                    <i class="fas fa-plus"></i> Nova Equipe
-                                </button>
-                                <button class="btn-secondary" onclick="sincronizarDados('equipes')">
-                                    <i class="fas fa-sync"></i> Sincronizar
-                                </button>
-                            </div>
+                            <button class="btn-primary" onclick="adicionarItem('equipes')">
+                                <i class="fas fa-plus"></i> Nova Equipe
+                            </button>
                         </div>
+
                         <div class="crud-table-container">
                             <table class="crud-table">
                                 <thead>
                                     <tr>
                                         <th>#</th>
                                         <th>Nome</th>
-                                        <th>Origem</th>
-                                        <th>Usos</th>
+                                        <th>Descrição</th>
+                                        <th>Data Criação</th>
                                         <th>Status</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="equipesTableBody">
-                                    <tr class="empty-state">
-                                        <td colspan="6" style="text-align:center;padding:30px;color:#6b7280;">
-                                            <div style="font-size:16px;margin-bottom:10px;">📊</div>
-                                            <div>Carregando dados das equipes...</div>
-                                        </td>
-                                    </tr>
+                                    <!-- Dados serão carregados dinamicamente -->
                                 </tbody>
                             </table>
                         </div>
@@ -872,36 +818,27 @@
                         <div class="gestao-header">
                             <div class="gestao-title">
                                 <h2><i class="fas fa-map-marker-alt"></i> Cidades</h2>
-                                <p>Gerencie as cidades extraídas dos endereços cadastrados</p>
+                                <p>Gerencie as cidades onde atuamos</p>
                             </div>
-                            <div class="gestao-actions">
-                                <button class="btn-primary" onclick="adicionarNovoItem('cidades')">
-                                    <i class="fas fa-plus"></i> Nova Cidade
-                                </button>
-                                <button class="btn-secondary" onclick="sincronizarDados('cidades')">
-                                    <i class="fas fa-sync"></i> Sincronizar
-                                </button>
-                            </div>
+                            <button class="btn-primary" onclick="adicionarItem('cidades')">
+                                <i class="fas fa-plus"></i> Nova Cidade
+                            </button>
                         </div>
+
                         <div class="crud-table-container">
                             <table class="crud-table">
                                 <thead>
                                     <tr>
                                         <th>#</th>
                                         <th>Nome</th>
-                                        <th>Origem</th>
-                                        <th>Usos</th>
+                                        <th>Descrição</th>
+                                        <th>Data Criação</th>
                                         <th>Status</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="cidadesTableBody">
-                                    <tr class="empty-state">
-                                        <td colspan="6" style="text-align:center;padding:30px;color:#6b7280;">
-                                            <div style="font-size:16px;margin-bottom:10px;">📊</div>
-                                            <div>Carregando dados das cidades...</div>
-                                        </td>
-                                    </tr>
+                                    <!-- Dados serão carregados dinamicamente -->
                                 </tbody>
                             </table>
                         </div>
@@ -1529,9 +1466,9 @@
     <!-- <script src="src/js/multi-select-dropdown.js?v=1.0&t=2025082121"></script> --> <!-- DESABILITADO - Sistema unificado de filtros -->
     <!-- <script src="src/js/permissions-system.js?v=1.0&t=2025082121"></script> --> <!-- Desabilitado - sistema simplificado -->
     <!-- <script src="src/js/force-init-dropdowns.js?v=1.3&t=2025081813"></script> --> <!-- DESABILITADO - Sistema unificado de filtros -->
-    <script src="src/js/gestao-projetos-sistema.js?v=1.0&t=2025091015"></script> <!-- SISTEMA DE GESTÃO DE PROJETOS NOVO -->
-    <script src="force-charts-init.js?v=1.0"></script> <!-- SISTEMA DE FORÇA BRUTA PARA GRÁFICOS -->
-    <script src="graficos-standalone.js?v=1.0"></script> <!-- SISTEMA DE GRÁFICOS ALTERNATIVO -->
+    <!-- <script src="src/js/gestao-renovada.js?v=1.0&t=2025082121"></script> --> <!-- Desabilitado - substituído por sistema novo -->
+    <script src="src/js/gestao-nova-simples.js?v=1.2&t=2025090923"></script> <!-- Sistema de gestão REABILITADO -->
+    <!-- <script src="src/js/gestao-projetos-novo.js?v=1.0&t=2025091013"></script> --> <!-- NOVO SISTEMA DE GESTÃO - DESABILITADO -->
     <!-- <script src="src/js/novo-endereco-integrado.js?v=2.0&t=2025082216"></script> --> <!-- DESABILITADO - Conflitava com firebase-table-system -->
     <script src="src/js/teste-sistema-endereco.js?v=1.0&t=2025090512"></script> <!-- Sistema de testes para endereços -->
     <script src="src/js/user-dropdown-system.js?v=1.0&t=2025082921"></script> <!-- Sistema de dropdown do usuário NOVO -->
@@ -1554,23 +1491,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 [DASHBOARD] Inicializando sistema de gráficos novo...');
             
-            // DIAGNÓSTICO COMPLETO DAS DEPENDÊNCIAS
-            function diagnosticarDependencias() {
-                console.log('🔍 [DIAGNÓSTICO] Verificando dependências...');
-                console.log('📊 Chart disponível?', typeof Chart !== 'undefined' ? '✅' : '❌');
-                console.log('📊 ChartDataLabels disponível?', typeof ChartDataLabels !== 'undefined' ? '✅' : '❌');
-                console.log('📊 ChartsDashboard disponível?', typeof ChartsDashboard !== 'undefined' ? '✅' : '❌');
-                console.log('📊 FirebaseTableSystem disponível?', typeof FirebaseTableSystem !== 'undefined' ? '✅' : '❌');
-                
-                if (typeof ChartsDashboard !== 'undefined') {
-                    console.log('📊 ChartsDashboard.inicializar disponível?', typeof ChartsDashboard.inicializar === 'function' ? '✅' : '❌');
-                }
-            }
-            
             // Aguardar Chart.js e FirebaseTableSystem estarem prontos
             function inicializarGraficos() {
-                diagnosticarDependencias();
-                
                 if (typeof Chart !== 'undefined' && 
                     typeof ChartsDashboard !== 'undefined' && 
                     ChartsDashboard.inicializar) {
@@ -1597,35 +1519,6 @@
             
             // Iniciar processo
             setTimeout(inicializarGraficos, 1000);
-            
-            // FORÇAR INICIALIZAÇÃO SE NECESSÁRIO
-            setTimeout(() => {
-                if (!ChartsDashboard.isInitialized) {
-                    console.log('🔥 [DASHBOARD] FORÇANDO inicialização dos gráficos...');
-                    ChartsDashboard.inicializar();
-                }
-            }, 10000);
-
-            // INICIALIZAÇÃO SUPER AGRESSIVA - GARANTIR GRÁFICOS SEMPRE VISÍVEIS
-            setTimeout(() => {
-                console.log('🚀 [DASHBOARD] INICIALIZAÇÃO SUPER AGRESSIVA DOS GRÁFICOS...');
-                if (typeof ChartsDashboard !== 'undefined') {
-                    // Forçar reinicialização completa
-                    ChartsDashboard.destruirGraficos();
-                    ChartsDashboard.isInitialized = false;
-                    ChartsDashboard.inicializar();
-                    
-                    // Garantir que o container esteja visível
-                    const container = document.getElementById('charts-rankings-container');
-                    if (container) {
-                        container.style.display = 'block';
-                        container.style.visibility = 'visible';
-                        console.log('✅ [DASHBOARD] Container de gráficos forçado como visível');
-                    }
-                } else {
-                    console.error('❌ [DASHBOARD] ChartsDashboard não encontrado!');
-                }
-            }, 3000);
             
             // Escutar eventos do FirebaseTableSystem
             window.addEventListener('firebaseTableDataLoaded', function(event) {
@@ -1691,22 +1584,32 @@
             document.getElementById(modalId).style.display = 'none';
         }
         
-        // FUNÇÃO INTEGRADA COM NOVO SISTEMA
         function showGestaoTab(tabName) {
-            console.log(`🎯 [GESTAO-DASHBOARD] showGestaoTab chamado para: ${tabName}`);
+            console.log(`🎯 [DASHBOARD] showGestaoTab chamado para: ${tabName}`);
             
-            // Chamar sistema de gestão quando estiver disponível
-            if (window.GestaoProjetosSystem && typeof window.GestaoProjetosSystem.mostrarAba === 'function') {
-                console.log(`✅ [GESTAO-DASHBOARD] Chamando sistema de gestão para: ${tabName}`);
-                window.GestaoProjetosSystem.mostrarAba(tabName);
-            } else {
-                console.warn(`⚠️ [GESTAO-DASHBOARD] Sistema ainda não carregado, aguardando...`);
-                // Tentar novamente em 2 segundos
+            // Esconder todas as abas
+            const tabs = document.querySelectorAll('.gestao-tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Remover classe active de todos os botões
+            const buttons = document.querySelectorAll('.gestao-tab-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Mostrar aba selecionada
+            document.getElementById(`gestao-${tabName}-tab`).classList.add('active');
+            
+            // Adicionar classe active no botão clicado
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
+            
+            // CORREÇÃO: Chamar o sistema de gestão se disponível
+            if (window.mostrarNovaAba && typeof window.mostrarNovaAba === 'function') {
+                console.log(`✅ [DASHBOARD] Chamando sistema de gestão para: ${tabName}`);
                 setTimeout(() => {
-                    if (window.GestaoProjetosSystem && typeof window.GestaoProjetosSystem.mostrarAba === 'function') {
-                        console.log(`✅ [GESTAO-DASHBOARD] Sistema carregado na segunda tentativa`);
-                        window.GestaoProjetosSystem.mostrarAba(tabName);
-                    } else {
+                    window.mostrarNovaAba(tabName);
+                }, 100);
+            } else {
                 console.warn(`⚠️ [DASHBOARD] Sistema de gestão não disponível para: ${tabName}`);
                 console.log('💡 [DASHBOARD] Tentando novamente em 2 segundos...');
                 setTimeout(() => {
@@ -2052,29 +1955,6 @@ Digite o número da opção desejada:`;
                         window.carregarTabelaEnderecos();
                     }
                 }, 500);
-            } else if (sectionName === 'inicio' || sectionName === 'infraestrutura') {
-                // 🔥 FORÇAR GRÁFICOS A APARECEREM QUANDO VOLTAR AO INÍCIO OU DASHBOARD
-                setTimeout(() => {
-                    console.log('🚀 [INÍCIO] Forçando reinicialização dos gráficos...');
-                    if (typeof ChartsDashboard !== 'undefined') {
-                        // Garantir que o container esteja visível
-                        const container = document.getElementById('charts-rankings-container');
-                        if (container) {
-                            container.style.display = 'block';
-                            container.style.visibility = 'visible';
-                            container.style.opacity = '1';
-                        }
-                        
-                        // Reinicializar sistema completo
-                        ChartsDashboard.destruirGraficos();
-                        ChartsDashboard.isInitialized = false;
-                        ChartsDashboard.inicializar();
-                        
-                        console.log('✅ [INÍCIO] Gráficos forçados a reaparecer!');
-                    } else {
-                        console.error('❌ [INÍCIO] ChartsDashboard não encontrado!');
-                    }
-                }, 100);
             }
         };
 

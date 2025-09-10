@@ -19,25 +19,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Escutar filtros aplicados - SISTEMA UNIFICADO
-    window.addEventListener('unifiedFiltersChanged', function(event) {
-        console.log('🔍 [RESUMO-TABELA] Filtros unificados aplicados:', event.detail.filteredCount, 'de', event.detail.totalCount);
-        if (event.detail && event.detail.filteredData) {
-            atualizarTabelaResumo(event.detail.filteredData);
-        }
-    });
-    
-    // Escutar filtros aplicados - SISTEMA ANTIGO (COMPATIBILIDADE)
+    // Escutar filtros aplicados
     window.addEventListener('filtersApplied', function(event) {
-        console.log('🔍 [RESUMO-TABELA] Filtros aplicados (sistema antigo)');
-        if (event.detail && event.detail.filteredData) {
-            atualizarTabelaResumo(event.detail.filteredData);
-        }
-    });
-    
-    // Escutar filtros do dashboard
-    window.addEventListener('dashboardFiltersApplied', function(event) {
-        console.log('🔍 [RESUMO-TABELA] Filtros do dashboard aplicados:', event.detail.filterCount, 'registros');
+        console.log('🔍 [RESUMO-TABELA] Filtros aplicados');
         if (event.detail && event.detail.filteredData) {
             atualizarTabelaResumo(event.detail.filteredData);
         }
@@ -228,31 +212,12 @@ function refreshFilteredTable() {
         }, 2000);
     }
     
-    // Tentar recarregar dados - PRIORITIZAR DADOS FILTRADOS
-    let dados = null;
-    
-    // 1. Tentar obter dados filtrados do sistema unificado
-    if (window.unifiedFilterSystem && window.unifiedFilterSystem.filteredData) {
-        dados = window.unifiedFilterSystem.filteredData;
-        console.log('📊 [RESUMO-TABELA] Usando dados filtrados do sistema unificado:', dados.length);
-    }
-    
-    // 2. Tentar obter dados do FirebaseTableSystem
-    if (!dados && window.FirebaseTableSystem && window.FirebaseTableSystem.getData) {
-        dados = window.FirebaseTableSystem.getData();
-        console.log('📊 [RESUMO-TABELA] Usando dados do FirebaseTableSystem:', dados?.length || 'null');
-    }
-    
-    // 3. Tentar dados globais
-    if (!dados && window.currentFirebaseData) {
-        dados = window.currentFirebaseData;
-        console.log('📊 [RESUMO-TABELA] Usando dados globais:', dados?.length || 'null');
-    }
-    
-    if (dados && dados.length > 0) {
-        atualizarTabelaResumo(dados);
-    } else {
-        console.warn('⚠️ [RESUMO-TABELA] Nenhum dado disponível para atualizar');
+    // Tentar recarregar dados
+    if (window.FirebaseTableSystem && window.FirebaseTableSystem.getData) {
+        const dados = window.FirebaseTableSystem.getData();
+        if (dados && dados.length > 0) {
+            atualizarTabelaResumo(dados);
+        }
     }
 }
 
@@ -262,33 +227,9 @@ window.updateFilteredTableData = function(data) {
     atualizarTabelaResumo(data);
 };
 
-// ============= FORÇAR SINCRONIZAÇÃO COM FILTROS =============
-function forcarSincronizacaoFiltros() {
-    console.log('🔄 [RESUMO-TABELA] Forçando sincronização com filtros...');
-    
-    // Verificar se há filtros ativos
-    if (window.unifiedFilterSystem) {
-        const filtros = window.unifiedFilterSystem.currentFilters;
-        const dadosFiltrados = window.unifiedFilterSystem.filteredData;
-        
-        console.log('🔍 [RESUMO-TABELA] Filtros ativos:', Object.keys(filtros).length);
-        console.log('📊 [RESUMO-TABELA] Dados filtrados disponíveis:', dadosFiltrados?.length || 'null');
-        
-        if (dadosFiltrados && dadosFiltrados.length >= 0) {
-            atualizarTabelaResumo(dadosFiltrados);
-            return true;
-        }
-    }
-    
-    // Fallback para dados não filtrados
-    refreshFilteredTable();
-    return false;
-}
-
 // ============= FUNÇÕES GLOBAIS =============
 window.refreshFilteredTable = refreshFilteredTable;
 window.goToPage = goToPage;
 window.changePageSize = changePageSize;
-window.forcarSincronizacaoFiltros = forcarSincronizacaoFiltros;
 
 console.log('✅ [RESUMO-TABELA] Sistema inicializado');

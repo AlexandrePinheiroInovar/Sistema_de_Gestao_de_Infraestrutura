@@ -273,49 +273,15 @@ ChartsDashboard.inicializar = function (dados = null) {
             return;
         }
 
-        // 2. Obter dados - MELHORADO PARA AGUARDAR DADOS REAIS
+        // 2. Obter dados
         let dadosProcessar = dados;
-        
-        // Tentar obter dados do FirebaseTableSystem
         if (!dadosProcessar && window.FirebaseTableSystem && window.FirebaseTableSystem.getData) {
             dadosProcessar = window.FirebaseTableSystem.getData();
-            console.log('📊 [CHARTS-NOVO] Dados obtidos do FirebaseTableSystem:', dadosProcessar?.length || 'null');
-        }
-        
-        // Tentar obter dados do window.currentFirebaseData
-        if (!dadosProcessar && window.currentFirebaseData) {
-            dadosProcessar = window.currentFirebaseData;
-            console.log('📊 [CHARTS-NOVO] Dados obtidos do window.currentFirebaseData:', dadosProcessar?.length || 'null');
-        }
-        
-        // Tentar obter dados da variável global firebaseTableData
-        if (!dadosProcessar && window.firebaseTableData) {
-            dadosProcessar = window.firebaseTableData;
-            console.log('📊 [CHARTS-NOVO] Dados obtidos do window.firebaseTableData:', dadosProcessar?.length || 'null');
         }
 
-        // Se ainda não há dados, aguardar mais ou usar mock apenas como último recurso
         if (!dadosProcessar || dadosProcessar.length === 0) {
-            // Se essa é a primeira tentativa, aguardar mais
-            if (!this.tentativasSemDados) {
-                this.tentativasSemDados = 1;
-                console.warn('⚠️ [CHARTS-NOVO] Primeira tentativa sem dados, aguardando 5s...');
-                setTimeout(() => this.inicializar(dados), 5000);
-                return;
-            } else if (this.tentativasSemDados < 3) {
-                this.tentativasSemDados++;
-                console.warn(`⚠️ [CHARTS-NOVO] Tentativa ${this.tentativasSemDados} sem dados, aguardando mais 3s...`);
-                setTimeout(() => this.inicializar(dados), 3000);
-                return;
-            } else {
-                console.warn('⚠️ [CHARTS-NOVO] Máximo de tentativas atingido, usando dados mock como fallback...');
-                dadosProcessar = this.gerarDadosMock();
-                // Resetar contador para futuras tentativas
-                this.tentativasSemDados = 0;
-            }
-        } else {
-            // Reset contador se encontrou dados
-            this.tentativasSemDados = 0;
+            console.warn('⚠️ [CHARTS-NOVO] Sem dados disponíveis, usando mock...');
+            dadosProcessar = this.gerarDadosMock();
         }
 
         console.log('📊 [CHARTS-NOVO] Processando', dadosProcessar.length, 'registros');

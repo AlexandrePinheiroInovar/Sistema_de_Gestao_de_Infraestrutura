@@ -233,7 +233,7 @@ tr.tabela {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 5000;
+    z-index: 10000;
     animation: fadeIn 0.3s ease;
 }
 
@@ -379,7 +379,7 @@ tr.tabela {
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 6000;
+    z-index: 11000;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     animation: slideInRight 0.3s ease;

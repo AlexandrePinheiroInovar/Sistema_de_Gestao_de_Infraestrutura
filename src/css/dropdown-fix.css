@@ -1,0 +1,81 @@
+/* ============= CORREÇÃO DEFINITIVA PARA Z-INDEX DOS DROPDOWNS ============= */
+/* Garantir que seletores sempre fiquem por cima de tudo */
+
+/* Forçar z-index máximo para dropdowns */
+.checkbox-dropdown,
+.checkbox-dropdown.open,
+.checkbox-dropdown-content,
+.checkbox-dropdown.open .checkbox-dropdown-content,
+.infra-filters-container .checkbox-dropdown,
+.infra-filters-container .checkbox-dropdown.open,
+.infra-filters-container .checkbox-dropdown-content,
+.infra-filters-container .checkbox-dropdown.open .checkbox-dropdown-content {
+    z-index: 999999999999999 !important;
+    position: relative !important;
+}
+
+/* Específico para conteúdo do dropdown quando aberto */
+.checkbox-dropdown.open .checkbox-dropdown-content {
+    position: absolute !important;
+    z-index: 999999999999999 !important;
+    display: block !important;
+    background: white !important;
+    border: 2px solid #3b82f6 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 25px 75px rgba(0, 0, 0, 0.9) !important;
+    backdrop-filter: blur(2px) !important;
+    min-width: 250px !important;
+    max-height: 350px !important;
+    overflow-y: auto !important;
+}
+
+/* Garantir que o dropdown fique visível mesmo sobre modais */
+.checkbox-dropdown.open .checkbox-dropdown-content,
+.filter-group .checkbox-dropdown.open .checkbox-dropdown-content,
+.filters-grid .checkbox-dropdown.open .checkbox-dropdown-content,
+.infra-filters-container .checkbox-dropdown.open .checkbox-dropdown-content,
+body .checkbox-dropdown.open .checkbox-dropdown-content,
+html .checkbox-dropdown.open .checkbox-dropdown-content {
+    z-index: 999999999999999 !important;
+    position: absolute !important;
+    display: block !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Forçar elementos que podem estar cobrindo */
+.gestao-overlay,
+.gestao-popup,
+.gestao-notification,
+.analysis-section,
+.chart-container,
+.section,
+.modal,
+.popup,
+.overlay {
+    z-index: 1000 !important;
+}
+
+/* Exceção apenas para elementos críticos do sistema */
+.system-critical,
+.loading-overlay,
+.error-modal {
+    z-index: 888888 !important;
+}
+
+/* Fix para o container principal dos filtros */
+.infra-filters-container {
+    position: relative !important;
+    z-index: 999999 !important;
+}
+
+.filters-grid {
+    position: relative !important;
+    z-index: 999999 !important;
+}
+
+.filter-group {
+    position: relative !important;
+    z-index: 999999 !important;
+}
