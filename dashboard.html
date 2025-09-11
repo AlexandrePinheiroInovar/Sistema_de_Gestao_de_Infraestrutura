@@ -582,21 +582,27 @@
                                         <th data-column="14">DATA RECEBIMENTO</th>
                                         <th data-column="15">DATA INICIO</th>
                                         <th data-column="16">DATA FINAL</th>
-                                        <th data-column="17">EQUIPE</th>
-                                        <th data-column="18">Supervisor</th>
-                                        <th data-column="19">Status</th>
-                                        <th data-column="20">RDO</th>
-                                        <th data-column="21">BOOK</th>
-                                        <th data-column="22">PROJETO</th>
-                                        <th data-column="23">JUSTIFICATIVA</th>
-                                        <th data-column="24">Observação</th>
-                                        <th data-column="25">Observação</th>
+                                        <th data-column="17">Dias</th>
+                                        <th data-column="18">EQUIPE</th>
+                                        <th data-column="19">SUPERVISOR</th>
+                                        <th data-column="20">STATUS</th>
+                                        <th data-column="21">RDO</th>
+                                        <th data-column="22">BOOK</th>
+                                        <th data-column="23">COLABORADOR/BOOK</th>
+                                        <th data-column="24">DATA BOOK</th>
+                                        <th data-column="25">PROJETO</th>
+                                        <th data-column="26">COLABORADOR/PROJETO</th>
+                                        <th data-column="27">DATA/PROJETO</th>
+                                        <th data-column="28">JUSTIFICATIVA</th>
+                                        <th data-column="29">Observação</th>
+                                        <th data-column="30">SOLUÇÃO</th>
+                                        <th data-column="31">< OU > QUE 30</th>
                                         <th data-column="actions">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="enderecoTableBody">
                                     <tr class="empty-state">
-                                        <td colspan="26">
+                                        <td colspan="32">
                                             <div class="empty-state-content">
                                                 <div class="empty-icon">📊</div>
                                                 <h3>Tabela Vazia</h3>
@@ -1511,11 +1517,12 @@
     <!-- Firebase Sistema Unificado (PRODUCTION ONLY) -->
     <script src="src/js/firebase-complete.js?v=1.3&t=2025081813"></script>
     <script src="src/js/firestore-integration.js?v=1.3&t=2025081813"></script>
-    <script src="src/js/novo-endereco-limpo.js?v=1.0&t=2025090201"></script> <!-- NOVO SISTEMA LIMPO -->
+    <script src="src/js/novo-endereco-limpo.js?v=1.0&t=2025090201"></script> <!-- Reabilitado para botão Novo Endereço -->
+    <script src="src/js/endereco-excel-upload.js?v=2.0&t=2025091116"></script> <!-- SISTEMA DE UPLOAD EXCEL ATUALIZADO -->
     <script src="src/js/dashboard-minimal.js?v=1.3&t=2025081813"></script>
     <script src="src/js/dashboard-functions.js?v=1.3&t=2025081813"></script>
     <!-- <script src="src/js/dashboard-handlers.js?v=1.3&t=2025081813"></script> DESABILITADO - Conflitando com novo sistema -->
-    <script src="src/js/firebase-table-system.js?v=4.3&t=2025082530"></script> <!-- Reabilitado - gráficos desabilitados para usar dashboard-integration.js -->
+    <script src="src/js/firebase-table-system.js?v=4.3&t=2025082530"></script> <!-- SISTEMA PRINCIPAL DE TABELA -->
     <!-- <script src="src/js/multi-select-filters.js?v=1.0&t=2025081925"></script> --> <!-- Desabilitado - usando novo sistema -->
     <!-- <script src="src/js/excel-reader-complete.js?v=1.0&t=2025081925"></script> --> <!-- Desabilitado - substituído por endereco-excel-upload.js -->
     <!-- <script src="src/js/excel-template-standard.js?v=1.0&t=2025082020"></script> --> <!-- Desabilitado - usando novo sistema -->
@@ -1533,7 +1540,7 @@
     <script src="force-charts-init.js?v=1.0"></script> <!-- SISTEMA DE FORÇA BRUTA PARA GRÁFICOS -->
     <script src="graficos-standalone.js?v=1.0"></script> <!-- SISTEMA DE GRÁFICOS ALTERNATIVO -->
     <!-- <script src="src/js/novo-endereco-integrado.js?v=2.0&t=2025082216"></script> --> <!-- DESABILITADO - Conflitava com firebase-table-system -->
-    <script src="src/js/teste-sistema-endereco.js?v=1.0&t=2025090512"></script> <!-- Sistema de testes para endereços -->
+    <!-- <script src="src/js/teste-sistema-endereco.js?v=1.0&t=2025090512"></script> --> <!-- DESATIVADO - Conflitando com firebase-table-system -->
     <script src="src/js/user-dropdown-system.js?v=1.0&t=2025082921"></script> <!-- Sistema de dropdown do usuário NOVO -->
     
     <!-- ============= SISTEMA UNIFICADO DE FILTROS ============= -->

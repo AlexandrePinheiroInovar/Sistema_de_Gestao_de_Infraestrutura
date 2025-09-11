@@ -57,7 +57,7 @@ function atualizarTabelaResumo(dados) {
     resumoData = dados.map(item => ({
         pep: item['PEP'] || item['pep'] || '',
         nodeGerencial: item['NODE GERENCIAL'] || item['nodeGerencial'] || '',
-        status: item['Status'] || item['status'] || '',
+        status: item['STATUS'] || item['Status'] || item['status'] || '',
         observacao: item['Observação'] || item['observacao'] || item['Observacao'] || '',
         justificativa: item['JUSTIFICATIVA'] || item['justificativa'] || item['Justificativa'] || ''
     }));

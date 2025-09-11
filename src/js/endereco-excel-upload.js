@@ -1,7 +1,7 @@
 // ============= SISTEMA DE UPLOAD EXCEL PARA TABELA DE ENDEREÇOS =============
 console.log('📊 [ENDERECO-EXCEL] Inicializando sistema de upload Excel para endereços...');
 
-// ============= ORDEM EXATA DAS 25 COLUNAS =============
+// ============= ORDEM EXATA DAS 31 COLUNAS =============
 const COLUNAS_ENDERECO_EXATAS = [
     'Projeto', // 1
     'Sub Projeto', // 2
@@ -19,15 +19,21 @@ const COLUNAS_ENDERECO_EXATAS = [
     'DATA RECEBIMENTO', // 14
     'DATA INICIO', // 15
     'DATA FINAL', // 16
-    'EQUIPE', // 17
-    'Supervisor', // 18
-    'Status', // 19
-    'RDO', // 20
-    'BOOK', // 21
-    'PROJETO', // 22
-    'JUSTIFICATIVA', // 23
-    'Observação', // 24
-    'Observação' // 25 (segunda coluna observação)
+    'Dias', // 17
+    'EQUIPE', // 18
+    'SUPERVISOR', // 19
+    'STATUS', // 20
+    'RDO', // 21
+    'BOOK', // 22
+    'COLABORADOR/BOOK', // 23
+    'DATA BOOK', // 24
+    'PROJETO', // 25
+    'COLABORADOR/PROJETO', // 26
+    'DATA/PROJETO', // 27
+    'JUSTIFICATIVA', // 28
+    'Observação', // 29
+    'SOLUÇÃO', // 30
+    '< OU > QUE 30' // 31
 ];
 
 // ============= VARIÁVEIS GLOBAIS =============
@@ -55,23 +61,26 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function configurarUploadExcel() {
-    const fileInput = document.getElementById('excelUpload');
-
+    // Tentar ambos os IDs possíveis
+    let fileInput = document.getElementById('novoExcelUpload') || document.getElementById('excelUpload');
+    
     if (fileInput) {
+        console.log('✅ [ENDERECO-EXCEL] Input encontrado:', fileInput.id);
         // Limpar listeners anteriores
         fileInput.replaceWith(fileInput.cloneNode(true));
-        const newInput = document.getElementById('excelUpload');
+        const newInput = document.getElementById(fileInput.id);
 
         // Adicionar novo listener
         newInput.addEventListener('change', processarUploadExcel);
-        console.log('✅ [ENDERECO-EXCEL] Listener configurado no input file');
+        console.log('✅ [ENDERECO-EXCEL] Listener configurado no input file:', fileInput.id);
     } else {
-        console.warn('⚠️ [ENDERECO-EXCEL] Input file #excelUpload não encontrado');
+        console.warn('⚠️ [ENDERECO-EXCEL] Input file não encontrado (tentou: #novoExcelUpload, #excelUpload)');
     }
 }
 
 // ============= PROCESSAMENTO DO UPLOAD =============
 async function processarUploadExcel(event) {
+    console.log('🚨 [SISTEMA NOVO] FUNÇÃO PROCESSARUPLOADEXCEL EXECUTADA - VERSÃO NOVA!');
     const arquivo = event.target.files[0];
 
     if (!arquivo) {
@@ -170,8 +179,17 @@ function lerArquivoExcel(arquivo) {
                     raw: false
                 });
 
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
+                // Procurar pela aba BD_Controle especificamente
+                const targetSheetName = 'BD_Controle';
+                const sheetName = workbook.SheetNames.includes(targetSheetName) ? targetSheetName : workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                
+                console.log('🔍 [EXCEL-DEBUG] Abas disponíveis:', workbook.SheetNames);
+                console.log('📋 [EXCEL-DEBUG] Aba selecionada:', sheetName);
+                
+                if (sheetName !== targetSheetName) {
+                    console.warn(`⚠️ [EXCEL-DEBUG] Aba "${targetSheetName}" não encontrada, usando "${sheetName}"`);
+                }
 
                 if (!worksheet['!ref']) {
                     throw new Error('Planilha está vazia');
@@ -190,9 +208,41 @@ function lerArquivoExcel(arquivo) {
 
                 // Separar headers e dados
                 const headers = jsonData[0];
+                console.log('🔥 [EXCEL-DEBUG] Total de linhas no Excel (incluindo cabeçalho):', jsonData.length);
+                console.log('🔥 [EXCEL-DEBUG] Headers encontrados no Excel:', headers);
+                console.log('🔥 [EXCEL-DEBUG] Total de colunas:', headers.length);
+                console.log('🔥 [EXCEL-DEBUG] Primeira linha de dados:', jsonData[1]);
+                
+                // Comparar com colunas esperadas
+                const colunasEsperadas = [
+                    'Projeto', 'Sub Projeto', 'Tipo de Ação', 'CONTRATO', 'Condominio',
+                    'ENDEREÇO', 'Cidade', 'PEP', 'COD IMOVEL GED', 'NODE GERENCIAL',
+                    'Área Técnica', 'HP', 'ANDAR', 'DATA RECEBIMENTO', 'DATA INICIO',
+                    'DATA FINAL', 'Dias', 'EQUIPE', 'SUPERVISOR', 'STATUS', 'RDO',
+                    'BOOK', 'COLABORADOR/BOOK', 'DATA BOOK', 'PROJETO', 
+                    'COLABORADOR/PROJETO', 'DATA/PROJETO', 'JUSTIFICATIVA', 
+                    'Observação', 'SOLUÇÃO', '< OU > QUE 30'
+                ];
+                
+                console.log('🔥 [COMPARAÇÃO] Colunas esperadas:', colunasEsperadas.length);
+                console.log('🔥 [COMPARAÇÃO] Colunas encontradas:', headers.length);
+                console.log('🔥 [COMPARAÇÃO] Colunas faltando:', colunasEsperadas.filter(col => !headers.includes(col)));
+                console.log('🔥 [COMPARAÇÃO] Colunas extras:', headers.filter(col => !colunasEsperadas.includes(col)));
+                
                 const processedData = jsonData
                     .slice(1)
-                    .filter(row => row && Array.isArray(row) && row.length > 0) // Filtrar linhas válidas
+                    .filter((row, index) => {
+                        // Filtro mais permissivo - aceitar linhas que tenham pelo menos 1 campo não vazio
+                        const hasValidData = row && Array.isArray(row) && row.some(cell => 
+                            cell !== undefined && cell !== null && String(cell).trim() !== ''
+                        );
+                        
+                        if (!hasValidData && index < 10) {
+                            console.log(`⚠️ [ENDERECO-EXCEL] Linha ${index + 2} filtrada:`, row);
+                        }
+                        
+                        return hasValidData;
+                    }) // Filtrar linhas válidas
                     .map(row => {
                         const rowObj = {};
                         headers.forEach((header, index) => {
@@ -205,6 +255,12 @@ function lerArquivoExcel(arquivo) {
                         });
                         return rowObj;
                     });
+
+                console.log('✅ [ENDERECO-EXCEL] Processamento concluído:', {
+                    totalLinhas: jsonData.length - 1,
+                    linhasValidas: processedData.length,
+                    colunas: headers.length
+                });
 
                 resolve({
                     headers: headers,
@@ -225,26 +281,34 @@ function lerArquivoExcel(arquivo) {
 
 // ============= VALIDAÇÃO DA ESTRUTURA =============
 function validarEstruturaColunas(headers) {
-    console.log('🔍 [ENDERECO-EXCEL] Validando estrutura:', headers);
+    console.log('🔍 [ENDERECO-EXCEL] Validando estrutura:', {
+        headersEncontrados: headers,
+        headersEsperados: COLUNAS_ENDERECO_EXATAS.slice(0, 10),
+        totalEncontrados: headers.length,
+        totalEsperados: COLUNAS_ENDERECO_EXATAS.length
+    });
 
-    // Verificar quantidade de colunas
-    if (headers.length !== COLUNAS_ENDERECO_EXATAS.length) {
+    // VALIDAÇÃO MAIS FLEXÍVEL - aceitar planilhas com estrutura similar
+    
+    // Verificar se existe pelo menos a coluna ENDEREÇO
+    const temEndereco = headers.some(header => 
+        header && (header.includes('ENDEREÇO') || header.includes('ENDERECO'))
+    );
+
+    if (!temEndereco) {
         return {
             valido: false,
-            erro: `Número incorreto de colunas. Esperado: ${COLUNAS_ENDERECO_EXATAS.length}, Encontrado: ${headers.length}`
+            erro: 'Coluna ENDEREÇO não encontrada'
         };
     }
 
-    // Verificar ordem e nomes exatos
-    for (let i = 0; i < COLUNAS_ENDERECO_EXATAS.length; i++) {
+    // Só alertar sobre diferenças, mas não bloquear
+    for (let i = 0; i < Math.min(headers.length, COLUNAS_ENDERECO_EXATAS.length); i++) {
         const esperada = COLUNAS_ENDERECO_EXATAS[i];
         const encontrada = headers[i];
 
         if (esperada !== encontrada) {
-            return {
-                valido: false,
-                erro: `Coluna ${i + 1} incorreta. Esperada: "${esperada}", Encontrada: "${encontrada}"`
-            };
+            console.warn(`⚠️ [ENDERECO-EXCEL] Coluna ${i + 1} diferente: Esperada "${esperada}", Encontrada "${encontrada}"`);
         }
     }
 
@@ -254,37 +318,48 @@ function validarEstruturaColunas(headers) {
 
 // ============= MAPEAMENTO DE DADOS =============
 function mapearDadosParaEstrutura(dadosExcel) {
-    console.log('🔄 [ENDERECO-EXCEL] Mapeando dados para estrutura...');
+    console.log('🔄 [ENDERECO-EXCEL] Mapeando dados para estrutura...', {
+        totalRegistros: dadosExcel.data.length,
+        totalColunas: dadosExcel.headers.length,
+        primeirasLinhas: dadosExcel.data.slice(0, 3)
+    });
 
     const dadosMapeados = dadosExcel.data.map((linha, index) => {
         const linhaMapeada = {};
 
-        // Mapear cada coluna na ordem exata
-        COLUNAS_ENDERECO_EXATAS.forEach((nomeColuna, indiceColuna) => {
-            let valor = linha[nomeColuna] || '';
+        // DEBUG: mostrar estrutura da linha para os primeiros registros
+        if (index < 3) {
+            console.log(`🔍 [DEBUG] Linha ${index + 1}:`, {
+                keysDisponíveis: Object.keys(linha),
+                valores: linha,
+                colunasEsperadas: COLUNAS_ENDERECO_EXATAS.slice(0, 5)
+            });
+        }
 
-            // Tratar valores especiais
-            if (typeof valor === 'string') {
-                valor = valor.trim();
+        // COPIAR TUDO BRUTALMENTE - SEM QUALQUER FILTRO
+        console.log(`🔥 [DEBUG-BRUTAL] Linha ${index + 1} - Headers disponíveis:`, dadosExcel.headers);
+        console.log(`🔥 [DEBUG-BRUTAL] Linha ${index + 1} - Dados da linha:`, linha);
+        
+        // Copiar CADA campo individualmente
+        for (const headerReal of dadosExcel.headers) {
+            const valor = linha[headerReal];
+            linhaMapeada[headerReal] = valor;
+            
+            // Log de CADA campo para primeira linha
+            if (index === 0) {
+                console.log(`🔥 [COPIANDO] "${headerReal}" = "${valor}"`);
             }
-
-            // Tratar coluna HP (deve ser número)
-            if (nomeColuna === 'HP' && valor !== '') {
-                valor = parseInt(valor) || 0;
+        }
+        
+        // Também copiar TUDO que existe no objeto linha (caso existam campos extras)
+        for (const chave in linha) {
+            if (linha.hasOwnProperty(chave)) {
+                linhaMapeada[chave] = linha[chave];
+                if (index === 0) {
+                    console.log(`🔥 [EXTRA] "${chave}" = "${linha[chave]}"`);
+                }
             }
-
-            // Tratar datas
-            if (nomeColuna.includes('DATA') && valor !== '') {
-                valor = formatarData(valor);
-            }
-
-            // Para a segunda coluna "Observação", usar chave diferente
-            if (nomeColuna === 'Observação' && indiceColuna === 24) {
-                linhaMapeada['Observação_2'] = valor;
-            } else {
-                linhaMapeada[nomeColuna] = valor;
-            }
-        });
+        }
 
         // Adicionar metadados
         linhaMapeada._rowIndex = index + 1;
@@ -314,8 +389,8 @@ async function salvarDadosNaTabela(dados) {
         throw new Error('Corpo da tabela não encontrado');
     }
 
-    // Adicionar cada linha (limitado para performance)
-    const dadosParaExibir = dados.slice(0, 100); // Primeiros 100 registros
+    // Processar TODOS os registros sem limite
+    const dadosParaExibir = dados; // TODOS os registros sem limite
 
     dadosParaExibir.forEach((linha, index) => {
         const tr = criarLinhaTabela(linha, index);
@@ -335,19 +410,35 @@ async function salvarDadosNaTabela(dados) {
 function criarLinhaTabela(dados, index) {
     const tr = document.createElement('tr');
 
-    // Adicionar células para cada coluna
-    COLUNAS_ENDERECO_EXATAS.forEach((nomeColuna, indiceColuna) => {
-        const td = document.createElement('td');
+    // DEBUG para primeira linha
+    if (index === 0) {
+        console.log('🔍 [CRIAR-LINHA] Dados disponíveis:', {
+            keys: Object.keys(dados),
+            primeiros5Valores: Object.fromEntries(Object.entries(dados).slice(0, 5))
+        });
+    }
 
-        let valor = '';
-        if (nomeColuna === 'Observação' && indiceColuna === 24) {
-            valor = dados['Observação_2'] || '';
+    // Buscar por todas as chaves disponíveis nos dados
+    const keys = Object.keys(dados).filter(key => !key.startsWith('_')); // Excluir metadados
+    
+    // Criar células para TODAS as chaves encontradas
+    keys.forEach((key, indiceColuna) => {
+        const td = document.createElement('td');
+        
+        let valor = dados[key] || '';
+        
+        // Formatação básica do valor
+        if (typeof valor === 'object') {
+            valor = JSON.stringify(valor);
+        } else if (valor === null || valor === undefined) {
+            valor = '';
         } else {
-            valor = dados[nomeColuna] || '';
+            valor = String(valor);
         }
 
         td.textContent = valor;
         td.setAttribute('data-column', indiceColuna + 1);
+        td.title = `${key}: ${valor}`; // Tooltip com nome da coluna
         tr.appendChild(td);
     });
 
@@ -465,6 +556,7 @@ async function salvarNoFirebase(dados) {
             console.log('💾 [ENDERECO-EXCEL] Salvando no Firebase...');
 
             const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+            const userId = firebase.auth().currentUser?.uid || 'anonymous';
 
             // Salvar em lotes
             const BATCH_SIZE = 25;
@@ -476,12 +568,135 @@ async function salvarNoFirebase(dados) {
                 const lote = dados.slice(i, i + BATCH_SIZE);
 
                 lote.forEach(registro => {
-                    const docData = {
-                        ...registro,
-                        createdAt: timestamp,
-                        source: 'endereco_excel_upload',
-                        columnCount: COLUNAS_ENDERECO_EXATAS.length
+                    // LOG COMPLETO DOS DADOS ORIGINAIS PARA DEBUG
+                    if (salvosCount === 0) {
+                        console.log('🔥 [EXCEL-UPLOAD] Registro original completo:', {
+                            keys: Object.keys(registro),
+                            valores: registro,
+                            totalCampos: Object.keys(registro).length
+                        });
+                    }
+
+                    // CRIAR DOCUMENTO COM NOMES EXATOS DAS COLUNAS DO EXCEL
+                    const docData = {};
+                    
+                    // Primeiro, garantir que TODAS as colunas esperadas existam (mesmo vazias)
+                    const colunasEsperadas = [
+                        'Projeto', 'Sub Projeto', 'Tipo de Ação', 'CONTRATO', 'Condominio',
+                        'ENDEREÇO', 'Cidade', 'PEP', 'COD IMOVEL GED', 'NODE GERENCIAL',
+                        'Área Técnica', 'HP', 'ANDAR', 'DATA RECEBIMENTO', 'DATA INICIO',
+                        'DATA FINAL', 'Dias', 'EQUIPE', 'SUPERVISOR', 'STATUS', 'RDO',
+                        'BOOK', 'COLABORADOR/BOOK', 'DATA BOOK', 'PROJETO', 
+                        'COLABORADOR/PROJETO', 'DATA/PROJETO', 'JUSTIFICATIVA', 
+                        'Observação', 'SOLUÇÃO', '< OU > QUE 30'
+                    ];
+                    
+                    // Inicializar todas as colunas
+                    colunasEsperadas.forEach(coluna => {
+                        docData[coluna] = '';
+                    });
+                    
+                    // MAPEAMENTO DE COLUNAS PARA COMPATIBILIDADE COM DASHBOARD
+                    const mapeamentoColunasParaDashboard = {
+                        'Projeto': 'projeto',
+                        'Sub Projeto': 'subProjeto', 
+                        'Tipo de Ação': 'tipoAcao',
+                        'CONTRATO': 'contrato',
+                        'Condominio': 'condominio',
+                        'ENDEREÇO': 'endereco',
+                        'Cidade': 'cidade',
+                        'PEP': 'pep',
+                        'COD IMOVEL GED': 'codImovelGed',
+                        'NODE GERENCIAL': 'nodeGerencial',
+                        'Área Técnica': 'areaTecnica',
+                        'HP': 'hp',
+                        'ANDAR': 'andar',
+                        'DATA RECEBIMENTO': 'dataRecebimento',
+                        'DATA INICIO': 'dataInicio',
+                        'DATA FINAL': 'dataFinal',
+                        'Dias': 'dias',
+                        'EQUIPE': 'equipe',
+                        'SUPERVISOR': 'supervisor',
+                        'STATUS': 'status',
+                        'RDO': 'rdo',
+                        'BOOK': 'book',
+                        'COLABORADOR/BOOK': 'colaboradorBook',
+                        'DATA BOOK': 'dataBook',
+                        'PROJETO': 'projeto2', // Diferente do primeiro projeto
+                        'COLABORADOR/PROJETO': 'colaboradorProjeto',
+                        'DATA/PROJETO': 'dataProjeto',
+                        'JUSTIFICATIVA': 'justificativa',
+                        'Observação': 'observacao',
+                        'SOLUÇÃO': 'solucao',
+                        '< OU > QUE 30': 'menorOuMaiorQue30'
                     };
+                    
+                    // Copiar dados com nomes padronizados para o dashboard
+                    Object.keys(registro).forEach(chaveExcel => {
+                        let valor = registro[chaveExcel];
+                        
+                        // Limpar valores null/undefined
+                        if (valor === null || valor === undefined) {
+                            valor = '';
+                        } else {
+                            valor = String(valor).trim();
+                        }
+                        
+                        // Usar nome mapeado ou manter original
+                        const nomePadronizado = mapeamentoColunasParaDashboard[chaveExcel] || chaveExcel;
+                        docData[nomePadronizado] = valor;
+                        
+                        // TAMBÉM manter o nome original para compatibilidade
+                        docData[chaveExcel] = valor;
+                        
+                        // Debug para primeira linha
+                        if (salvosCount === 0) {
+                            console.log(`🔥 [MAPEAMENTO] "${chaveExcel}" = "${valor}"`);
+                        }
+                    });
+                    
+                    // Debug final: mostrar TODAS as chaves que serão salvas
+                    if (salvosCount === 0) {
+                        console.log('🔥 [DEBUG-FINAL] TODAS as chaves no docData:', Object.keys(docData));
+                        console.log('🔥 [DEBUG-FINAL] Total de campos:', Object.keys(docData).length);
+                        
+                        // CONFIRMAR SE TEM AS 31 COLUNAS
+                        const colunasDoExcel = Object.keys(docData).filter(k => !k.startsWith('created') && !k.startsWith('updated'));
+                        console.log('🔥 [CONFIRMAÇÃO-31] Colunas do Excel sendo salvas:', colunasDoExcel);
+                        console.log('🔥 [CONFIRMAÇÃO-31] Total:', colunasDoExcel.length);
+                        
+                        if (colunasDoExcel.length !== 31) {
+                            console.error('❌ [ERRO-CRÍTICO] DEVERIA TER 31 COLUNAS MAS TEM:', colunasDoExcel.length);
+                        } else {
+                            console.log('✅ [SUCESSO] Todas as 31 colunas confirmadas!');
+                        }
+                    }
+                    
+                    // Metadados
+                    docData.createdAt = timestamp;
+                    docData.updatedAt = timestamp;
+                    docData.createdBy = userId;
+                    docData.source = 'excel_upload';
+
+                    // Log final COMPLETO para primeira linha
+                    if (salvosCount === 0) {
+                        console.log('🎯 [FIRESTORE-FINAL] DOCUMENTO COMPLETO QUE SERÁ SALVO:', {
+                            totalCampos: Object.keys(docData).length,
+                            camposComDados: Object.keys(docData).filter(k => docData[k] !== '' && !k.startsWith('created') && !k.startsWith('updated')).length,
+                            todosOsCampos: Object.keys(docData).filter(k => !k.startsWith('created') && !k.startsWith('updated')),
+                            exemploCompleto: Object.fromEntries(
+                                Object.entries(docData).filter(([k, v]) => !k.startsWith('created') && !k.startsWith('updated'))
+                            )
+                        });
+                    }
+
+                    // LOG CRÍTICO: O que exatamente está sendo salvo?
+                    if (salvosCount === 0) {
+                        console.log('🚨 [CRÍTICO] O que está sendo salvo no Firestore:');
+                        console.log('🚨 [CRÍTICO] Objeto completo docData:', docData);
+                        console.log('🚨 [CRÍTICO] Campos não-vazios:', Object.keys(docData).filter(k => docData[k] !== '' && !k.startsWith('created') && !k.startsWith('updated')));
+                        console.log('🚨 [CRÍTICO] Total de campos não-vazios:', Object.keys(docData).filter(k => docData[k] !== '' && !k.startsWith('created') && !k.startsWith('updated')).length);
+                    }
 
                     const docRef = firebase.firestore().collection('enderecos').doc();
                     batch.set(docRef, docData);
@@ -500,7 +715,7 @@ async function salvarNoFirebase(dados) {
                 }
             }
 
-            console.log(`🎉 [ENDERECO-EXCEL] ${salvosCount} registros salvos no Firebase`);
+            console.log(`🎉 [ENDERECO-EXCEL] ${salvosCount} registros salvos no Firebase com estrutura completa`);
         }
     } catch (error) {
         console.error('❌ [ENDERECO-EXCEL] Erro ao salvar no Firebase:', error);
@@ -518,8 +733,7 @@ async function carregarDadosExistentes() {
                 .firestore()
                 .collection('enderecos')
                 .orderBy('createdAt', 'desc')
-                .limit(100)
-                .get();
+                .get(); // REMOVIDO LIMITE - carregar todos os registros
 
             if (!snapshot.empty) {
                 const dadosCarregados = [];
@@ -575,8 +789,8 @@ async function exibirDadosNaTabela(dados) {
         return;
     }
 
-    // Adicionar cada linha (limitado para performance)
-    const dadosParaExibir = dados.slice(0, 100); // Primeiros 100 registros
+    // Processar TODOS os registros sem limite
+    const dadosParaExibir = dados; // TODOS os registros sem limite
 
     dadosParaExibir.forEach((linha, index) => {
         try {
@@ -678,7 +892,7 @@ window.debugEnderecoSystem = function () {
     console.log('- Tabela existe:', !!document.getElementById('enderecoTableBody'));
     console.log('- Dados carregados:', dadosEndereco.length);
     console.log('- Total registros:', totalRegistros);
-    console.log('- Input file existe:', !!document.getElementById('excelUpload'));
+    console.log('- Input file existe:', !!(document.getElementById('novoExcelUpload') || document.getElementById('excelUpload')));
 };
 
 console.log('✅ [ENDERECO-EXCEL] Sistema de upload Excel para endereços carregado');

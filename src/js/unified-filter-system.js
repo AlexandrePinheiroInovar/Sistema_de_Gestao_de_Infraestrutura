@@ -34,10 +34,10 @@ class UnifiedFilterSystem {
                 id: 'infraFilterSupervisor',
                 name: 'supervisor',
                 label: 'Supervisor',
-                column: 'Supervisor'
+                column: 'SUPERVISOR'
             },
             { id: 'infraFilterEquipe', name: 'equipe', label: 'Equipe', column: 'EQUIPE' },
-            { id: 'infraFilterStatus', name: 'status', label: 'Status', column: 'Status' },
+            { id: 'infraFilterStatus', name: 'status', label: 'Status', column: 'STATUS' },
             { id: 'infraFilterCidade', name: 'cidade', label: 'Cidade', column: 'Cidade' },
             { 
                 id: 'infraFilterJustificativa', 
@@ -175,7 +175,7 @@ class UnifiedFilterSystem {
                     
                     // DEBUG: Analisar dados de produtividade no carregamento inicial
                     const produtivos = this.allData.filter(item => {
-                        const status = (item['Status'] || '').toUpperCase();
+                        const status = (item['STATUS'] || item['Status'] || item['status'] || '').toUpperCase();
                         return status === 'PRODUTIVA' || status.includes('PRODUTIVA');
                     }).length;
                     const produtividade = Math.round((produtivos / this.allData.length) * 100);
@@ -668,8 +668,17 @@ class UnifiedFilterSystem {
                         return this.applyDateFilter(item, config.dateColumns, filterValues);
                     }
 
-                    // Filtros normais (texto)
-                    const itemValue = item[config.column];
+                    // Filtros normais (texto) - usar fallback para colunas problemáticas
+                    let itemValue;
+                    if (config.column === 'STATUS') {
+                        itemValue = item['STATUS'] || item['Status'] || item['status'];
+                    } else if (config.column === 'SUPERVISOR') {
+                        itemValue = item['SUPERVISOR'] || item['Supervisor'] || item['supervisor'];
+                    } else if (config.column === 'EQUIPE') {
+                        itemValue = item['EQUIPE'] || item['equipe'];
+                    } else {
+                        itemValue = item[config.column];
+                    }
                     return filterValues.includes(itemValue);
                 });
             });
@@ -881,7 +890,18 @@ class UnifiedFilterSystem {
         }
 
         const values = this.allData
-            .map(item => item[columnName])
+            .map(item => {
+                // Usar fallback para colunas problemáticas
+                if (columnName === 'STATUS') {
+                    return item['STATUS'] || item['Status'] || item['status'];
+                } else if (columnName === 'SUPERVISOR') {
+                    return item['SUPERVISOR'] || item['Supervisor'] || item['supervisor'];
+                } else if (columnName === 'EQUIPE') {
+                    return item['EQUIPE'] || item['equipe'];
+                } else {
+                    return item[columnName];
+                }
+            })
             .filter(value => value && value.toString().trim() !== '')
             .map(value => value.toString().trim());
 

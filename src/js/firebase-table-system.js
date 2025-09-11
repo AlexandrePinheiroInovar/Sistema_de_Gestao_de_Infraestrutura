@@ -190,7 +190,15 @@ const firebaseManager = new FirebaseManager();
 
 // ============= VARIÁVEIS GLOBAIS DA TABELA =============
 let firebaseTableData = [];
-let firebaseTableColumns = [];
+const firebaseTableColumns = [
+    'Projeto', 'Sub Projeto', 'Tipo de Ação', 'CONTRATO', 'Condominio',
+    'ENDEREÇO', 'Cidade', 'PEP', 'COD IMOVEL GED', 'NODE GERENCIAL',
+    'Área Técnica', 'HP', 'ANDAR', 'DATA RECEBIMENTO', 'DATA INICIO',
+    'DATA FINAL', 'Dias', 'EQUIPE', 'SUPERVISOR', 'STATUS', 'RDO',
+    'BOOK', 'COLABORADOR/BOOK', 'DATA BOOK', 'PROJETO', 
+    'COLABORADOR/PROJETO', 'DATA/PROJETO', 'JUSTIFICATIVA', 
+    'Observação', 'SOLUÇÃO', '< OU > QUE 30'
+];
 let filterText = '';
 
 // ============= INICIALIZAÇÃO GLOBAL =============
@@ -273,6 +281,31 @@ async function loadFirebaseTableData() {
         
         console.log('📋 [FIREBASE-TABLE] Dados carregados:', data.length, 'registros');
         
+        // Debug: verificar estrutura dos primeiros dados
+        if (data.length > 0) {
+            console.log('🔍 [DEBUG-FIREBASE] Primeiro registro do Firebase:', data[0]);
+            console.log('🔍 [DEBUG-FIREBASE] Campos disponíveis:', Object.keys(data[0]));
+            
+            // Debug específico para STATUS
+            const statusValue = data[0]['STATUS'] || data[0]['Status'] || data[0]['status'];
+            const statusKeys = Object.keys(data[0]).filter(k => k.toLowerCase().includes('status'));
+            console.log('🔥 [STATUS-DEBUG] Chaves que contém "status":', statusKeys);
+            console.log('🔥 [STATUS-DEBUG] Valor STATUS encontrado:', statusValue);
+            
+            // Debug específico para SUPERVISOR  
+            const supervisorValue = data[0]['SUPERVISOR'] || data[0]['Supervisor'] || data[0]['supervisor'];
+            const supervisorKeys = Object.keys(data[0]).filter(k => k.toLowerCase().includes('supervisor'));
+            console.log('🔥 [SUPERVISOR-DEBUG] Chaves que contém "supervisor":', supervisorKeys);
+            console.log('🔥 [SUPERVISOR-DEBUG] Valor SUPERVISOR encontrado:', supervisorValue);
+            
+            // Debug para todas as chaves do primeiro registro
+            console.log('🔥 [ALL-KEYS] TODAS as chaves do primeiro registro:');
+            Object.keys(data[0]).forEach((key, index) => {
+                const value = data[0][key];
+                console.log(`🔥 [KEY-${index}] "${key}" = "${value}"`);
+            });
+        }
+        
         // Armazenar dados
         firebaseTableData = data;
         // Armazenar globalmente para paginação
@@ -290,8 +323,10 @@ async function loadFirebaseTableData() {
         }
         
         if (data.length > 0) {
-            // Extrair colunas (excluir campos internos)
-            extractTableColumns(data[0]);
+            console.log('✅ [FIREBASE-TABLE] Usando colunas fixas predefinidas:', firebaseTableColumns.length, 'colunas');
+            
+            // Atualizar cabeçalho da tabela HTML com colunas fixas
+            updateTableHeader(firebaseTableColumns);
             
             // Renderizar tabela
             renderFirebaseTable(data);
@@ -335,22 +370,51 @@ async function loadFirebaseTableData() {
     }
 }
 
-// ============= EXTRAIR COLUNAS DA TABELA =============
-function extractTableColumns(sampleData) {
-    if (!sampleData) return;
+// ============= EXTRAIR COLUNAS DA TABELA DINAMICAMENTE =============
+// Função removida - agora usando colunas fixas predefinidas
+
+// ============= ATUALIZAR CABEÇALHO DA TABELA DINAMICAMENTE =============
+function updateTableHeader(columns) {
+    console.log('🔧 [FIREBASE-TABLE] Atualizando cabeçalho da tabela dinamicamente...');
     
-    console.log('🔍 [FIREBASE-TABLE] Definindo colunas fixas conforme HTML...');
+    const table = document.getElementById('enderecoMainTable');
+    const thead = table ? table.querySelector('thead') : null;
     
-    // Colunas fixas conforme definidas no HTML (25 colunas)
-    firebaseTableColumns = [
-        'projeto', 'subProjeto', 'tipoAcao', 'contrato', 'condominio',
-        'endereco', 'cidade', 'pep', 'codImovelGed', 'nodeGerencial',
-        'areaTecnica', 'hp', 'andar', 'dataRecebimento', 'dataInicio',
-        'dataFinal', 'equipe', 'supervisor', 'status', 'rdo',
-        'book', 'projeto2', 'justificativa', 'observacao1', 'observacao2'
-    ];
+    if (!thead) {
+        console.warn('⚠️ [FIREBASE-TABLE] Thead não encontrado, criando novo...');
+        const newThead = document.createElement('thead');
+        table.insertBefore(newThead, table.firstChild);
+    }
     
-    console.log('📊 [FIREBASE-TABLE] Colunas fixas definidas:', firebaseTableColumns.length, 'colunas');
+    const headerRow = document.createElement('tr');
+    
+    // Adicionar colunas dinamicamente baseadas nos dados
+    columns.forEach((column, index) => {
+        const th = document.createElement('th');
+        th.textContent = column;
+        th.setAttribute('data-column', index + 1);
+        th.title = `Ordenar por ${column}`;
+        th.style.cursor = 'pointer';
+        th.onclick = () => sortTable(column);
+        headerRow.appendChild(th);
+    });
+    
+    // Adicionar coluna de ações
+    const actionsHeader = document.createElement('th');
+    actionsHeader.textContent = 'Ações';
+    actionsHeader.setAttribute('data-column', 'actions');
+    actionsHeader.style.width = '120px';
+    actionsHeader.style.textAlign = 'center';
+    headerRow.appendChild(actionsHeader);
+    
+    // Substituir cabeçalho existente
+    const existingThead = table.querySelector('thead');
+    if (existingThead) {
+        existingThead.innerHTML = '';
+        existingThead.appendChild(headerRow);
+    }
+    
+    console.log('✅ [FIREBASE-TABLE] Cabeçalho atualizado com', columns.length, 'colunas');
 }
 
 // ============= RENDERIZAR TABELA =============
@@ -404,60 +468,51 @@ function renderTableHeader(thead) {
     thead.appendChild(headerRow);
 }
 
-// Mapeamento direto baseado nos campos EXATOS salvos no Firestore
+// FUNÇÃO DINÂMICA: BUSCAR VALOR DIRETAMENTE PELO NOME DA COLUNA
 function mapFieldValue(row, column) {
-    // Mapeamento direto: campo da tabela -> campo no Firestore (EXATOS como no exemplo)
-    const exactFieldMappings = {
-        'projeto': 'Projeto',
-        'subProjeto': 'Sub Projeto', 
-        'tipoAcao': 'Tipo de Ação',
-        'contrato': 'CONTRATO',
-        'condominio': 'Condominio',
-        'endereco': 'ENDEREÇO',
-        'cidade': 'Cidade',
-        'pep': 'PEP',
-        'codImovelGed': 'COD IMOVEL GED',
-        'nodeGerencial': 'NODE GERENCIAL',
-        'areaTecnica': 'Área Técnica',
-        'hp': 'HP',
-        'andar': 'ANDAR',
-        'dataRecebimento': 'DATA RECEBIMENTO',
-        'dataInicio': 'DATA INICIO',
-        'dataFinal': 'DATA FINAL',
-        'equipe': 'EQUIPE',
-        'supervisor': 'Supervisor',
-        'status': 'Status',
-        'rdo': 'RDO',
-        'book': 'BOOK',
-        'projeto2': 'Projeto', // Reutilizar mesmo campo "Projeto" 
-        'justificativa': 'JUSTIFICATIVA',
-        'observacao1': 'JUSTIFICATIVA', // Mapear para JUSTIFICATIVA se não houver Observação
-        'observacao2': 'JUSTIFICATIVA' // Mapear para JUSTIFICATIVA se não houver Observação 2
-    };
+    let value = null;
     
-    // Primeiro: tentar mapeamento direto
-    const firestoreFieldName = exactFieldMappings[column];
-    if (firestoreFieldName && row[firestoreFieldName] !== undefined) {
-        const value = row[firestoreFieldName];
-        
-        // Tratar campos de data (números do Excel)
-        if (firestoreFieldName.includes('DATA') && typeof value === 'number') {
-            // Converter número serial do Excel para data
-            const excelEpoch = new Date(1899, 11, 30); // 30 de dezembro de 1899
-            const date = new Date(excelEpoch.getTime() + value * 24 * 60 * 60 * 1000);
-            return date.toLocaleDateString('pt-BR');
+    // Mapeamento direto específico para colunas problemáticas (sem recursão)
+    if (column === 'STATUS') {
+        value = row['STATUS'] || row['Status'] || row['status'] || null;
+    } else if (column === 'SUPERVISOR') {
+        value = row['SUPERVISOR'] || row['Supervisor'] || row['supervisor'] || null;
+    } else if (column === 'Dias') {
+        value = row['Dias'] || row['dias'] || null;
+    } else if (column === 'EQUIPE') {
+        value = row['EQUIPE'] || row['equipe'] || null;
+    } else {
+        // Para outras colunas, tentar nome exato primeiro, depois fallback
+        value = row[column];
+        if ((value === undefined || value === null || value === '')) {
+            // Tentar variações comuns
+            const lowerColumn = column.toLowerCase();
+            const camelColumn = lowerColumn.replace(/[^a-z0-9]/g, '');
+            value = row[lowerColumn] || row[camelColumn] || null;
+        }
+    }
+    
+    if (value !== undefined && value !== null && value !== '') {
+        // Tratar timestamps do Firestore
+        if (typeof value === 'object' && value.seconds) {
+            return new Date(value.seconds * 1000).toLocaleDateString('pt-BR');
         }
         
-        if (value !== null && value !== '') {
+        return value;
+    }
+
+    // Não encontrou
+    return null;
+}
+
+// FUNÇÃO AUXILIAR: BUSCAR CAMPO COM MÚLTIPLAS OPÇÕES DE NOME
+function getFieldValue(row, ...possibleNames) {
+    for (const name of possibleNames) {
+        const value = mapFieldValue(row, name);
+        if (value !== null) {
             return value;
         }
     }
-    
-    // Fallback: buscar campo exato como está salvo
-    if (row[column] !== undefined && row[column] !== null && row[column] !== '') {
-        return row[column];
-    }
-    
     return null;
 }
 
@@ -472,7 +527,7 @@ function renderTableBody(tbody, data) {
         console.log('📊 [FIREBASE-TABLE] Primeiro registro completo:', data[0]);
     }
     
-    // Aplicar filtro se houver
+    // Aplicar filtro se houver - MANTIDO DINÂMICO
     const filteredData = filterText ? 
         data.filter(row => {
             return firebaseTableColumns.some(column => {
@@ -772,6 +827,9 @@ function updatePaginationControls() {
                 <option value="50" ${paginationConfig.recordsPerPage === 50 ? 'selected' : ''}>50</option>
                 <option value="100" ${paginationConfig.recordsPerPage === 100 ? 'selected' : ''}>100</option>
                 <option value="200" ${paginationConfig.recordsPerPage === 200 ? 'selected' : ''}>200</option>
+                <option value="500" ${paginationConfig.recordsPerPage === 500 ? 'selected' : ''}>500</option>
+                <option value="1000" ${paginationConfig.recordsPerPage === 1000 ? 'selected' : ''}>1000</option>
+                <option value="9999" ${paginationConfig.recordsPerPage === 9999 ? 'selected' : ''}>Todos</option>
             </select>
         </div>
     `;
@@ -896,14 +954,15 @@ function sortTable(column) {
 function setupEventListeners() {
     console.log('🔧 [FIREBASE-TABLE] Configurando event listeners...');
     
-    // Event listener para upload de Excel (ID correto do HTML)
-    const excelUpload = document.getElementById('novoExcelUpload');
-    if (excelUpload) {
-        console.log('📁 [FIREBASE-TABLE] Upload Excel encontrado');
-        excelUpload.addEventListener('change', handleExcelUpload);
-    } else {
-        console.warn('⚠️ [FIREBASE-TABLE] Elemento novoExcelUpload não encontrado');
-    }
+    // Event listener para upload de Excel - DESATIVADO - usando endereco-excel-upload.js
+    // const excelUpload = document.getElementById('novoExcelUpload');
+    // if (excelUpload) {
+    //     console.log('📁 [FIREBASE-TABLE] Upload Excel encontrado');
+    //     excelUpload.addEventListener('change', handleExcelUpload);
+    // } else {
+    //     console.warn('⚠️ [FIREBASE-TABLE] Elemento novoExcelUpload não encontrado');
+    // }
+    console.log('📁 [FIREBASE-TABLE] Upload Excel delegado para endereco-excel-upload.js');
     
     // Event listener para formulário de novo endereço
     const enderecoForm = document.getElementById('enderecoForm');
@@ -912,64 +971,6 @@ function setupEventListeners() {
         enderecoForm.addEventListener('submit', handleNovoEndereco);
     }
 }
-
-// ============= INTEGRAÇÃO COM UPLOAD DE EXCEL =============
-async function handleExcelUpload(event) {
-    const file = event.target.files[0];
-    
-    if (!file) return;
-    
-    try {
-        console.log('📊 [FIREBASE-TABLE] Processando upload de Excel:', file.name);
-        
-        // Validar arquivo
-        const validExtensions = ['.xlsx', '.xls'];
-        const fileName = file.name.toLowerCase();
-        const isValidFile = validExtensions.some(ext => fileName.endsWith(ext));
-        
-        if (!isValidFile) {
-            throw new Error('Por favor, selecione apenas arquivos Excel (.xlsx ou .xls)');
-        }
-        
-        updateFirebaseStatus('connecting', 'Preparando Firebase...');
-        
-        // GARANTIR QUE FIREBASE ESTEJA CONECTADO
-        await firebaseManager.ensureReady();
-        
-        updateFirebaseStatus('connecting', 'Processando planilha...');
-        
-        // Ler arquivo Excel
-        const data = await readExcelFile(file);
-        
-        if (!data || data.length === 0) {
-            throw new Error('Arquivo Excel está vazio ou não contém dados válidos');
-        }
-        
-        console.log('📋 [FIREBASE-TABLE] Dados lidos do Excel:', data.length, 'linhas');
-        
-        updateFirebaseStatus('connecting', 'Salvando no Firebase...');
-        
-        // Salvar no Firebase
-        await saveExcelDataToFirebase(data);
-        
-        updateFirebaseStatus('connecting', 'Atualizando tabela...');
-        
-        // Recarregar tabela
-        await loadFirebaseTableData();
-        
-        updateFirebaseStatus('connected', 'Upload concluído');
-        showNotification('✅ Sucesso!', `Upload concluído! ${data.length} registros importados.`, 'success');
-        
-    } catch (error) {
-        console.error('❌ [FIREBASE-TABLE] Erro no upload:', error);
-        updateFirebaseStatus('error', 'Erro no upload');
-        showNotification('❌ Erro', 'Erro no upload: ' + error.message, 'error');
-    } finally {
-        // Limpar input
-        event.target.value = '';
-    }
-}
-
 
 function readExcelFile(file) {
     return new Promise((resolve, reject) => {
@@ -1155,9 +1156,16 @@ function getStatusCounts(data) {
 }
 
 function calculateProductivity(data) {
-    const withStatus = data.filter(item => item.status && item.status !== '').length;
     if (data.length === 0) return 0;
-    return Math.round((withStatus / data.length) * 100);
+    
+    const produtivos = data.filter(item => {
+        const status = getFieldValue(item, 'STATUS', 'Status', 'status');
+        if (!status) return false;
+        const statusUpper = status.toString().toUpperCase();
+        return statusUpper === 'PRODUTIVA' || statusUpper.includes('PRODUTIVA');
+    }).length;
+    
+    return Math.round((produtivos / data.length) * 100);
 }
 
 function getRecordsByMonth(data) {
@@ -1304,14 +1312,14 @@ function calculateStatisticsFromTableData(data) {
     const equipesRanking = {};
     
     data.forEach(row => {
-        // Endereços únicos
-        const endereco = mapFieldValue(row, 'endereco');
+        // Endereços únicos - DINÂMICO
+        const endereco = getFieldValue(row, 'ENDEREÇO', 'endereco');
         if (endereco && endereco.trim()) {
             enderecosUnicos.add(endereco.trim());
         }
         
-        // Equipes únicas
-        const equipe = mapFieldValue(row, 'equipe');
+        // Equipes únicas - DINÂMICO  
+        const equipe = getFieldValue(row, 'EQUIPE', 'equipe');
         if (equipe && equipe.trim()) {
             equipesUnicas.add(equipe.trim());
             
@@ -1330,20 +1338,20 @@ function calculateStatisticsFromTableData(data) {
             equipesRanking[equipe].total++;
         }
         
-        // Cidades únicas
-        const cidade = mapFieldValue(row, 'cidade');
+        // Cidades únicas - DINÂMICO
+        const cidade = getFieldValue(row, 'Cidade', 'cidade');
         if (cidade && cidade.trim()) {
             cidadesUnicas.add(cidade.trim());
         }
         
-        // Supervisores únicos
-        const supervisor = mapFieldValue(row, 'supervisor');
+        // Supervisores únicos - DINÂMICO
+        const supervisor = getFieldValue(row, 'SUPERVISOR', 'Supervisor', 'supervisor');
         if (supervisor && supervisor.trim()) {
             supervisoresUnicos.add(supervisor.trim());
         }
         
-        // Status de produtividade
-        const status = mapFieldValue(row, 'status');
+        // Status de produtividade - DINÂMICO
+        const status = getFieldValue(row, 'STATUS', 'Status', 'status');
         if (status) {
             const statusUpper = status.toString().toUpperCase();
             if (statusUpper === 'PRODUTIVA') {
@@ -1418,6 +1426,8 @@ function calculateStatisticsFromTableData(data) {
     stats.totalProdutiva = produtivos;
     stats.totalImprodutiva = improdutivos;
     stats.produtividade = stats.totalRegistros > 0 ? Math.round((produtivos / stats.totalRegistros) * 100) : 0;
+    
+    console.log(`🎯 [STATS-DEBUG] Contagem final: Produtivos=${produtivos}, Improdutivos=${improdutivos}, Total=${stats.totalRegistros}, Supervisores=${stats.supervisoresDistintos}`);
     
     // Calcular tempos médios com logs detalhados
     stats.tempoMedio = temposExecucao.length > 0 ? Math.round(temposExecucao.reduce((a, b) => a + b, 0) / temposExecucao.length) : 0;
@@ -1584,8 +1594,8 @@ async function updateDashboardFilters() {
             subProjetos: getUniqueValues(allData, 'Sub Projeto'),
             cidades: getUniqueValues(allData, 'Cidade'),
             equipes: getUniqueValues(allData, 'EQUIPE'),
-            supervisores: getUniqueValues(allData, 'Supervisor'),
-            status: getUniqueValues(allData, 'Status'),
+            supervisores: getUniqueValues(allData, 'SUPERVISOR'),
+            status: getUniqueValues(allData, 'STATUS'),
             condominios: getUniqueValues(allData, 'Condominio'),
             tiposAcao: getUniqueValues(allData, 'Tipo de Ação')
         };
@@ -1846,11 +1856,17 @@ function updateFilteredCards(stats) {
 function getUniqueValues(data, field) {
     const unique = new Set();
     data.forEach(item => {
-        if (item[field] && item[field] !== '') {
-            unique.add(item[field]);
+        // Usar mapFieldValue diretamente (agora sem recursão)
+        const value = mapFieldValue(item, field);
+        
+        if (value && value !== '') {
+            unique.add(value);
         }
     });
-    return Array.from(unique).sort();
+    
+    const result = Array.from(unique).sort();
+    console.log(`📊 [UNIQUE-VALUES] Campo "${field}" encontrou ${result.length} valores únicos:`, result.slice(0, 5));
+    return result;
 }
 
 function populateFilterSelect(selectId, values) {
@@ -2526,8 +2542,8 @@ function createSupervisorStatusChart(stats) {
     // Processar dados de supervisores por status
     const supervisorData = {};
     firebaseTableData.forEach(item => {
-        const supervisor = mapFieldValue(item, 'supervisor') || 'Não especificado';
-        const status = mapFieldValue(item, 'status') || 'Não especificado';
+        const supervisor = mapFieldValue(item, 'SUPERVISOR') || 'Não especificado';
+        const status = mapFieldValue(item, 'STATUS') || 'Não especificado';
         
         if (!supervisorData[supervisor]) {
             supervisorData[supervisor] = { PRODUTIVA: 0, IMPRODUTIVA: 0 };
@@ -3214,7 +3230,23 @@ async function handleNovoEndereco(event) {
         const formData = new FormData(event.target);
         const enderecoData = {};
         
-        // Mapear campos do formulário para campos do Firestore
+        // GARANTIR QUE TODAS AS COLUNAS OBRIGATÓRIAS EXISTAM
+        const COLUNAS_OBRIGATORIAS = [
+            'Projeto', 'Sub Projeto', 'Tipo de Ação', 'CONTRATO', 'Condominio',
+            'ENDEREÇO', 'Cidade', 'PEP', 'COD IMOVEL GED', 'NODE GERENCIAL',
+            'Área Técnica', 'HP', 'ANDAR', 'DATA RECEBIMENTO', 'DATA INICIO', 
+            'DATA FINAL', 'Dias', 'EQUIPE', 'SUPERVISOR', 'STATUS', 'RDO',
+            'BOOK', 'COLABORADOR/BOOK', 'DATA BOOK', 'PROJETO', 
+            'COLABORADOR/PROJETO', 'DATA/PROJETO', 'JUSTIFICATIVA', 
+            'Observação', 'SOLUÇÃO', '< OU > QUE 30'
+        ];
+        
+        // Primeiro, inicializar TODAS as colunas obrigatórias
+        COLUNAS_OBRIGATORIAS.forEach(coluna => {
+            enderecoData[coluna] = '';
+        });
+        
+        // Depois, mapear campos do formulário para campos do Firestore
         for (let [key, value] of formData.entries()) {
             enderecoData[key] = value;
         }
@@ -3526,7 +3558,20 @@ window.FirebaseTableSystem = {
     updateCards: updateDashboardCards,
     updateFilters: updateDashboardFilters,
     updateCharts: updateDashboardCharts,
-    manager: firebaseManager
+    manager: firebaseManager,
+    // DEBUG: Função para verificar dados
+    debugData: () => {
+        console.log('🔥 [DEBUG] Total dados na memória:', firebaseTableData.length);
+        console.log('🔥 [DEBUG] Dados na tabela visível:', document.querySelectorAll('#enderecoTableBody tr').length);
+        console.log('🔥 [DEBUG] Config paginação:', paginationConfig);
+        console.log('🔥 [DEBUG] Filtro ativo:', filterText);
+        return {
+            totalData: firebaseTableData.length,
+            visibleRows: document.querySelectorAll('#enderecoTableBody tr').length,
+            pagination: paginationConfig,
+            filter: filterText
+        };
+    }
 };
 
 // ============= SISTEMA INTEGRADO DE DASHBOARD =============
@@ -3559,9 +3604,10 @@ function obterCampo(item, campo) {
         'dataRecebimento': item['DATA RECEBIMENTO'] || item['dataRecebimento'] || item['Data Recebimento'] || '',
         'dataInicio': item['DATA INICIO'] || item['dataInicio'] || item['Data Início'] || '',
         'dataFinal': item['DATA FINAL'] || item['dataFinal'] || item['Data Final'] || '',
-        'supervisor': item['Supervisor'] || item['supervisor'] || '',
+        'dias': item['Dias'] || item['dias'] || '',
+        'supervisor': item['SUPERVISOR'] || item['Supervisor'] || item['supervisor'] || '',
         'equipe': item['EQUIPE'] || item['equipe'] || '',
-        'status': item['Status'] || item['status'] || item['STATUS'] || '',
+        'status': item['STATUS'] || item['Status'] || item['status'] || '',
         'tipoAcao': item['Tipo de Ação'] || item['tipoAcao'] || ''
     };
     return mapeamento[campo] || '';
@@ -3644,7 +3690,7 @@ function atualizarCardsEstatisticosIntegrado(dados) {
     
     // Produtividade
     const produtivos = dados.filter(item => {
-        const status = (item['Status'] || '').toUpperCase();
+        const status = (item['STATUS'] || item['Status'] || '').toUpperCase();
         return status === 'PRODUTIVA' || status.includes('PRODUTIVA');
     }).length;
     const produtividade = totalRegistros > 0 ? Math.round((produtivos / totalRegistros) * 100) : 0;
@@ -3667,37 +3713,87 @@ function atualizarCardsEstatisticosIntegrado(dados) {
 }
 
 function calcularTempoMedioIntegrado(dados, campoInicio, campoFim) {
+    console.log(`🕐 [CALC-TEMPO] Calculando tempo médio: ${campoInicio} → ${campoFim}`);
+    
     const registrosComDatas = dados.filter(item => {
-        const inicio = item[campoInicio];
-        const fim = item[campoFim];
+        const inicio = getFieldValue(item, campoInicio, campoInicio.toLowerCase(), campoInicio.replace(' ', ''));
+        const fim = getFieldValue(item, campoFim, campoFim.toLowerCase(), campoFim.replace(' ', ''));
+        
         // Verificar se os valores existem e são válidos (string ou objeto Date)
         const inicioValido = inicio && (typeof inicio === 'string' ? inicio.trim() : true);
         const fimValido = fim && (typeof fim === 'string' ? fim.trim() : true);
+        
+        // Debug reduzido para evitar spam nos logs
+        
         return inicioValido && fimValido;
     });
     
-    if (registrosComDatas.length === 0) return 0;
+    console.log(`📊 [CALC-TEMPO] Registros com datas válidas: ${registrosComDatas.length} de ${dados.length}`);
     
-    const tempos = registrosComDatas.map(item => {
+    if (registrosComDatas.length === 0) {
+        console.log('⚠️ [CALC-TEMPO] Nenhum registro com datas válidas encontrado');
+        return 0;
+    }
+    
+    const tempos = registrosComDatas.map((item, index) => {
         try {
-            const inicio = new Date(item[campoInicio]);
-            const fim = new Date(item[campoFim]);
+            const inicioRaw = getFieldValue(item, campoInicio, campoInicio.toLowerCase(), campoInicio.replace(' ', ''));
+            const fimRaw = getFieldValue(item, campoFim, campoFim.toLowerCase(), campoFim.replace(' ', ''));
             
-            if (isNaN(inicio.getTime()) || isNaN(fim.getTime())) return 0;
+            // Tentar diferentes formatos de data
+            const inicio = parseDataBrasileira(inicioRaw) || new Date(inicioRaw);
+            const fim = parseDataBrasileira(fimRaw) || new Date(fimRaw);
+            
+            if (isNaN(inicio.getTime()) || isNaN(fim.getTime())) {
+                if (index < 5) console.log(`❌ [CALC-TEMPO] Erro parsing datas - Início: ${inicioRaw}, Fim: ${fimRaw}`);
+                return 0;
+            }
             
             const diffTime = Math.abs(fim - inicio);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (index < 5) {
+                console.log(`🔢 [CALC-TEMPO] Item ${index}: ${inicioRaw} → ${fimRaw} = ${diffDays} dias`);
+            }
+            
             return diffDays;
         } catch (error) {
+            if (index < 5) console.log(`❌ [CALC-TEMPO] Erro no item ${index}:`, error);
             return 0;
         }
     });
     
     const temposValidos = tempos.filter(t => t > 0);
+    console.log(`📈 [CALC-TEMPO] Tempos válidos: ${temposValidos.length}, Valores: [${temposValidos.slice(0, 10).join(', ')}...]`);
+    
     if (temposValidos.length === 0) return 0;
     
     const media = temposValidos.reduce((sum, t) => sum + t, 0) / temposValidos.length;
-    return Math.round(media);
+    const resultado = Math.round(media);
+    
+    console.log(`✅ [CALC-TEMPO] Resultado final: ${resultado} dias (média de ${temposValidos.length} registros)`);
+    return resultado;
+}
+
+// Função auxiliar para parsing de datas brasileiras
+function parseDataBrasileira(dateString) {
+    if (!dateString || typeof dateString !== 'string') return null;
+    
+    // Formato dd/mm/yyyy ou dd/mm/yy
+    const brazilianFormat = dateString.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (brazilianFormat) {
+        const day = parseInt(brazilianFormat[1]);
+        const month = parseInt(brazilianFormat[2]) - 1; // JS months are 0-based
+        let year = parseInt(brazilianFormat[3]);
+        
+        if (year < 100) {
+            year += year < 50 ? 2000 : 1900; // Assume 2000s for years 0-49, 1900s for 50-99
+        }
+        
+        return new Date(year, month, day);
+    }
+    
+    return null;
 }
 
 // ============= 1. ANÁLISE DE PROJETOS (Barras + Linhas) =============
@@ -4245,7 +4341,7 @@ function criarRanking2_EquipesStatusIntegrado(dados) {
     
     dados.forEach(item => {
         const equipe = item['EQUIPE'] || 'Não especificado';
-        const status = item['Status'] || 'Não especificado';
+        const status = item['STATUS'] || item['Status'] || 'Não especificado';
         
         if (!equipeStats[equipe]) {
             equipeStats[equipe] = { PRODUTIVA: 0, IMPRODUTIVA: 0 };
