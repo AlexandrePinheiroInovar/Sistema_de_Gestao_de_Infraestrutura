@@ -3,9 +3,9 @@ console.log('📋 [RESUMO-TABELA] Sistema carregado');
 
 // ============= VARIÁVEIS =============
 let resumoData = [];
-let currentPage = 1;
-let itemsPerPage = 25;
-let totalPages = 1;
+let resumoCurrentPage = 1;
+let resumoItemsPerPage = 25;
+let resumoTotalPages = 1;
 
 // ============= INICIALIZAÇÃO =============
 document.addEventListener('DOMContentLoaded', function() {
@@ -78,9 +78,9 @@ function renderizarTabela() {
     }
     
     // Calcular itens da página
-    totalPages = Math.ceil(resumoData.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
+    resumoTotalPages = Math.ceil(resumoData.length / resumoItemsPerPage);
+    const startIndex = (resumoCurrentPage - 1) * resumoItemsPerPage;
+    const endIndex = startIndex + resumoItemsPerPage;
     const pageItems = resumoData.slice(startIndex, endIndex);
     
     if (pageItems.length === 0) {
@@ -170,7 +170,7 @@ function atualizarPaginacao() {
     const pagination = document.getElementById('filteredTablePagination');
     if (!pagination) return;
     
-    if (totalPages <= 1) {
+    if (resumoTotalPages <= 1) {
         pagination.style.display = 'none';
         return;
     }
@@ -183,22 +183,22 @@ function atualizarPaginacao() {
     const nextBtn = document.getElementById('nextPage');
     const lastBtn = document.getElementById('lastPage');
     
-    if (firstBtn) firstBtn.disabled = currentPage === 1;
-    if (prevBtn) prevBtn.disabled = currentPage === 1;
-    if (nextBtn) nextBtn.disabled = currentPage === totalPages;
-    if (lastBtn) lastBtn.disabled = currentPage === totalPages;
+    if (firstBtn) firstBtn.disabled = resumoCurrentPage === 1;
+    if (prevBtn) prevBtn.disabled = resumoCurrentPage === 1;
+    if (nextBtn) nextBtn.disabled = resumoCurrentPage === resumoTotalPages;
+    if (lastBtn) lastBtn.disabled = resumoCurrentPage === resumoTotalPages;
     
     // Info de página
     const paginationInfo = document.getElementById('paginationInfo');
     if (paginationInfo) {
-        paginationInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+        paginationInfo.textContent = `Página ${resumoCurrentPage} de ${resumoTotalPages}`;
     }
 }
 
 // ============= NAVEGAÇÃO DE PÁGINAS =============
 function goToPage(page) {
-    if (page < 1 || page > totalPages || page === currentPage) return;
-    currentPage = page;
+    if (page < 1 || page > resumoTotalPages || page === resumoCurrentPage) return;
+    resumoCurrentPage = page;
     renderizarTabela();
 }
 
@@ -206,8 +206,8 @@ function changePageSize() {
     const pageSize = document.getElementById('pageSize');
     if (!pageSize) return;
     
-    itemsPerPage = parseInt(pageSize.value);
-    currentPage = 1;
+    resumoItemsPerPage = parseInt(pageSize.value);
+    resumoCurrentPage = 1;
     renderizarTabela();
 }
 
