@@ -135,12 +135,25 @@ async function processarUploadExcel(event) {
             return;
         }
 
-        // Processar e salvar dados
+        // Atualizar status do upload
+        mostrarNotificacao('💾 Salvando...', 'Salvando dados no Firebase...', 'info');
+        
+        // Processar e salvar dados (AGUARDAR COMPLETAMENTE)
         await salvarDadosNaTabela(dadosMapeados);
 
-        // Garantir que dados aparecem na tabela
-        console.log('🔍 [ENDERECO-EXCEL] Forçando atualização da tabela...');
-        await exibirDadosNaTabela(dadosMapeados);
+        // Aguardar salvamento completo no Firebase
+        mostrarNotificacao('⏳ Finalizando...', 'Aguardando salvamento completo...', 'info');
+        console.log('🔍 [ENDERECO-EXCEL] Aguardando salvamento completo no Firebase...');
+        
+        // Aguardar um pouco mais para garantir que todos os batches foram processados
+        await new Promise(resolve => setTimeout(resolve, 3000)); // Aumentar para 3 segundos
+        
+        // FORÇAR RECARREGAMENTO DOS DADOS DO FIREBASE (não usar dados locais)
+        mostrarNotificacao('🔄 Atualizando...', 'Carregando dados na tabela...', 'info');
+        console.log('🔄 [ENDERECO-EXCEL] Recarregando dados do Firebase após upload...');
+        if (window.FirebaseTableSystem && window.FirebaseTableSystem.loadData) {
+            await window.FirebaseTableSystem.loadData();
+        }
 
         mostrarNotificacao(
             '🎉 Sucesso!',
@@ -374,36 +387,23 @@ function mapearDadosParaEstrutura(dadosExcel) {
 
 // ============= SALVAR NA TABELA =============
 async function salvarDadosNaTabela(dados) {
-    console.log('💾 [ENDERECO-EXCEL] Salvando dados na tabela...');
+    console.log('💾 [ENDERECO-EXCEL] Salvando dados no Firebase (AGUARDANDO SALVAMENTO COMPLETO)...');
 
     // Armazenar dados globalmente
     dadosEndereco = dados;
     totalRegistros = dados.length;
 
-    // Limpar tabela atual
-    limparTabela();
-
-    // Criar linhas na tabela
-    const tbody = document.getElementById('enderecoTableBody');
-    if (!tbody) {
-        throw new Error('Corpo da tabela não encontrado');
-    }
-
-    // Processar TODOS os registros sem limite
-    const dadosParaExibir = dados; // TODOS os registros sem limite
-
-    dadosParaExibir.forEach((linha, index) => {
-        const tr = criarLinhaTabela(linha, index);
-        tbody.appendChild(tr);
-    });
-
-    // Atualizar estatísticas
-    atualizarEstatisticas();
-
-    // Salvar no Firebase (se disponível)
+    // APENAS salvar no Firebase, NÃO renderizar dados locais na tabela
+    // A tabela será atualizada via firebase-table-system.js depois
+    console.log('🔄 [ENDERECO-EXCEL] Iniciando salvamento no Firebase...');
+    
+    // Salvar no Firebase (AGUARDAR COMPLETAMENTE)
     await salvarNoFirebase(dados);
-
-    console.log('✅ [ENDERECO-EXCEL] Dados salvos na tabela');
+    
+    console.log('✅ [ENDERECO-EXCEL] Salvamento no Firebase concluído');
+    
+    // NÃO renderizar dados locais - deixar o firebase-table-system.js fazer isso
+    // após recarregar os dados do Firestore
 }
 
 // ============= CRIAÇÃO DE LINHA DA TABELA =============
@@ -709,9 +709,9 @@ async function salvarNoFirebase(dados) {
                     `✅ [ENDERECO-EXCEL] Lote ${Math.floor(i / BATCH_SIZE) + 1} salvo no Firebase (${lote.length} registros)`
                 );
 
-                // Pausa entre lotes para evitar throttling
+                // Pausa entre lotes para evitar throttling  
                 if (i + BATCH_SIZE < dados.length) {
-                    await new Promise(resolve => setTimeout(resolve, 200));
+                    await new Promise(resolve => setTimeout(resolve, 300)); // Aumentar para 300ms
                 }
             }
 

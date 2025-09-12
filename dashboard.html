@@ -455,7 +455,7 @@
                             <div class="filtered-table-pagination" id="filteredTablePagination" style="display: none;">
                                 <div class="pagination-info">
                                     <span id="paginationInfo">Página 1 de 1</span>
-                                    <select id="pageSize" onchange="changePageSize()">
+                                    <select id="pageSize" onchange="changeFilteredPageSize()">
                                         <option value="10">10 por página</option>
                                         <option value="25" selected>25 por página</option>
                                         <option value="50">50 por página</option>
@@ -463,17 +463,17 @@
                                     </select>
                                 </div>
                                 <div class="pagination-controls">
-                                    <button id="firstPage" onclick="goToPage(1)" disabled>
+                                    <button id="firstPageFiltered" onclick="goToPageFiltered(1)" disabled>
                                         <i class="fas fa-angle-double-left"></i>
                                     </button>
-                                    <button id="prevPage" onclick="goToPage(currentPage - 1)" disabled>
+                                    <button id="prevPageFiltered" onclick="goToPageFiltered(filteredTablePagination.currentPage - 1)" disabled>
                                         <i class="fas fa-angle-left"></i>
                                     </button>
                                     <span id="pageNumbers"></span>
-                                    <button id="nextPage" onclick="goToPage(currentPage + 1)" disabled>
+                                    <button id="nextPageFiltered" onclick="goToPageFiltered(filteredTablePagination.currentPage + 1)" disabled>
                                         <i class="fas fa-angle-right"></i>
                                     </button>
-                                    <button id="lastPage" onclick="goToPage(totalPages)" disabled>
+                                    <button id="lastPageFiltered" onclick="goToPageFiltered(filteredTablePagination.totalPages)" disabled>
                                         <i class="fas fa-angle-double-right"></i>
                                     </button>
                                 </div>
@@ -1547,7 +1547,8 @@
     <script src="src/js/unified-filter-system.js?v=1.0&t=2025090115"></script>
     
     <!-- ============= NOVA TABELA FILTRADA - VERSÃO 1.1 ============= -->
-    <script src="src/js/filtered-table-v1-1.js?v=1.1&t=2025090901"></script>
+    <!-- <script src="src/js/filtered-table-v1-1.js?v=1.1&t=2025090901"></script> --> <!-- DESABILITADO TEMPORARIAMENTE - firebase-table-system alimenta diretamente -->
+    
     
     <!-- SISTEMAS ANTIGOS DE FILTROS - TEMPORARIAMENTE DESABILITADOS -->
     <!-- <script src="src/js/filter-state-manager.js?v=1.0&t=2025090115"></script> --> <!-- Substituído pelo sistema unificado -->

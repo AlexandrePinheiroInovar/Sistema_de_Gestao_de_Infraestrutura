@@ -79,7 +79,7 @@
     z-index: 999999999 !important;
     max-height: 320px !important;
     overflow-y: auto !important;
-    display: none !important;
+    display: none;
     margin-top: 2px !important;
     min-width: 250px !important;
 }
@@ -87,9 +87,12 @@
 .checkbox-dropdown.open .checkbox-dropdown-content {
     display: block !important;
     animation: fadeInDown 0.2s ease;
-    z-index: 9999999999 !important;
+    z-index: 2147483647 !important;
     position: absolute !important;
     background: white !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 /* Regra extra para garantir prioridade máxima */
@@ -97,11 +100,13 @@
 .infra-filters-container .checkbox-dropdown.open .checkbox-dropdown-content,
 .filters-grid .checkbox-dropdown.open .checkbox-dropdown-content,
 .filter-group .checkbox-dropdown.open .checkbox-dropdown-content {
-    z-index: 999999999999 !important;
+    z-index: 2147483647 !important;
     position: absolute !important;
     background: white !important;
     display: block !important;
     pointer-events: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 /* Forçar todos os elementos do dashboard para z-index baixo */

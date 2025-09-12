@@ -1,13 +1,27 @@
 // ============= SISTEMA DE TABELA FIREBASE COMPLETAMENTE NOVO =============
 console.log('🔥 [FIREBASE-TABLE] Inicializando sistema de tabela Firebase...');
 
-// ============= SISTEMA DE PAGINAÇÃO =============
+// ============= CONFIGURAÇÕES DE PAGINAÇÃO =============
+// Paginação da tabela principal
 const paginationConfig = {
     currentPage: 1,
     recordsPerPage: 50,
     totalRecords: 0,
     totalPages: 0
 };
+
+// Paginação da tabela resumo (inicializada no início)
+const filteredTablePagination = {
+    currentPage: 1,
+    recordsPerPage: 25,
+    totalRecords: 0,
+    totalPages: 0,
+    allData: [],
+    filteredData: []
+};
+
+// Expor globalmente imediatamente
+window.filteredTablePagination = filteredTablePagination;
 
 // ============= VARIÁVEL GLOBAL PARA EDIÇÃO =============
 let currentEditingRecordId = null;
@@ -322,6 +336,30 @@ async function loadFirebaseTableData() {
             window.onFirebaseTableDataLoaded(data);
         }
         
+        // Configurar listener para filtros unificados (uma única vez)
+        if (!window.filteredTableListenerConfigured) {
+            document.addEventListener('unifiedFiltersChanged', function(event) {
+                console.log('🔍 [FILTERED-TABLE] Evento de filtros recebido:', event.detail.filteredCount, 'de', event.detail.totalCount);
+                if (event.detail && event.detail.filteredData && filteredTablePagination) {
+                    // Armazenar dados originais se necessário
+                    if (event.detail.totalCount > filteredTablePagination.allData.length) {
+                        filteredTablePagination.allData = firebaseTableData || [];
+                    }
+                    
+                    // Atualizar tabela com dados filtrados
+                    filteredTablePagination.filteredData = event.detail.filteredData;
+                    filteredTablePagination.currentPage = 1; // Reset para página 1
+                    
+                    // Chamar função de atualização de forma segura
+                    setTimeout(() => {
+                        updateFilteredTableFromFirebase(filteredTablePagination.allData);
+                    }, 100);
+                }
+            });
+            window.filteredTableListenerConfigured = true;
+            console.log('✅ [FILTERED-TABLE] Listener para filtros unificados configurado');
+        }
+        
         if (data.length > 0) {
             console.log('✅ [FIREBASE-TABLE] Usando colunas fixas predefinidas:', firebaseTableColumns.length, 'colunas');
             
@@ -333,6 +371,9 @@ async function loadFirebaseTableData() {
             
             // Atualizar estatísticas
             updateTableStats(data.length);
+            
+            // ATUALIZAR TABELA RESUMO (substituindo filtered-table-v1-1.js)
+            updateFilteredTableFromFirebase(data);
             
             // ATUALIZAR CARDS, FILTROS E GRÁFICOS DO DASHBOARD
             try {
@@ -3379,6 +3420,9 @@ window.FirebaseTableSystem.updateTable = function(filteredData) {
         // Atualizar estatísticas
         updateTableStats(filteredData.length);
         
+        // Atualizar tabela resumo com dados filtrados
+        updateFilteredTableFromFirebase(filteredData);
+        
         console.log('✅ [FIREBASE-TABLE] Tabela atualizada com filtros aplicados');
         
         // Callback para restaurar dados originais quando filtros forem limpos
@@ -5989,4 +6033,298 @@ function closeModal() {
     console.log('❌ [EDIT-MODAL] Modal fechado');
 }
 
-console.log('✅ [FIREBASE-TABLE-SYSTEM] Sistema de edição carregado completamente');
+// ============= TABELA RESUMO COM PAGINAÇÃO INTEGRADA =============
+function updateFilteredTableFromFirebase(data) {
+    console.log('📋 [FIREBASE-TABLE] Atualizando tabela resumo com', data ? data.length : 0, 'registros');
+    
+    // Verificar se a configuração de paginação existe
+    if (!filteredTablePagination) {
+        console.error('❌ [FIREBASE-TABLE] filteredTablePagination não inicializada');
+        return;
+    }
+    
+    const tableBody = document.getElementById('filteredTableBody');
+    const tableCount = document.getElementById('filteredTableCount');
+    const tableStatus = document.getElementById('filteredTableStatus');
+    const paginationContainer = document.getElementById('filteredTablePagination');
+    
+    if (!tableBody) {
+        console.warn('⚠️ [FIREBASE-TABLE] Tabela resumo não encontrada (filteredTableBody)');
+        return;
+    }
+    
+    try {
+        // Armazenar dados
+        filteredTablePagination.allData = data || [];
+        filteredTablePagination.filteredData = data || [];
+        filteredTablePagination.totalRecords = data ? data.length : 0;
+        
+        // Aplicar filtros se existirem dados filtrados do sistema unificado
+        if (window.unifiedFilterSystem && window.unifiedFilterSystem.filteredData) {
+            filteredTablePagination.filteredData = window.unifiedFilterSystem.filteredData;
+            filteredTablePagination.totalRecords = window.unifiedFilterSystem.filteredData.length;
+            console.log('🔍 [FILTERED-TABLE] Usando dados filtrados:', filteredTablePagination.totalRecords, 'registros');
+        }
+        
+        // Calcular paginação
+        filteredTablePagination.totalPages = Math.ceil(filteredTablePagination.totalRecords / filteredTablePagination.recordsPerPage);
+        
+        // Resetar para página 1 se necessário
+        if (filteredTablePagination.currentPage > filteredTablePagination.totalPages) {
+            filteredTablePagination.currentPage = 1;
+        }
+        
+        // Limpar tabela
+        tableBody.innerHTML = '';
+        
+        if (!filteredTablePagination.filteredData || filteredTablePagination.filteredData.length === 0) {
+            // Mostrar estado vazio
+            tableBody.innerHTML = `
+                <tr class="no-data-row">
+                    <td colspan="5" class="no-data-cell">
+                        <div class="no-data-content">
+                            <div class="no-data-icon">📊</div>
+                            <h3>Nenhum dado encontrado</h3>
+                            <p>Faça o upload de dados ou ajuste os filtros</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            
+            // Atualizar contadores
+            if (tableCount) tableCount.textContent = '0 registros encontrados';
+            if (tableStatus) tableStatus.textContent = 'Aguardando dados...';
+            if (paginationContainer) paginationContainer.style.display = 'none';
+            return;
+        }
+        
+        // Calcular dados da página atual
+        const startIndex = (filteredTablePagination.currentPage - 1) * filteredTablePagination.recordsPerPage;
+        const endIndex = startIndex + filteredTablePagination.recordsPerPage;
+        const pageData = filteredTablePagination.filteredData.slice(startIndex, endIndex);
+        
+        console.log(`📄 [FILTERED-TABLE] Página ${filteredTablePagination.currentPage}: registros ${startIndex + 1}-${Math.min(endIndex, filteredTablePagination.totalRecords)} de ${filteredTablePagination.totalRecords}`);
+        
+        // Renderizar dados da página
+        pageData.forEach((item, index) => {
+            const row = document.createElement('tr');
+            
+            // Extrair dados com fallbacks
+            const pep = item['PEP'] || item['pep'] || '';
+            const nodeGerencial = item['NODE GERENCIAL'] || item['nodeGerencial'] || '';
+            const status = item['STATUS'] || item['status'] || '';
+            const observacao = item['Observação'] || item['observacao'] || item['Observacao'] || '';
+            const justificativa = item['JUSTIFICATIVA'] || item['justificativa'] || '';
+            
+            row.innerHTML = `
+                <td title="${pep}">${pep}</td>
+                <td title="${nodeGerencial}">${nodeGerencial}</td>
+                <td title="${status}">${formatarStatusBadge(status)}</td>
+                <td title="${observacao}">${observacao}</td>
+                <td title="${justificativa}">${justificativa}</td>
+            `;
+            
+            tableBody.appendChild(row);
+        });
+        
+        // Atualizar contadores
+        if (tableCount) {
+            tableCount.textContent = `${filteredTablePagination.totalRecords} registros encontrados`;
+        }
+        if (tableStatus) {
+            tableStatus.textContent = `Atualizado em ${new Date().toLocaleString()}`;
+        }
+        
+        // Atualizar paginação
+        updateFilteredTablePagination();
+        
+        console.log('✅ [FIREBASE-TABLE] Tabela resumo atualizada com paginação');
+        
+    } catch (error) {
+        console.error('❌ [FIREBASE-TABLE] Erro ao atualizar tabela resumo:', error);
+        
+        // Mostrar erro na tabela
+        if (tableBody) {
+            tableBody.innerHTML = `
+                <tr class="error-row">
+                    <td colspan="5" class="error-cell">
+                        <div class="error-content">
+                            <div class="error-icon">⚠️</div>
+                            <h3>Erro ao carregar dados</h3>
+                            <p>${error.message}</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+}
+
+// Formatar status com badges coloridos
+function formatarStatusBadge(status) {
+    if (!status) return '<span class="status-badge pendente">N/A</span>';
+    
+    const statusLower = status.toLowerCase();
+    let statusClass = 'pendente';
+    
+    if (statusLower.includes('produtiva')) {
+        statusClass = 'produtiva';
+    } else if (statusLower.includes('improdutiva')) {
+        statusClass = 'improdutiva';
+    } else if (statusLower.includes('rota')) {
+        statusClass = 'em-rota';
+    } else if (statusLower.includes('pausa')) {
+        statusClass = 'pausa';
+    }
+    
+    return `<span class="status-badge ${statusClass}">${status}</span>`;
+}
+
+// Atualizar controles de paginação da tabela resumo
+function updateFilteredTablePagination() {
+    const paginationContainer = document.getElementById('filteredTablePagination');
+    const paginationInfo = document.getElementById('paginationInfo');
+    const pageNumbers = document.getElementById('pageNumbers');
+    
+    if (!paginationContainer) return;
+    
+    if (filteredTablePagination.totalPages <= 1) {
+        paginationContainer.style.display = 'none';
+        return;
+    }
+    
+    paginationContainer.style.display = 'flex';
+    
+    // Atualizar info de página
+    if (paginationInfo) {
+        paginationInfo.textContent = `Página ${filteredTablePagination.currentPage} de ${filteredTablePagination.totalPages}`;
+    }
+    
+    // Gerar números das páginas
+    if (pageNumbers) {
+        let paginationHTML = '';
+        const maxVisible = 5;
+        let startPage = Math.max(1, filteredTablePagination.currentPage - Math.floor(maxVisible / 2));
+        let endPage = Math.min(filteredTablePagination.totalPages, startPage + maxVisible - 1);
+        
+        // Ajustar se não temos páginas suficientes no final
+        if (endPage - startPage < maxVisible - 1) {
+            startPage = Math.max(1, endPage - maxVisible + 1);
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const activeClass = i === filteredTablePagination.currentPage ? 'active' : '';
+            paginationHTML += `
+                <button class="page-number ${activeClass}" onclick="goToPageFiltered(${i})">
+                    ${i}
+                </button>
+            `;
+        }
+        
+        pageNumbers.innerHTML = paginationHTML;
+    }
+    
+    // Atualizar botões de navegação
+    const firstBtn = document.getElementById('firstPageFiltered');
+    const prevBtn = document.getElementById('prevPageFiltered');
+    const nextBtn = document.getElementById('nextPageFiltered');
+    const lastBtn = document.getElementById('lastPageFiltered');
+    
+    if (firstBtn) {
+        firstBtn.disabled = filteredTablePagination.currentPage === 1;
+        firstBtn.onclick = () => goToPageFiltered(1);
+    }
+    if (prevBtn) {
+        prevBtn.disabled = filteredTablePagination.currentPage === 1;
+        prevBtn.onclick = () => goToPageFiltered(filteredTablePagination.currentPage - 1);
+    }
+    if (nextBtn) {
+        nextBtn.disabled = filteredTablePagination.currentPage === filteredTablePagination.totalPages;
+        nextBtn.onclick = () => goToPageFiltered(filteredTablePagination.currentPage + 1);
+    }
+    if (lastBtn) {
+        lastBtn.disabled = filteredTablePagination.currentPage === filteredTablePagination.totalPages;
+        lastBtn.onclick = () => goToPageFiltered(filteredTablePagination.totalPages);
+    }
+}
+
+// Funções de navegação da tabela resumo
+window.goToPageFiltered = function(page) {
+    if (page < 1 || page > filteredTablePagination.totalPages || page === filteredTablePagination.currentPage) {
+        return;
+    }
+    
+    filteredTablePagination.currentPage = page;
+    console.log(`📄 [FILTERED-TABLE] Mudando para página ${page}`);
+    
+    // Re-renderizar tabela
+    updateFilteredTableFromFirebase(filteredTablePagination.allData);
+};
+
+window.changeFilteredPageSize = function() {
+    const pageSize = document.getElementById('pageSize');
+    if (!pageSize) return;
+    
+    filteredTablePagination.recordsPerPage = parseInt(pageSize.value);
+    filteredTablePagination.currentPage = 1; // Resetar para primeira página
+    
+    console.log(`📄 [FILTERED-TABLE] Alterando para ${filteredTablePagination.recordsPerPage} registros por página`);
+    
+    // Re-renderizar tabela
+    updateFilteredTableFromFirebase(filteredTablePagination.allData);
+};
+
+// Função para forçar sincronização com filtros
+window.forcarSincronizacaoFiltros = function() {
+    console.log('🔄 [FILTERED-TABLE] Forçando sincronização com filtros...');
+    
+    // Verificar se há filtros ativos
+    if (window.unifiedFilterSystem) {
+        const filtros = window.unifiedFilterSystem.currentFilters;
+        const dadosFiltrados = window.unifiedFilterSystem.filteredData;
+        
+        console.log('🔍 [FILTERED-TABLE] Filtros ativos:', Object.keys(filtros || {}).length);
+        console.log('📊 [FILTERED-TABLE] Dados filtrados disponíveis:', dadosFiltrados?.length || 'null');
+        
+        if (dadosFiltrados && dadosFiltrados.length >= 0) {
+            updateFilteredTableFromFirebase(firebaseTableData || []);
+            return true;
+        }
+    }
+    
+    // Fallback para dados não filtrados
+    if (firebaseTableData && firebaseTableData.length > 0) {
+        updateFilteredTableFromFirebase(firebaseTableData);
+        return true;
+    }
+    
+    return false;
+};
+
+// Exposição global das funções da tabela resumo
+window.updateFilteredTableFromFirebase = updateFilteredTableFromFirebase;
+
+// Debug global
+window.debugFilteredTable = function() {
+    console.log('🔍 [DEBUG] Estado da tabela filtrada:');
+    console.log('- Dados totais:', filteredTablePagination.allData.length);
+    console.log('- Dados filtrados:', filteredTablePagination.filteredData.length);
+    console.log('- Página atual:', filteredTablePagination.currentPage);
+    console.log('- Total de páginas:', filteredTablePagination.totalPages);
+    console.log('- Registros por página:', filteredTablePagination.recordsPerPage);
+    return filteredTablePagination;
+};
+
+// Função refreshFilteredTable para o botão de atualizar
+window.refreshFilteredTable = function() {
+    console.log('🔄 [FIREBASE-TABLE] Atualizando tabela resumo manualmente...');
+    
+    if (firebaseTableData && firebaseTableData.length > 0) {
+        updateFilteredTableFromFirebase(firebaseTableData);
+    } else {
+        console.warn('⚠️ [FIREBASE-TABLE] Nenhum dado disponível para atualizar');
+        updateFilteredTableFromFirebase([]);
+    }
+};
+
+console.log('✅ [FIREBASE-TABLE-SYSTEM] Sistema de edição e tabela resumo carregado completamente');
