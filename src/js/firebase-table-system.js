@@ -2187,7 +2187,8 @@ function createProjetosChart(stats) {
                 },
                 title: {
                     display: true,
-                    text: 'Análise de Projetos'
+                    text: 'Análise de Projetos',
+                    color: '#000000'
                 }
             }
         }
@@ -3903,7 +3904,8 @@ function criarGrafico1_AnaliseProjetosIntegrado(dados) {
                 },
                 title: {
                     display: true,
-                    text: 'Análise de Projetos'
+                    text: 'Análise de Projetos',
+                    color: '#000000'
                 }
             },
             scales: {
@@ -3984,11 +3986,11 @@ function criarGrafico2_AnaliseSubProjetosIntegrado(dados) {
             responsive: true,
             plugins: {
                 legend: { position: 'top', display: true },
-                title: { display: true, text: 'Análise de Sub-Projetos' }
+                title: { display: true, color: "#000000", text: 'Análise de Sub-Projetos' }
             },
             scales: {
-                y: { beginAtZero: true, title: { display: true, text: 'Quantidade' } },
-                x: { title: { display: true, text: 'Sub-Projetos' } }
+                y: { beginAtZero: true, title: { display: true, color: "#000000", text: 'Quantidade' } },
+                x: { title: { display: true, color: "#000000", text: 'Sub-Projetos' } }
             }
         }
     });
@@ -4036,11 +4038,11 @@ function criarGrafico3_AnaliseCidadesIntegrado(dados) {
             responsive: true,
             plugins: {
                 legend: { position: 'top', display: true },
-                title: { display: true, text: 'Análise de Cidades' }
+                title: { display: true, color: "#000000", text: 'Análise de Cidades' }
             },
             scales: {
-                y: { beginAtZero: true, title: { display: true, text: 'Quantidade' } },
-                x: { title: { display: true, text: 'Cidades' } }
+                y: { beginAtZero: true, title: { display: true, color: "#000000", text: 'Quantidade' } },
+                x: { title: { display: true, color: "#000000", text: 'Cidades' } }
             }
         }
     });
@@ -4096,11 +4098,11 @@ function criarGrafico4_AnaliseHPProjetosIntegrado(dados) {
             responsive: true,
             plugins: {
                 legend: { position: 'top', display: true },
-                title: { display: true, text: 'Análise de HP por Projeto' }
+                title: { display: true, color: "#000000", text: 'Análise de HP por Projeto' }
             },
             scales: {
-                y: { beginAtZero: true, title: { display: true, text: 'Soma de HP Ativados' } },
-                x: { title: { display: true, text: 'Projetos' } }
+                y: { beginAtZero: true, title: { display: true, color: "#000000", text: 'Soma de HP Ativados' } },
+                x: { title: { display: true, color: "#000000", text: 'Projetos' } }
             }
         }
     });
@@ -4222,11 +4224,11 @@ function criarGrafico5_AnaliseRecebimentosIntegrado(dados) {
             responsive: true,
             plugins: {
                 legend: { position: 'top', display: true },
-                title: { display: true, text: 'Análise de Recebimentos e Conclusões' }
+                title: { display: true, color: "#000000", text: 'Análise de Recebimentos e Conclusões' }
             },
             scales: {
-                y: { beginAtZero: true, title: { display: true, text: 'Quantidade' } },
-                x: { title: { display: true, text: 'Período' } }
+                y: { beginAtZero: true, title: { display: true, color: "#000000", text: 'Quantidade' } },
+                x: { title: { display: true, color: "#000000", text: 'Período' } }
             }
         }
     });
@@ -4295,11 +4297,11 @@ function criarGrafico6_AnaliseEnderecosSupervisorIntegrado(dados) {
             responsive: true,
             plugins: {
                 legend: { position: 'top', display: true },
-                title: { display: true, text: 'Análise de Endereços por Supervisor' }
+                title: { display: true, color: "#000000", text: 'Análise de Endereços por Supervisor' }
             },
             scales: {
-                y: { beginAtZero: true, title: { display: true, text: 'Quantidade de Endereços' } },
-                x: { title: { display: true, text: 'Supervisores' } }
+                y: { beginAtZero: true, title: { display: true, color: "#000000", text: 'Quantidade de Endereços' } },
+                x: { title: { display: true, color: "#000000", text: 'Supervisores' } }
             }
         }
     });
@@ -5413,7 +5415,7 @@ function gerarHTMLHistorico(logDocs) {
         
         html += `
             <div class="historico-entry" style="border-left: 3px solid #3b82f6; padding-left: 15px; margin-bottom: 20px; position: relative;">
-                <div class="historico-header" style="font-weight: bold; color: #1f2937; margin-bottom: 8px;">
+                <div class="historico-header" style="font-weight: bold; color: #000000; margin-bottom: 8px;">
                     <span style="background: #3b82f6; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px;">
                         ${log.tipoOperacao?.toUpperCase() || 'EDIT'}
                     </span>

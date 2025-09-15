@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="src/css/gestao-renovada.css?v=1.0&t=2025082121">
     <link rel="stylesheet" href="src/css/user-dropdown.css?v=1.0&t=2025082921">
     <link rel="stylesheet" href="src/css/dropdown-fix.css?v=1.0">
+    <link rel="stylesheet" href="src/css/z-index-fix-master.css?v=1.0">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="src/assets/images/Inovar-Telecom-Logo-Site_.png">
 </head>
@@ -91,6 +92,11 @@
                             <button class="dropdown-option colorblind-option" id="colorblindOption">
                                 <i class="fas fa-eye"></i>
                                 <span id="colorblindText">Modo Daltônico</span>
+                            </button>
+                            <button class="dropdown-option dark-mode-dropdown-option" id="darkModeOption">
+                                <i class="fas fa-moon"></i>
+                                <span class="toggle-text" id="darkModeText">Modo Escuro</span>
+                                <span class="toggle-indicator" id="darkModeIndicator">🌙</span>
                             </button>
                             <div class="dropdown-separator"></div>
                             <button class="dropdown-option logout-option" id="logoutOption">
@@ -194,8 +200,8 @@
                                     <span class="step-line"></span>
                                 </div>
                                 <div class="step-details">
-                                    <h4>Acesse a Infraestrutura</h4>
-                                    <p>Clique em <b>Infraestrutura</b> no menu lateral para ver todos os gráficos.</p>
+                                    <h4>Acesse o Dashboard</h4>
+                                    <p>Clique em <b>Dashboard</b> no menu lateral para ver todos os gráficos.</p>
                                 </div>
                             </div>
                             <div class="step-card">
@@ -402,11 +408,9 @@
                             <h3>📋 Resumo de Dados Filtrados</h3>
                             <p>Visualize os dados de acordo com os filtros aplicados</p>
                             <div class="table-actions">
-                                <button id="refreshFilteredData" class="btn-refresh" onclick="refreshFilteredTable()">
-                                    <i class="fas fa-filter"></i>
-                                </button>
-                                <button id="syncFilteredData" class="btn-secondary" onclick="forcarSincronizacaoFiltros()" title="Forçar sincronização com filtros ativos">
-                                    <i class="fas fa-filter"></i>
+                                <button id="refreshFilteredData" class="btn-refresh-unified" onclick="forcarSincronizacaoFiltros()" title="Atualizar dados e aplicar filtros">
+                                    <i class="fas fa-sync-alt"></i>
+                                    <span>Atualizar Dados</span>
                                 </button>
                             </div>
                         </div>
@@ -1542,6 +1546,7 @@
     <!-- <script src="src/js/novo-endereco-integrado.js?v=2.0&t=2025082216"></script> --> <!-- DESABILITADO - Conflitava com firebase-table-system -->
     <!-- <script src="src/js/teste-sistema-endereco.js?v=1.0&t=2025090512"></script> --> <!-- DESATIVADO - Conflitando com firebase-table-system -->
     <script src="src/js/user-dropdown-system.js?v=1.0&t=2025082921"></script> <!-- Sistema de dropdown do usuário NOVO -->
+    <!-- <script src="src/js/dropdown-z-index-manager.js?v=1.0"></script> --> <!-- DESABILITADO - Interfere com select multiple -->
     
     <!-- ============= SISTEMA UNIFICADO DE FILTROS ============= -->
     <script src="src/js/unified-filter-system.js?v=1.0&t=2025090115"></script>
@@ -1562,6 +1567,18 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 [DASHBOARD] Inicializando sistema de gráficos novo...');
             
+            // CONFIGURAÇÃO GLOBAL CHART.JS PARA DARK MODE - PRETO
+            function configurarChartJSDarkMode() {
+                if (typeof Chart !== 'undefined') {
+                    Chart.defaults.plugins.title.color = '#000000';
+                    Chart.defaults.plugins.legend.labels.color = '#000000';
+                    Chart.defaults.scales.linear.title.color = '#000000';
+                    Chart.defaults.scales.category.title.color = '#000000';
+                    Chart.defaults.color = '#000000'; // Cor padrão para todos os textos
+                    console.log('🎨 [CHART.JS] Configuração PRETA para dark mode aplicada');
+                }
+            }
+
             // DIAGNÓSTICO COMPLETO DAS DEPENDÊNCIAS
             function diagnosticarDependencias() {
                 console.log('🔍 [DIAGNÓSTICO] Verificando dependências...');
@@ -1569,6 +1586,9 @@
                 console.log('📊 ChartDataLabels disponível?', typeof ChartDataLabels !== 'undefined' ? '✅' : '❌');
                 console.log('📊 ChartsDashboard disponível?', typeof ChartsDashboard !== 'undefined' ? '✅' : '❌');
                 console.log('📊 FirebaseTableSystem disponível?', typeof FirebaseTableSystem !== 'undefined' ? '✅' : '❌');
+                
+                // Aplicar configuração dark mode se disponível
+                configurarChartJSDarkMode();
                 
                 if (typeof ChartsDashboard !== 'undefined') {
                     console.log('📊 ChartsDashboard.inicializar disponível?', typeof ChartsDashboard.inicializar === 'function' ? '✅' : '❌');
@@ -2087,5 +2107,70 @@ Digite o número da opção desejada:`;
         };
 
     </script>
-</body>
-</html>
+
+    <!-- Script Dark Mode Melhorado -->
+    <script>
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            
+            // Salvar preferência
+            localStorage.setItem('darkMode', isDark);
+            
+            // Atualizar elementos do dropdown
+            updateDarkModeUI(isDark);
+            
+            console.log('🌓 Dark Mode:', isDark ? 'Ativado' : 'Desativado');
+        }
+
+        function updateDarkModeUI(isDark) {
+            const textElement = document.getElementById('darkModeText');
+            const indicatorElement = document.getElementById('darkModeIndicator');
+            const iconElement = document.querySelector('#darkModeOption i');
+            
+            if (textElement) {
+                textElement.textContent = isDark ? 'Modo Claro' : 'Modo Escuro';
+            }
+            
+            if (indicatorElement) {
+                indicatorElement.textContent = isDark ? '☀️' : '🌙';
+            }
+            
+            if (iconElement) {
+                iconElement.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            }
+            
+            // Atualizar cores dos gráficos Chart.js se existirem
+            // No modo escuro, gráficos têm fundo claro, então títulos devem ser escuros
+            if (window.Chart && window.Chart.instances) {
+                Object.values(window.Chart.instances).forEach(chart => {
+                    if (chart.options && chart.options.plugins && chart.options.plugins.title) {
+                        chart.options.plugins.title.color = isDark ? '#000000' : '#000000';
+                    }
+                    if (chart.options && chart.options.scales) {
+                        Object.values(chart.options.scales).forEach(scale => {
+                            if (scale.title) {
+                                scale.title.color = isDark ? '#000000' : '#000000';
+                            }
+                        });
+                    }
+                    chart.update();
+                });
+            }
+        }
+
+        // Aplicar preferência salva ao carregar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedMode = localStorage.getItem('darkMode');
+            if (savedMode === 'true') {
+                document.body.classList.add('dark-mode');
+                updateDarkModeUI(true);
+            }
+            
+            // Adicionar evento ao item do dropdown
+            const darkModeOption = document.getElementById('darkModeOption');
+            if (darkModeOption) {
+                darkModeOption.addEventListener('click', toggleDarkMode);
+            }
+        });
+    </script>

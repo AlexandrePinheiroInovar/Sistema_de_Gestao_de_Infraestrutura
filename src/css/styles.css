@@ -1605,6 +1605,39 @@ body.loading * {
     background: linear-gradient(135deg, #2563eb, #1e40af);
 }
 
+/* Correção de z-index para dropdowns de filtros */
+.filter-group {
+    position: relative;
+    z-index: 10;
+}
+
+.filter-group select[multiple]:focus,
+.filter-group select[multiple]:active {
+    position: absolute !important;
+    z-index: 99999 !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+}
+
+/* Garantir que dropdowns fiquem acima de títulos e outros elementos */
+.infra-filters-container .filter-group select[multiple] {
+    z-index: 100;
+    position: relative;
+}
+
+.infra-filters-container .filter-group select[multiple]:focus {
+    position: absolute !important;
+    z-index: 99999 !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border: 2px solid #3b82f6;
+}
+
 /* Instrução visual nos labels */
 .filter-group label small {
     color: #6b7280;
@@ -5847,7 +5880,7 @@ html, body {
     line-height: 1.3;
     padding: 0;
     position: relative;
-    z-index: 3;
+    z-index: 1; /* Reduzido para não interferir com dropdowns */
     background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -14014,6 +14047,83 @@ body.colorblind-mode .user-role-simple {
     transform: translateY(-1px);
 }
 
+/* Botão Unificado de Atualização - Visual Melhorado */
+.btn-refresh-unified {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-refresh-unified::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.btn-refresh-unified:hover::before {
+    left: 100%;
+}
+
+.btn-refresh-unified:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+.btn-refresh-unified:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.btn-refresh-unified i {
+    font-size: 16px;
+}
+
+.btn-refresh-unified span {
+    font-weight: 600;
+    letter-spacing: 0.025em;
+}
+
+/* Dark mode para botão unificado */
+.dark-mode .btn-refresh-unified {
+    background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+}
+
+.dark-mode .btn-refresh-unified:hover {
+    background: linear-gradient(135deg, #3730a3 0%, #312e81 100%);
+    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4);
+}
+
+/* Z-index para filtros no modo dark */
+.dark-mode .filter-group select[multiple]:focus {
+    position: absolute !important;
+    z-index: 99999 !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    border: 2px solid #4f46e5;
+}
+
 .filtered-table-container {
     padding: 0;
 }
@@ -14360,4 +14470,409 @@ body.colorblind-mode .user-role-simple {
 
 .filter-info span {
     font-weight: 500;
+}
+
+/* ========== MODO DARK MELHORADO ========== */
+
+/* Transições suaves para mudança de tema */
+*,
+*::before,
+*::after {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Corpo principal */
+.dark-mode {
+    background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%) !important;
+    color: #e8e8e8 !important;
+}
+
+/* Containers principais */
+.dark-mode .login-body {
+    background: linear-gradient(135deg, #111827 0%, #1f2937 100%) !important;
+}
+
+.dark-mode .login-card-modern {
+    background: rgba(31, 41, 55, 0.95) !important;
+    border: 1px solid #374151 !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5) !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.dark-mode .dashboard-container,
+.dark-mode .main-content {
+    background: #111827 !important;
+    color: #e8e8e8 !important;
+}
+
+/* Sidebar */
+.dark-mode .sidebar {
+    background: linear-gradient(180deg, #1f2937 0%, #111827 100%) !important;
+    border-right: 1px solid #374151 !important;
+}
+
+.dark-mode .sidebar-nav a {
+    color: #d1d5db !important;
+    border-bottom: 1px solid #374151 !important;
+}
+
+.dark-mode .sidebar-nav a:hover {
+    background: rgba(59, 130, 246, 0.1) !important;
+    color: #60a5fa !important;
+}
+
+.dark-mode .sidebar-nav a.active {
+    background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%) !important;
+    color: white !important;
+}
+
+/* Cards e componentes */
+.dark-mode .card,
+.dark-mode .chart-card,
+.dark-mode .kpi-card,
+.dark-mode .stats-card {
+    background: rgba(31, 41, 55, 0.8) !important;
+    border: 1px solid #374151 !important;
+    color: #e8e8e8 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark-mode .card h3,
+.dark-mode .card h4,
+.dark-mode .chart-card h3,
+.dark-mode .kpi-card h4 {
+    color: #f9fafb !important;
+}
+
+/* Tabelas */
+.dark-mode .endereco-table,
+.dark-mode .filtered-table,
+.dark-mode .crud-table {
+    background: #1f2937 !important;
+    border: 1px solid #374151 !important;
+}
+
+.dark-mode .endereco-table th,
+.dark-mode .filtered-table th,
+.dark-mode .crud-table th {
+    background: linear-gradient(180deg, #374151 0%, #4b5563 100%) !important;
+    color: #f9fafb !important;
+    border-bottom: 2px solid #6b7280 !important;
+}
+
+.dark-mode .endereco-table td,
+.dark-mode .filtered-table td,
+.dark-mode .crud-table td {
+    border-bottom: 1px solid #374151 !important;
+    color: #e5e7eb !important;
+}
+
+.dark-mode .endereco-table tbody tr:nth-child(even),
+.dark-mode .filtered-table tbody tr:nth-child(even) {
+    background: rgba(55, 65, 81, 0.3) !important;
+}
+
+.dark-mode .endereco-table tbody tr:hover,
+.dark-mode .filtered-table tbody tr:hover {
+    background: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Formulários */
+.dark-mode input,
+.dark-mode select,
+.dark-mode textarea {
+    background: #374151 !important;
+    color: #f9fafb !important;
+    border: 1px solid #4b5563 !important;
+}
+
+.dark-mode input:focus,
+.dark-mode select:focus,
+.dark-mode textarea:focus {
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1) !important;
+}
+
+.dark-mode input::placeholder,
+.dark-mode textarea::placeholder {
+    color: #9ca3af !important;
+}
+
+/* Botões */
+.dark-mode .btn-primary,
+.dark-mode .login-btn-modern {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+    border: none !important;
+    color: white !important;
+}
+
+.dark-mode .btn-primary:hover,
+.dark-mode .login-btn-modern:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important;
+    transform: translateY(-1px) !important;
+}
+
+.dark-mode .btn-secondary {
+    background: #4b5563 !important;
+    border: 1px solid #6b7280 !important;
+    color: #f9fafb !important;
+}
+
+.dark-mode .btn-secondary:hover {
+    background: #6b7280 !important;
+}
+
+/* Modais */
+.dark-mode .modal {
+    background: rgba(0, 0, 0, 0.8) !important;
+}
+
+.dark-mode .modal-content {
+    background: #1f2937 !important;
+    border: 1px solid #374151 !important;
+    color: #e5e7eb !important;
+}
+
+.dark-mode .modal-header {
+    border-bottom: 1px solid #374151 !important;
+}
+
+.dark-mode .modal-footer {
+    border-top: 1px solid #374151 !important;
+}
+
+/* Filtros e dropdowns */
+.dark-mode .filter-container,
+.dark-mode .dropdown-content {
+    background: #1f2937 !important;
+    border: 1px solid #374151 !important;
+}
+
+.dark-mode .filter-tag {
+    background: #374151 !important;
+    color: #e5e7eb !important;
+    border: 1px solid #4b5563 !important;
+}
+
+/* Gráficos - ajuste de fundo e títulos */
+.dark-mode canvas {
+    background: transparent !important;
+}
+
+/* Títulos dos gráficos Chart.js */
+.dark-mode .chart-container canvas,
+.dark-mode .chartjs-render-monitor {
+    color: #f9fafb !important;
+}
+
+/* Elementos de gráfico específicos */
+.dark-mode .chartjs-tooltip,
+.dark-mode .chart-legend,
+.dark-mode .chart-title-text {
+    color: #f9fafb !important;
+}
+
+/* Remover regra genérica que causava problemas */
+
+/* Títulos de gráficos - PRETO para máximo contraste */
+.dark-mode .chart-title,
+.dark-mode .chart-container h3,
+.dark-mode .chart-container h4,
+.dark-mode .chart-wrapper h3,
+.dark-mode .chart-wrapper h4 {
+    color: #000000 !important;
+}
+
+/* FORÇAR PRETO EM TODOS OS TÍTULOS NO DASHBOARD */
+.dark-mode h1,
+.dark-mode h2,
+.dark-mode h3,
+.dark-mode h4,
+.dark-mode h5,
+.dark-mode h6 {
+    color: #000000 !important;
+}
+
+/* Títulos de seções específicas - PRETO */
+.dark-mode .step-details h4,
+.dark-mode .feature-card h3,
+.dark-mode .start-header h3,
+.dark-mode .filters-header h4,
+.dark-mode .infra-filters-container h4 {
+    color: #000000 !important;
+}
+
+/* Títulos já definidos acima com cor preta */
+
+/* Títulos principais também PRETO */
+.dark-mode .hero-title,
+.dark-mode .title-main,
+.dark-mode .title-sub,
+.dark-mode .infra-hero-title {
+    color: #000000 !important;
+    text-shadow: none !important;
+}
+
+/* Títulos dos feature cards também PRETO */
+.dark-mode .feature-card h3 {
+    color: #000000 !important;
+}
+
+/* Outros títulos h3 que ficam invisíveis */
+.dark-mode .start-header h3,
+.dark-mode .modal-header h3,
+.dark-mode .section-header h3 {
+    color: #000000 !important;
+}
+
+/* H3 em tabelas e resumos */
+.dark-mode .filter-header h3,
+.dark-mode .empty-state h3,
+.dark-mode .no-data-message h3 {
+    color: #000000 !important;
+}
+
+/* H4 - Títulos de seções que ficam invisíveis */
+.dark-mode .step-details h4,
+.dark-mode .step-card h4,
+.dark-mode .filters-header h4,
+.dark-mode .table-header h4,
+.dark-mode .chart-header h4,
+.dark-mode .section-header h4,
+.dark-mode .infra-filters-container h4 {
+    color: #000000 !important;
+}
+
+/* H4 em modais e formulários */
+.dark-mode .modal-content h4,
+.dark-mode .form-section h4,
+.dark-mode .endereco-form h4,
+.dark-mode .gestao-section h4 {
+    color: #f9fafb !important;
+}
+
+/* Inputs de data no modo dark - texto branco */
+.dark-mode input[type="date"],
+.dark-mode input[type="datetime-local"],
+.dark-mode input[type="time"] {
+    color: #f9fafb !important;
+    background-color: #374151 !important;
+    border-color: #4b5563 !important;
+}
+
+.dark-mode input[type="date"]::-webkit-calendar-picker-indicator,
+.dark-mode input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+.dark-mode input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+
+/* Títulos específicos de tabelas */
+.dark-mode .endereco-table-container h4,
+.dark-mode .table-stats h4,
+.dark-mode .pagination-info h4 {
+    color: #f9fafb !important;
+}
+
+/* Apenas correções essenciais para elementos específicos */
+
+.dark-mode .text-muted,
+.dark-mode small {
+    color: #9ca3af !important;
+}
+
+/* Apenas elementos específicos problemáticos */
+.dark-mode .login-card-modern h1,
+.dark-mode .login-card-modern h2,
+.dark-mode .login-card-modern h3,
+.dark-mode .login-card-modern label {
+    color: #f9fafb !important;
+}
+
+.dark-mode .dropdown-user-name,
+.dark-mode .dropdown-user-email {
+    color: #f9fafb !important;
+}
+
+.dark-mode .sidebar-nav a span {
+    color: #d1d5db !important;
+}
+
+.dark-mode .sidebar-nav a.active span {
+    color: white !important;
+}
+
+.dark-mode ::placeholder {
+    color: #9ca3af !important;
+    opacity: 1;
+}
+
+/* Links */
+.dark-mode a {
+    color: #60a5fa !important;
+}
+
+.dark-mode a:hover {
+    color: #93c5fd !important;
+}
+
+/* Botão toggle fixo - OCULTO */
+.dark-mode-toggle {
+    display: none !important;
+}
+
+/* Toggle dark mode no dropdown */
+.dark-mode-dropdown-option {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.dark-mode-dropdown-option:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .dark-mode-dropdown-option:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode-dropdown-option i {
+    margin-right: 12px;
+    width: 16px;
+    text-align: center;
+}
+
+.dark-mode-dropdown-option .toggle-text {
+    flex: 1;
+}
+
+.dark-mode-dropdown-option .toggle-indicator {
+    font-size: 16px;
+    margin-left: 8px;
+}
+
+/* Scrollbars para modo escuro */
+.dark-mode ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.dark-mode ::-webkit-scrollbar-track {
+    background: #1f2937;
+}
+
+.dark-mode ::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    border-radius: 4px;
+}
+
+.dark-mode ::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
 }
