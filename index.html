@@ -95,5 +95,16 @@
     <!-- Firebase Sistema Unificado (PRODUCTION ONLY) -->
     <script src="src/js/firebase-complete.js"></script>
     <script src="src/js/form-handler.js"></script>
+
+    <!-- Script Dark Mode Simples para Login -->
+    <script>
+        // Aplicar preferência salva ao carregar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedMode = localStorage.getItem('darkMode');
+            if (savedMode === 'true') {
+                document.body.classList.add('dark-mode');
+            }
+        });
+    </script>
 </body>
 </html>
