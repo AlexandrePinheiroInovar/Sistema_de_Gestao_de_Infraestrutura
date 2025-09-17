@@ -685,7 +685,7 @@
                                 <p>Gerencie os projetos principais extraídos dos endereços cadastrados</p>
                             </div>
                             <div class="gestao-actions">
-                                <button class="btn-primary" onclick="adicionarNovoItem('projetos')">
+                                <button class="btn-primary supervisor-only" onclick="adicionarNovoItem('projetos')" data-role="supervisor">
                                     <i class="fas fa-plus"></i> Novo Projeto
                                 </button>
                                 <button class="btn-secondary" onclick="sincronizarDados('projetos')">
@@ -725,7 +725,7 @@
                                 <p>Gerencie os sub projetos extraídos dos endereços cadastrados</p>
                             </div>
                             <div class="gestao-actions">
-                                <button class="btn-primary" onclick="adicionarNovoItem('subprojetos')">
+                                <button class="btn-primary supervisor-only" onclick="adicionarNovoItem('subprojetos')" data-role="supervisor">
                                     <i class="fas fa-plus"></i> Novo Sub Projeto
                                 </button>
                                 <button class="btn-secondary" onclick="sincronizarDados('subprojetos')">
@@ -765,7 +765,7 @@
                                 <p>Gerencie os tipos de ação extraídos dos endereços cadastrados</p>
                             </div>
                             <div class="gestao-actions">
-                                <button class="btn-primary" onclick="adicionarNovoItem('tipos-acao')">
+                                <button class="btn-primary supervisor-only" onclick="adicionarNovoItem('tipos-acao')" data-role="supervisor">
                                     <i class="fas fa-plus"></i> Novo Tipo de Ação
                                 </button>
                                 <button class="btn-secondary" onclick="sincronizarDados('tipos-acao')">
@@ -805,7 +805,7 @@
                                 <p>Gerencie os supervisores extraídos dos endereços cadastrados</p>
                             </div>
                             <div class="gestao-actions">
-                                <button class="btn-primary" onclick="adicionarNovoItem('supervisores')">
+                                <button class="btn-primary supervisor-only" onclick="adicionarNovoItem('supervisores')" data-role="supervisor">
                                     <i class="fas fa-plus"></i> Novo Supervisor
                                 </button>
                                 <button class="btn-secondary" onclick="sincronizarDados('supervisores')">
@@ -845,7 +845,7 @@
                                 <p>Gerencie as equipes extraídas dos endereços cadastrados</p>
                             </div>
                             <div class="gestao-actions">
-                                <button class="btn-primary" onclick="adicionarNovoItem('equipes')">
+                                <button class="btn-primary supervisor-only" onclick="adicionarNovoItem('equipes')" data-role="supervisor">
                                     <i class="fas fa-plus"></i> Nova Equipe
                                 </button>
                                 <button class="btn-secondary" onclick="sincronizarDados('equipes')">
@@ -885,7 +885,7 @@
                                 <p>Gerencie as cidades extraídas dos endereços cadastrados</p>
                             </div>
                             <div class="gestao-actions">
-                                <button class="btn-primary" onclick="adicionarNovoItem('cidades')">
+                                <button class="btn-primary supervisor-only" onclick="adicionarNovoItem('cidades')" data-role="supervisor">
                                     <i class="fas fa-plus"></i> Nova Cidade
                                 </button>
                                 <button class="btn-secondary" onclick="sincronizarDados('cidades')">
@@ -1960,7 +1960,7 @@
         // ============= FUNÇÕES DE ADMIN PARA LIMPEZA =============
         function checkAdminPermissions() {
             // Verificar se o usuário é admin baseado no role
-            const userRole = document.getElementById('userRoleSimple')?.textContent;
+            const userRole = document.getElementById('userDisplayRole')?.textContent;
             const isAdmin = userRole && (userRole.includes('ADMIN') || userRole.includes('admin'));
             
             const adminControls = document.getElementById('adminControls');
@@ -1973,7 +1973,7 @@
         
         // ============= SISTEMA DE CONTROLE DE PERMISSÕES =============
         function setupUserPermissions() {
-            const userRole = document.getElementById('userRoleSimple')?.textContent;
+            const userRole = document.getElementById('userDisplayRole')?.textContent;
             if (!userRole) return;
             
             console.log('🔐 [PERMISSIONS] Configurando permissões para:', userRole);
@@ -1994,7 +1994,10 @@
             } else if (userRole.toLowerCase().includes('supervisor')) {
                 console.log('👨‍💼 [PERMISSIONS] Usuário SUPERVISOR - Acesso restrito');
                 // Supervisor: início, dashboard, gestão de projetos, cadastro de endereços
-                // Não ocultar nada, supervisor tem acesso a todos módulos
+                // Garantir que todos os módulos estejam visíveis para supervisor
+                Object.values(menuItems).forEach(item => {
+                    if (item) item.style.display = 'block';
+                });
                 
             } else {
                 console.log('👤 [PERMISSIONS] Usuário COMUM - Acesso limitado');

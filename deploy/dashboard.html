@@ -6,6 +6,10 @@
     <title>Sistema de Análises - Dashboard</title>
     <link rel="stylesheet" href="src/css/styles.css?v=1.3&t=2025081813">
     <link rel="stylesheet" href="src/css/checkbox-dropdown.css?v=1.3&t=2025081813">
+    <link rel="stylesheet" href="src/css/gestao-renovada.css?v=1.0&t=2025082121">
+    <link rel="stylesheet" href="src/css/user-dropdown.css?v=1.0&t=2025082921">
+    <link rel="stylesheet" href="src/css/dropdown-fix.css?v=1.0">
+    <link rel="stylesheet" href="src/css/z-index-fix-master.css?v=1.0">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="src/assets/images/Inovar-Telecom-Logo-Site_.png">
 </head>
@@ -54,46 +58,51 @@
                 </a></li>
             </ul>
             <div class="sidebar-footer">
-                <!-- Novo dropdown do usuário - versão simplificada -->
-                <div class="new-user-dropdown" id="newUserDropdown">
-                    <div class="user-profile-btn" id="userProfileBtn" onclick="toggleNewDropdown()">
-                        <div class="user-avatar-simple">
-                            <img src="https://ui-avatars.com/api/?name=U&background=667eea&color=fff&size=40" alt="Avatar" id="userAvatarSimple">
+                <!-- Sistema de Dropdown do Usuário - NOVO -->
+                <div class="user-dropdown-container" id="userDropdownContainer">
+                    <button class="user-dropdown-trigger" id="userDropdownTrigger">
+                        <div class="user-avatar">
+                            <img id="userAvatar" src="https://ui-avatars.com/api/?name=User&background=667eea&color=fff&size=40" alt="Avatar">
                         </div>
-                        <div class="user-info-simple">
-                            <span class="user-name-simple" id="userNameSimple">Usuário</span>
-                            <span class="user-role-simple" id="userRoleSimple">USER</span>
+                        <div class="user-info">
+                            <span class="user-name" id="userDisplayName">Carregando...</span>
+                            <span class="user-role" id="userDisplayRole">USER</span>
                         </div>
-                        <div class="dropdown-arrow">
-                            <i class="fas fa-chevron-down" id="dropdownArrow"></i>
-                        </div>
-                    </div>
+                        <i class="fas fa-chevron-down user-chevron" id="userChevron"></i>
+                    </button>
                     
-                    <div class="dropdown-menu" id="dropdownMenu">
-                        <div class="dropdown-header">
-                            <div class="user-avatar-large">
-                                <img src="https://ui-avatars.com/api/?name=U&background=667eea&color=fff&size=60" alt="Avatar" id="userAvatarLarge">
+                    <div class="user-dropdown-menu" id="userDropdownMenu">
+                        <div class="dropdown-user-header">
+                            <div class="dropdown-user-avatar">
+                                <img id="dropdownUserAvatar" src="https://ui-avatars.com/api/?name=User&background=667eea&color=fff&size=50" alt="Avatar">
                             </div>
-                            <div>
+                            <div class="dropdown-user-info">
                                 <div class="dropdown-user-name" id="dropdownUserName">Usuário</div>
-                                <div class="dropdown-user-email" id="dropdownUserEmail">usuario@inovar.com</div>
+                                <div class="dropdown-user-email" id="dropdownUserEmail">user@email.com</div>
                             </div>
                         </div>
                         
+                        <div class="dropdown-separator"></div>
+                        
                         <div class="dropdown-options">
-                            <a href="#" class="dropdown-option" onclick="openUserProfile()">
+                            <button class="dropdown-option profile-option" id="profileOption">
                                 <i class="fas fa-user"></i>
                                 <span>Perfil</span>
-                            </a>
-                            <a href="#" class="dropdown-option" onclick="toggleColorblindMode()">
+                            </button>
+                            <button class="dropdown-option colorblind-option" id="colorblindOption">
                                 <i class="fas fa-eye"></i>
-                                <span id="colorblindToggleText">Modo Daltônico</span>
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <a href="#" class="dropdown-option logout-option" onclick="confirmLogout()">
+                                <span id="colorblindText">Modo Daltônico</span>
+                            </button>
+                            <button class="dropdown-option dark-mode-dropdown-option" id="darkModeOption">
+                                <i class="fas fa-moon"></i>
+                                <span class="toggle-text" id="darkModeText">Modo Escuro</span>
+                                <span class="toggle-indicator" id="darkModeIndicator">🌙</span>
+                            </button>
+                            <div class="dropdown-separator"></div>
+                            <button class="dropdown-option logout-option" id="logoutOption">
                                 <i class="fas fa-sign-out-alt"></i>
                                 <span>Sair</span>
-                            </a>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -191,8 +200,8 @@
                                     <span class="step-line"></span>
                                 </div>
                                 <div class="step-details">
-                                    <h4>Acesse a Infraestrutura</h4>
-                                    <p>Clique em <b>Infraestrutura</b> no menu lateral para ver todos os gráficos.</p>
+                                    <h4>Acesse o Dashboard</h4>
+                                    <p>Clique em <b>Dashboard</b> no menu lateral para ver todos os gráficos.</p>
                                 </div>
                             </div>
                             <div class="step-card">
@@ -295,21 +304,37 @@
                                 </select>
                             </div>
                             
+                            <div class="filter-group">
+                                <label for="infraFilterJustificativa">Justificativa</label>
+                                <select id="infraFilterJustificativa" multiple>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="infraFilterNodeGerencial">Node Gerencial</label>
+                                <select id="infraFilterNodeGerencial" multiple>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="infraFilterAreaTecnica">Área Técnica</label>
+                                <select id="infraFilterAreaTecnica" multiple>
+                                </select>
+                            </div>
+                            
                             <div class="filter-group periodo-filter">
                                 <label for="infraFilterDataRecebimento">Período de Recebimento</label>
                                 <div class="periodo-inputs">
-                                    <input type="date" id="infraFilterDataInicio" placeholder="Data Início" onchange="applyInfraFilters()">
+                                    <input type="date" id="infraFilterDataInicio" placeholder="Data Início">
                                     <span class="periodo-separator">até</span>
-                                    <input type="date" id="infraFilterDataFim" placeholder="Data Fim" onchange="applyInfraFilters()">
+                                    <input type="date" id="infraFilterDataFim" placeholder="Data Fim">
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="filters-actions">
-                            <button onclick="clearInfraFilters()" class="btn-clean btn-filter-clear">
-                                <span class="btn-icon">🔄</span>
-                                <span class="btn-text">Limpar Filtros</span>
-                            </button>
+                        <!-- BOTÃO LIMPAR REMOVIDO - Sistema unificado cria automaticamente -->
+                        <div id="unified-filter-actions">
+                            <!-- Botão será inserido aqui pelo sistema unificado -->
                         </div>
                     </div>
                     
@@ -377,163 +402,105 @@
                         </div>
                     </div>
                     
-                    <!-- Caixa de Análise de Projetos -->
-                    <div class="analysis-section">
-                        <div class="analysis-header">
-                            <h3>📊 Análise de Projetos</h3>
-                            <p>Quantidade de Projetos e seus Percentuais</p>
-                        </div>
-                        <div class="analysis-content">
-                            <div class="chart-container">
-                                <canvas id="projetosChart" width="400" height="200"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Caixa de Análise de Sub Projetos -->
-                    <div class="analysis-section">
-                        <div class="analysis-header">
-                            <h3>📊 Análise de Sub Projetos</h3>
-                            <p>Quantidade de Sub Projetos e seus Percentuais</p>
-                        </div>
-                        <div class="analysis-content">
-                            <div class="chart-container">
-                                <canvas id="subProjetosChart" width="400" height="200"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Caixa de Análise de Cidades -->
-                    <div class="analysis-section">
-                        <div class="analysis-header">
-                            <h3>📊 Análise de Cidades</h3>
-                            <p>Quantidade por Cidade e seus Percentuais</p>
-                        </div>
-                        <div class="analysis-content">
-                            <div class="chart-container">
-                                <canvas id="cidadesChart" width="400" height="200"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Caixa de Análise de HP por Projeto -->
-                    <div class="analysis-section">
-                        <div class="analysis-header">
-                            <h3>📊 Análise de HP por Projeto</h3>
-                            <p>Soma de HP Ativados por Projeto</p>
-                        </div>
-                        <div class="analysis-content">
-                            <div class="chart-container">
-                                <canvas id="hpProjetosChart" width="400" height="200"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Caixa de Análise de Recebimentos por Mês -->
-                    <div class="analysis-section">
-                        <div class="analysis-header">
-                            <h3>📅 Análise de Recebimentos e Conclusões</h3>
-                            <p>Registros Recebidos vs Concluídos por Mês</p>
-                        </div>
-                        <div class="analysis-content">
-                            <div class="chart-container">
-                                <canvas id="recebimentosChart" width="400" height="200"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Caixa de Análise de Endereços por Supervisor -->
-                    <div class="analysis-section">
-                        <div class="analysis-header">
-                            <h3>📊 Análise de Endereços por Supervisor</h3>
-                            <p>Quantidade por Status (Produtiva/Improdutiva)</p>
-                        </div>
-                        <div class="analysis-content">
-                            <div class="chart-container">
-                                <canvas id="supervisorStatusChart" width="400" height="200"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Container para as duas tabelas de ranking lado a lado -->
-                    <div class="analysis-section">
-                        <div class="analysis-header">
-                            <h3>🏆 Rankings das Equipes</h3>
-                            <p>Análise por Tipo de Ação e Status</p>
-                            <div class="export-controls">
-                                <button class="btn btn-secondary" onclick="exportAllRankings()">
-                                    <i class="fas fa-download"></i> Exportar Rankings (XLSX)
+                    <!-- ============= TABELA DE DADOS FILTRADOS ============= -->
+                    <div class="filtered-data-section">
+                        <div class="section-header-table">
+                            <h3>📋 Resumo de Dados Filtrados</h3>
+                            <p>Visualize os dados de acordo com os filtros aplicados</p>
+                            <div class="table-actions">
+                                <button id="refreshFilteredData" class="btn-refresh-unified" onclick="forcarSincronizacaoFiltros()" title="Atualizar dados e aplicar filtros">
+                                    <i class="fas fa-sync-alt"></i>
+                                    <span>Atualizar Dados</span>
                                 </button>
                             </div>
                         </div>
-                        <div class="analysis-content">
-                            <div class="rankings-grid">
-                                <!-- Tabela de Ranking das Equipes por Tipo de Ação -->
-                                <div class="ranking-table-container">
-                                    <div class="table-header">
-                                        <h4>📊 Por Tipo de Ação</h4>
-                                    </div>
-                                    <div class="table-responsive">
-                                        <table id="equipeRankingTable" class="ranking-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Rank</th>
-                                                    <th>Equipe</th>
-                                                    <th>ATIVAÇÃO</th>
-                                                    <th>CONSTRUÇÃO</th>
-                                                    <th>VISTORIA</th>
-                                                    <th>Total</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="equipeRankingTableBody">
-                                                <!-- Dados serão inseridos dinamicamente -->
-                                            </tbody>
-                                            <tfoot>
-                                                <tr class="total-row">
-                                                    <td colspan="2"><strong>Total Geral</strong></td>
-                                                    <td id="totalAtivacao">0</td>
-                                                    <td id="totalConstrucao">0</td>
-                                                    <td id="totalVistoria">0</td>
-                                                    <td id="totalGeral">0</td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
-                                </div>
 
-                                <!-- Tabela de Ranking das Equipes por Status -->
-                                <div class="ranking-table-container">
-                                    <div class="table-header">
-                                        <h4>📈 Por Status</h4>
-                                    </div>
-                                    <div class="table-responsive">
-                                        <table id="equipeStatusRankingTable" class="ranking-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Rank</th>
-                                                    <th>Equipe</th>
-                                                    <th>PRODUTIVA</th>
-                                                    <th>IMPRODUTIVA</th>
-                                                    <th>Total</th>
-                                                    <th>Produtividade</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="equipeStatusRankingTableBody">
-                                                <!-- Dados serão inseridos dinamicamente -->
-                                            </tbody>
-                                            <tfoot>
-                                                <tr class="total-row">
-                                                    <td colspan="2"><strong>Total Geral</strong></td>
-                                                    <td id="totalProdutiva">0</td>
-                                                    <td id="totalImprodutiva">0</td>
-                                                    <td id="totalStatusGeral">0</td>
-                                                    <td id="totalProdutividade">0%</td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
+                        <div class="filtered-table-container">
+                            <div class="table-stats-info">
+                                <span id="filteredTableCount">0 registros encontrados</span>
+                                <span id="filteredTableStatus">Aguardando dados...</span>
+                            </div>
+                            
+                            <div class="filtered-table-wrapper">
+                                <table class="filtered-table" id="filteredDataTable">
+                                    <thead>
+                                        <tr>
+                                            <th class="sortable" data-column="pep" onclick="sortFilteredTable('pep')">
+                                                PEP <i class="fas fa-sort"></i>
+                                            </th>
+                                            <th class="sortable" data-column="nodeGerencial" onclick="sortFilteredTable('nodeGerencial')">
+                                                NODE GERENCIAL <i class="fas fa-sort"></i>
+                                            </th>
+                                            <th class="sortable" data-column="status" onclick="sortFilteredTable('status')">
+                                                STATUS <i class="fas fa-sort"></i>
+                                            </th>
+                                            <th class="sortable" data-column="observacao" onclick="sortFilteredTable('observacao')">
+                                                OBSERVAÇÃO <i class="fas fa-sort"></i>
+                                            </th>
+                                            <th class="sortable" data-column="justificativa" onclick="sortFilteredTable('justificativa')">
+                                                JUSTIFICATIVA <i class="fas fa-sort"></i>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="filteredTableBody">
+                                        <tr class="no-data-row">
+                                            <td colspan="5" class="no-data-cell">
+                                                <div class="no-data-content">
+                                                    <i class="fas fa-filter"></i>
+                                                    <p>Aplicue filtros para visualizar os dados</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Paginação da nova tabela -->
+                            <div class="filtered-table-pagination" id="filteredTablePagination" style="display: none;">
+                                <div class="pagination-info">
+                                    <span id="paginationInfo">Página 1 de 1</span>
+                                    <select id="pageSize" onchange="changeFilteredPageSize()">
+                                        <option value="10">10 por página</option>
+                                        <option value="25" selected>25 por página</option>
+                                        <option value="50">50 por página</option>
+                                        <option value="100">100 por página</option>
+                                    </select>
+                                </div>
+                                <div class="pagination-controls">
+                                    <button id="firstPageFiltered" onclick="goToPageFiltered(1)" disabled>
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </button>
+                                    <button id="prevPageFiltered" onclick="goToPageFiltered(filteredTablePagination.currentPage - 1)" disabled>
+                                        <i class="fas fa-angle-left"></i>
+                                    </button>
+                                    <span id="pageNumbers"></span>
+                                    <button id="nextPageFiltered" onclick="goToPageFiltered(filteredTablePagination.currentPage + 1)" disabled>
+                                        <i class="fas fa-angle-right"></i>
+                                    </button>
+                                    <button id="lastPageFiltered" onclick="goToPageFiltered(filteredTablePagination.totalPages)" disabled>
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </button>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- ============= ÁREA DE GRÁFICOS E RANKINGS - SISTEMA NOVO ============= -->
+                    <div id="charts-rankings-container">
+                        <!-- Conteúdo será inserido dinamicamente pelo novo sistema -->
+                        <div class="loading-charts">
+                            <p>📊 Carregando gráficos e rankings...</p>
+                            <div style="margin-top: 15px;">
+                                <button onclick="forcarGraficos()" style="background: #3B82F6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px;">
+                                    🔥 Forçar Gráficos
+                                </button>
+                                <button onclick="inicializarGraficosStandalone()" style="background: #10B981; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                                    📊 Gráficos Alternativos
+                                </button>
+                            </div>
+                            <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                                Se os gráficos não aparecerem em 10 segundos, clique em um dos botões acima
+                            </p>
                         </div>
                     </div>
 
@@ -541,49 +508,20 @@
 
                 <!-- Seção CRUD de Endereços -->
                 <div id="enderecos" class="section">
-                    <div class="endereco-stats-cards">
-                        <div class="endereco-stat-card blue">
-                            <div class="stat-content">
-                                <span class="stat-label">Total de Registros</span>
-                                <span class="stat-value" id="statTotalRegistros">0</span>
-                                <span class="stat-desc">Endereços cadastrados</span>
-                            </div>
-                            <div class="stat-icon">📋</div>
-                        </div>
-                        <div class="endereco-stat-card green">
-                            <div class="stat-content">
-                                <span class="stat-label">Endereços Distintos</span>
-                                <span class="stat-value" id="statEnderecosDistintos">0</span>
-                                <span class="stat-desc">Endereços únicos</span>
-                            </div>
-                            <div class="stat-icon">🏠</div>
-                        </div>
-                        <div class="endereco-stat-card orange">
-                            <div class="stat-content">
-                                <span class="stat-label">Equipes Distintas</span>
-                                <span class="stat-value" id="statEquipesDistintas">0</span>
-                                <span class="stat-desc">Equipes únicas</span>
-                            </div>
-                            <div class="stat-icon">👥</div>
-                        </div>
-                        <div class="endereco-stat-card purple">
-                            <div class="stat-content">
-                                <span class="stat-label">Produtividade</span>
-                                <span class="stat-value" id="statProdutividade">0%</span>
-                                <span class="stat-desc">Total / Produtiva</span>
-                            </div>
-                            <div class="stat-icon">⚡</div>
-                        </div>
-                    </div>
+                    <!-- Cards removidos - disponíveis apenas no Dashboard -->
                     <div class="crud-header">
                         <div class="crud-title">
                             <h2>🏠 Cadastro de Endereços</h2>
                             <p>Gerencie todos os endereços do sistema MDU</p>
                         </div>
                         <div class="btn-group">
-                            <button class="btn-primary" onclick="abrirNovoEndereco()">
+                            <button class="btn-primary" onclick="novoEnderecoLimpo()">
                                 <span class="btn-icon">➕</span>
                                 Novo Endereço
+                            </button>
+                            <button class="btn-secondary" onclick="visualizarHistoricoGeral()" style="background-color: #6f42c1; color: white;">
+                                <span class="btn-icon">📋</span>
+                                Histórico Geral
                             </button>
                             <div class="upload-excel-container">
                                 <input type="file" id="novoExcelUpload" accept=".xlsx,.xls" style="display: none;">
@@ -648,21 +586,27 @@
                                         <th data-column="14">DATA RECEBIMENTO</th>
                                         <th data-column="15">DATA INICIO</th>
                                         <th data-column="16">DATA FINAL</th>
-                                        <th data-column="17">EQUIPE</th>
-                                        <th data-column="18">Supervisor</th>
-                                        <th data-column="19">Status</th>
-                                        <th data-column="20">RDO</th>
-                                        <th data-column="21">BOOK</th>
-                                        <th data-column="22">PROJETO</th>
-                                        <th data-column="23">JUSTIFICATIVA</th>
-                                        <th data-column="24">Observação</th>
-                                        <th data-column="25">Observação</th>
+                                        <th data-column="17">Dias</th>
+                                        <th data-column="18">EQUIPE</th>
+                                        <th data-column="19">SUPERVISOR</th>
+                                        <th data-column="20">STATUS</th>
+                                        <th data-column="21">RDO</th>
+                                        <th data-column="22">BOOK</th>
+                                        <th data-column="23">COLABORADOR/BOOK</th>
+                                        <th data-column="24">DATA BOOK</th>
+                                        <th data-column="25">PROJETO</th>
+                                        <th data-column="26">COLABORADOR/PROJETO</th>
+                                        <th data-column="27">DATA/PROJETO</th>
+                                        <th data-column="28">JUSTIFICATIVA</th>
+                                        <th data-column="29">Observação</th>
+                                        <th data-column="30">SOLUÇÃO</th>
+                                        <th data-column="31">< OU > QUE 30</th>
                                         <th data-column="actions">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="enderecoTableBody">
                                     <tr class="empty-state">
-                                        <td colspan="26">
+                                        <td colspan="32">
                                             <div class="empty-state-content">
                                                 <div class="empty-icon">📊</div>
                                                 <h3>Tabela Vazia</h3>
@@ -673,6 +617,11 @@
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+
+                        <!-- Controles de Paginação -->
+                        <div id="paginationContainer" class="pagination-container">
+                            <!-- Controles de paginação serão inseridos aqui -->
                         </div>
 
                         <!-- Mensagem quando não há dados -->
@@ -689,19 +638,16 @@
                 </div>
 
 
-                <!-- Seção de Gestão de Projetos -->
+                <!-- SEÇÃO DE GESTÃO DE PROJETOS -->
                 <div id="gestao-projetos" class="section">
                     <div class="gestao-hero">
                         <div class="gestao-hero-content">
-                            <div class="gestao-hero-icon">
-                                🗂️
-                            </div>
+                            <div class="gestao-hero-icon">🗂️</div>
                             <div class="gestao-hero-text">
                                 <h1 class="gestao-hero-title">Gestão de Projetos</h1>
-                                <p class="gestao-hero-desc">Gerencie projetos, clientes e configurações do sistema</p>
+                                <p class="gestao-hero-desc">Gerencie projetos, supervisores, equipes e configurações extraídos automaticamente dos endereços cadastrados</p>
                             </div>
                         </div>
-
                     </div>
 
                     <div class="gestao-tabs">
@@ -736,30 +682,36 @@
                         <div class="gestao-header">
                             <div class="gestao-title">
                                 <h2><i class="fas fa-building"></i> Projetos</h2>
-                                <p>Gerencie os projetos principais</p>
+                                <p>Gerencie os projetos principais extraídos dos endereços cadastrados</p>
                             </div>
                             <div class="gestao-actions">
-                                <button class="btn-primary" onclick="openGestaoModal('projetoModal')">
+                                <button class="btn-primary supervisor-only" onclick="adicionarNovoItem('projetos')" data-role="supervisor">
                                     <i class="fas fa-plus"></i> Novo Projeto
+                                </button>
+                                <button class="btn-secondary" onclick="sincronizarDados('projetos')">
+                                    <i class="fas fa-sync"></i> Sincronizar
                                 </button>
                             </div>
                         </div>
-
                         <div class="crud-table-container">
                             <table class="crud-table">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
-                                        <th>Nome do Projeto</th>
-                                        <th>Cliente</th>
-                                        <th>Descrição</th>
+                                        <th>#</th>
+                                        <th>Nome</th>
+                                        <th>Origem</th>
+                                        <th>Usos</th>
                                         <th>Status</th>
-                                        <th>Data Criação</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="projetosTableBody">
-                                    <!-- Dados serão carregados dinamicamente -->
+                                    <tr class="empty-state">
+                                        <td colspan="6" style="text-align:center;padding:30px;color:#6b7280;">
+                                            <div style="font-size:16px;margin-bottom:10px;">📊</div>
+                                            <div>Carregando dados dos projetos...</div>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -770,28 +722,36 @@
                         <div class="gestao-header">
                             <div class="gestao-title">
                                 <h2><i class="fas fa-sitemap"></i> Sub Projetos</h2>
-                                <p>Gerencie os sub projetos dentro de cada projeto principal</p>
+                                <p>Gerencie os sub projetos extraídos dos endereços cadastrados</p>
                             </div>
-                            <button class="btn-primary" onclick="openGestaoModal('subprojetoModal')">
-                                <i class="fas fa-plus"></i> Novo Sub Projeto
-                            </button>
+                            <div class="gestao-actions">
+                                <button class="btn-primary supervisor-only" onclick="adicionarNovoItem('subprojetos')" data-role="supervisor">
+                                    <i class="fas fa-plus"></i> Novo Sub Projeto
+                                </button>
+                                <button class="btn-secondary" onclick="sincronizarDados('subprojetos')">
+                                    <i class="fas fa-sync"></i> Sincronizar
+                                </button>
+                            </div>
                         </div>
-
                         <div class="crud-table-container">
                             <table class="crud-table">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
+                                        <th>#</th>
                                         <th>Nome</th>
-                                        <th>Projeto Principal</th>
-                                        <th>Descrição</th>
+                                        <th>Origem</th>
+                                        <th>Usos</th>
                                         <th>Status</th>
-                                        <th>Data Criação</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="subprojetosTableBody">
-                                    <!-- Dados serão carregados dinamicamente -->
+                                    <tr class="empty-state">
+                                        <td colspan="6" style="text-align:center;padding:30px;color:#6b7280;">
+                                            <div style="font-size:16px;margin-bottom:10px;">📊</div>
+                                            <div>Carregando dados dos sub projetos...</div>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -802,28 +762,36 @@
                         <div class="gestao-header">
                             <div class="gestao-title">
                                 <h2><i class="fas fa-tasks"></i> Tipos de Ação</h2>
-                                <p>Gerencie os tipos de ação disponíveis (Vistoria, Construção, etc.)</p>
+                                <p>Gerencie os tipos de ação extraídos dos endereços cadastrados</p>
                             </div>
-                            <button class="btn-primary" onclick="openGestaoModal('tipoAcaoModal')">
-                                <i class="fas fa-plus"></i> Novo Tipo de Ação
-                            </button>
+                            <div class="gestao-actions">
+                                <button class="btn-primary supervisor-only" onclick="adicionarNovoItem('tipos-acao')" data-role="supervisor">
+                                    <i class="fas fa-plus"></i> Novo Tipo de Ação
+                                </button>
+                                <button class="btn-secondary" onclick="sincronizarDados('tipos-acao')">
+                                    <i class="fas fa-sync"></i> Sincronizar
+                                </button>
+                            </div>
                         </div>
-
                         <div class="crud-table-container">
                             <table class="crud-table">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
+                                        <th>#</th>
                                         <th>Nome</th>
-                                        <th>Descrição</th>
-                                        <th>Categoria</th>
+                                        <th>Origem</th>
+                                        <th>Usos</th>
                                         <th>Status</th>
-                                        <th>Data Criação</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tiposAcaoTableBody">
-                                    <!-- Dados serão carregados dinamicamente -->
+                                    <tr class="empty-state">
+                                        <td colspan="6" style="text-align:center;padding:30px;color:#6b7280;">
+                                            <div style="font-size:16px;margin-bottom:10px;">📊</div>
+                                            <div>Carregando dados dos tipos de ação...</div>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -834,29 +802,36 @@
                         <div class="gestao-header">
                             <div class="gestao-title">
                                 <h2><i class="fas fa-user-tie"></i> Supervisores</h2>
-                                <p>Gerencie os supervisores responsáveis pelos projetos</p>
+                                <p>Gerencie os supervisores extraídos dos endereços cadastrados</p>
                             </div>
-                            <button class="btn-primary" onclick="openGestaoModal('supervisorModal')">
-                                <i class="fas fa-plus"></i> Novo Supervisor
-                            </button>
+                            <div class="gestao-actions">
+                                <button class="btn-primary supervisor-only" onclick="adicionarNovoItem('supervisores')" data-role="supervisor">
+                                    <i class="fas fa-plus"></i> Novo Supervisor
+                                </button>
+                                <button class="btn-secondary" onclick="sincronizarDados('supervisores')">
+                                    <i class="fas fa-sync"></i> Sincronizar
+                                </button>
+                            </div>
                         </div>
-
                         <div class="crud-table-container">
                             <table class="crud-table">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
+                                        <th>#</th>
                                         <th>Nome</th>
-                                        <th>Email</th>
-                                        <th>Telefone</th>
-                                        <th>Área</th>
+                                        <th>Origem</th>
+                                        <th>Usos</th>
                                         <th>Status</th>
-                                        <th>Data Criação</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="supervisoresTableBody">
-                                    <!-- Dados serão carregados dinamicamente -->
+                                    <tr class="empty-state">
+                                        <td colspan="6" style="text-align:center;padding:30px;color:#6b7280;">
+                                            <div style="font-size:16px;margin-bottom:10px;">📊</div>
+                                            <div>Carregando dados dos supervisores...</div>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -867,29 +842,36 @@
                         <div class="gestao-header">
                             <div class="gestao-title">
                                 <h2><i class="fas fa-users"></i> Equipes</h2>
-                                <p>Gerencie as equipes de trabalho</p>
+                                <p>Gerencie as equipes extraídas dos endereços cadastrados</p>
                             </div>
-                            <button class="btn-primary" onclick="openGestaoModal('equipeModal')">
-                                <i class="fas fa-plus"></i> Nova Equipe
-                            </button>
+                            <div class="gestao-actions">
+                                <button class="btn-primary supervisor-only" onclick="adicionarNovoItem('equipes')" data-role="supervisor">
+                                    <i class="fas fa-plus"></i> Nova Equipe
+                                </button>
+                                <button class="btn-secondary" onclick="sincronizarDados('equipes')">
+                                    <i class="fas fa-sync"></i> Sincronizar
+                                </button>
+                            </div>
                         </div>
-
                         <div class="crud-table-container">
                             <table class="crud-table">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
-                                        <th>Nome da Equipe</th>
-                                        <th>Líder</th>
-                                        <th>Membros</th>
-                                        <th>Especialidade</th>
+                                        <th>#</th>
+                                        <th>Nome</th>
+                                        <th>Origem</th>
+                                        <th>Usos</th>
                                         <th>Status</th>
-                                        <th>Data Criação</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="equipesTableBody">
-                                    <!-- Dados serão carregados dinamicamente -->
+                                    <tr class="empty-state">
+                                        <td colspan="6" style="text-align:center;padding:30px;color:#6b7280;">
+                                            <div style="font-size:16px;margin-bottom:10px;">📊</div>
+                                            <div>Carregando dados das equipes...</div>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -900,28 +882,36 @@
                         <div class="gestao-header">
                             <div class="gestao-title">
                                 <h2><i class="fas fa-map-marker-alt"></i> Cidades</h2>
-                                <p>Gerencie as cidades onde atuamos</p>
+                                <p>Gerencie as cidades extraídas dos endereços cadastrados</p>
                             </div>
-                            <button class="btn-primary" onclick="openGestaoModal('cidadeModal')">
-                                <i class="fas fa-plus"></i> Nova Cidade
-                            </button>
+                            <div class="gestao-actions">
+                                <button class="btn-primary supervisor-only" onclick="adicionarNovoItem('cidades')" data-role="supervisor">
+                                    <i class="fas fa-plus"></i> Nova Cidade
+                                </button>
+                                <button class="btn-secondary" onclick="sincronizarDados('cidades')">
+                                    <i class="fas fa-sync"></i> Sincronizar
+                                </button>
+                            </div>
                         </div>
-
                         <div class="crud-table-container">
                             <table class="crud-table">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
-                                        <th>Nome da Cidade</th>
-                                        <th>Estado</th>
-                                        <th>Região</th>
+                                        <th>#</th>
+                                        <th>Nome</th>
+                                        <th>Origem</th>
+                                        <th>Usos</th>
                                         <th>Status</th>
-                                        <th>Data Criação</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="cidadesTableBody">
-                                    <!-- Dados serão carregados dinamicamente -->
+                                    <tr class="empty-state">
+                                        <td colspan="6" style="text-align:center;padding:30px;color:#6b7280;">
+                                            <div style="font-size:16px;margin-bottom:10px;">📊</div>
+                                            <div>Carregando dados das cidades...</div>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -1531,24 +1521,174 @@
     <!-- Firebase Sistema Unificado (PRODUCTION ONLY) -->
     <script src="src/js/firebase-complete.js?v=1.3&t=2025081813"></script>
     <script src="src/js/firestore-integration.js?v=1.3&t=2025081813"></script>
+    <script src="src/js/novo-endereco-limpo.js?v=1.0&t=2025090201"></script> <!-- Reabilitado para botão Novo Endereço -->
+    <script src="src/js/endereco-excel-upload.js?v=2.0&t=2025091116"></script> <!-- SISTEMA DE UPLOAD EXCEL ATUALIZADO -->
     <script src="src/js/dashboard-minimal.js?v=1.3&t=2025081813"></script>
     <script src="src/js/dashboard-functions.js?v=1.3&t=2025081813"></script>
-    <!-- <script src="src/js/dashboard-handlers.js?v=1.3&t=2025081813"></script> --> <!-- Desabilitado - não necessário para tabela simples -->
-    <!-- <script src="src/js/firebase-table-system.js?v=4.2&t=2025081925"></script> --> <!-- Desabilitado - usando excel-reader-complete.js com ordem fixa -->
+    <!-- <script src="src/js/dashboard-handlers.js?v=1.3&t=2025081813"></script> DESABILITADO - Conflitando com novo sistema -->
+    <script src="src/js/firebase-table-system.js?v=4.3&t=2025082530"></script> <!-- SISTEMA PRINCIPAL DE TABELA -->
     <!-- <script src="src/js/multi-select-filters.js?v=1.0&t=2025081925"></script> --> <!-- Desabilitado - usando novo sistema -->
     <!-- <script src="src/js/excel-reader-complete.js?v=1.0&t=2025081925"></script> --> <!-- Desabilitado - substituído por endereco-excel-upload.js -->
     <!-- <script src="src/js/excel-template-standard.js?v=1.0&t=2025082020"></script> --> <!-- Desabilitado - usando novo sistema -->
     <!-- <script src="src/js/excel-column-ordering.js?v=1.0&t=2025082020"></script> --> <!-- Desabilitado - usando novo sistema -->
     <!-- <script src="src/js/checkbox-dropdown.js?v=1.3&t=2025081813"></script> --> <!-- Desabilitado - não necessário com sistema de ordem fixa -->
-    <script src="src/js/novo-upload-excel.js?v=1.0&t=2025082121"></script> <!-- Sistema novo e simplificado de upload Excel -->
-    <script src="src/js/dashboard-integration.js?v=1.0&t=2025082121"></script> <!-- Integração dos dados do dashboard -->
-    <script src="src/js/multi-select-dropdown.js?v=1.0&t=2025082121"></script> <!-- Sistema avançado de dropdowns -->
+    <!-- <script src="src/js/novo-upload-excel.js?v=1.0&t=2025082121"></script> DESABILITADO - Conflitando com sistema integrado -->
+    <!-- <script src="src/js/dashboard-integration.js?v=6.0&t=2025082520"></script> --> <!-- DESABILITADO - Conflitando com sistema final -->
+    <!-- SISTEMA DE GRÁFICOS NOVO - IMPLEMENTAÇÃO LIMPA -->
+    <script src="src/js/dashboard-charts-novo.js?v=1.0"></script>
+    <script src="src/js/dashboard-charts-implementacao.js?v=1.0"></script>
+    <!-- <script src="src/js/multi-select-dropdown.js?v=1.0&t=2025082121"></script> --> <!-- DESABILITADO - Sistema unificado de filtros -->
     <!-- <script src="src/js/permissions-system.js?v=1.0&t=2025082121"></script> --> <!-- Desabilitado - sistema simplificado -->
-    <script src="src/js/force-init-dropdowns.js?v=1.3&t=2025081813"></script>
+    <!-- <script src="src/js/force-init-dropdowns.js?v=1.3&t=2025081813"></script> --> <!-- DESABILITADO - Sistema unificado de filtros -->
+    <script src="src/js/gestao-projetos-sistema.js?v=1.0&t=2025091015"></script> <!-- SISTEMA DE GESTÃO DE PROJETOS NOVO -->
+    <script src="force-charts-init.js?v=1.0"></script> <!-- SISTEMA DE FORÇA BRUTA PARA GRÁFICOS -->
+    <script src="graficos-standalone.js?v=1.0"></script> <!-- SISTEMA DE GRÁFICOS ALTERNATIVO -->
+    <!-- <script src="src/js/novo-endereco-integrado.js?v=2.0&t=2025082216"></script> --> <!-- DESABILITADO - Conflitava com firebase-table-system -->
+    <!-- <script src="src/js/teste-sistema-endereco.js?v=1.0&t=2025090512"></script> --> <!-- DESATIVADO - Conflitando com firebase-table-system -->
+    <script src="src/js/user-dropdown-system.js?v=1.0&t=2025082921"></script> <!-- Sistema de dropdown do usuário NOVO -->
+    <!-- <script src="src/js/dropdown-z-index-manager.js?v=1.0"></script> --> <!-- DESABILITADO - Interfere com select multiple -->
+    <script src="src/js/supervisor-permissions.js?v=1.0"></script> <!-- SISTEMA DE PERMISSÕES PARA SUPERVISORES -->
+    
+    <!-- ============= SISTEMA UNIFICADO DE FILTROS ============= -->
+    <script src="src/js/unified-filter-system.js?v=1.0&t=2025090115"></script>
+    
+    <!-- ============= NOVA TABELA FILTRADA - VERSÃO 1.1 ============= -->
+    <!-- <script src="src/js/filtered-table-v1-1.js?v=1.1&t=2025090901"></script> --> <!-- DESABILITADO TEMPORARIAMENTE - firebase-table-system alimenta diretamente -->
+    
+    
+    <!-- SISTEMAS ANTIGOS DE FILTROS - TEMPORARIAMENTE DESABILITADOS -->
+    <!-- <script src="src/js/filter-state-manager.js?v=1.0&t=2025090115"></script> --> <!-- Substituído pelo sistema unificado -->
+    <!-- <script src="src/js/filter-event-listeners.js?v=1.0&t=2025090115"></script> --> <!-- Substituído pelo sistema unificado -->
     <script>
         // O script.js já tem o event listener DOMContentLoaded
         // Não precisamos duplicar aqui
         console.log('📄 Dashboard HTML carregado');
+        
+        // ============= INICIALIZAÇÃO DO SISTEMA DE GRÁFICOS NOVO =============
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 [DASHBOARD] Inicializando sistema de gráficos novo...');
+            
+            // CONFIGURAÇÃO GLOBAL CHART.JS PARA DARK MODE - PRETO
+            function configurarChartJSDarkMode() {
+                if (typeof Chart !== 'undefined') {
+                    Chart.defaults.plugins.title.color = '#000000';
+                    Chart.defaults.plugins.legend.labels.color = '#000000';
+                    Chart.defaults.scales.linear.title.color = '#000000';
+                    Chart.defaults.scales.category.title.color = '#000000';
+                    Chart.defaults.color = '#000000'; // Cor padrão para todos os textos
+                    console.log('🎨 [CHART.JS] Configuração PRETA para dark mode aplicada');
+                }
+            }
+
+            // DIAGNÓSTICO COMPLETO DAS DEPENDÊNCIAS
+            function diagnosticarDependencias() {
+                console.log('🔍 [DIAGNÓSTICO] Verificando dependências...');
+                console.log('📊 Chart disponível?', typeof Chart !== 'undefined' ? '✅' : '❌');
+                console.log('📊 ChartDataLabels disponível?', typeof ChartDataLabels !== 'undefined' ? '✅' : '❌');
+                console.log('📊 ChartsDashboard disponível?', typeof ChartsDashboard !== 'undefined' ? '✅' : '❌');
+                console.log('📊 FirebaseTableSystem disponível?', typeof FirebaseTableSystem !== 'undefined' ? '✅' : '❌');
+                
+                // Aplicar configuração dark mode se disponível
+                configurarChartJSDarkMode();
+                
+                if (typeof ChartsDashboard !== 'undefined') {
+                    console.log('📊 ChartsDashboard.inicializar disponível?', typeof ChartsDashboard.inicializar === 'function' ? '✅' : '❌');
+                }
+            }
+            
+            // Aguardar Chart.js e FirebaseTableSystem estarem prontos
+            function inicializarGraficos() {
+                diagnosticarDependencias();
+                
+                if (typeof Chart !== 'undefined' && 
+                    typeof ChartsDashboard !== 'undefined' && 
+                    ChartsDashboard.inicializar) {
+                    
+                    console.log('📊 [DASHBOARD] Condições atendidas, iniciando gráficos...');
+                    
+                    // Tentar obter dados do FirebaseTableSystem
+                    let dados = null;
+                    if (window.FirebaseTableSystem && window.FirebaseTableSystem.getData) {
+                        dados = window.FirebaseTableSystem.getData();
+                        if (dados && dados.length > 0) {
+                            console.log('📊 [DASHBOARD] Dados do Firebase encontrados:', dados.length, 'registros');
+                        }
+                    }
+                    
+                    // Inicializar sistema
+                    ChartsDashboard.inicializar(dados);
+                    
+                } else {
+                    console.log('⏳ [DASHBOARD] Aguardando dependências...');
+                    setTimeout(inicializarGraficos, 1000);
+                }
+            }
+            
+            // Iniciar processo
+            setTimeout(inicializarGraficos, 1000);
+            
+            // FORÇAR INICIALIZAÇÃO SE NECESSÁRIO
+            setTimeout(() => {
+                if (!ChartsDashboard.isInitialized) {
+                    console.log('🔥 [DASHBOARD] FORÇANDO inicialização dos gráficos...');
+                    ChartsDashboard.inicializar();
+                }
+            }, 10000);
+
+            // INICIALIZAÇÃO SUPER AGRESSIVA - GARANTIR GRÁFICOS SEMPRE VISÍVEIS
+            setTimeout(() => {
+                console.log('🚀 [DASHBOARD] INICIALIZAÇÃO SUPER AGRESSIVA DOS GRÁFICOS...');
+                if (typeof ChartsDashboard !== 'undefined') {
+                    // Forçar reinicialização completa
+                    ChartsDashboard.destruirGraficos();
+                    ChartsDashboard.isInitialized = false;
+                    ChartsDashboard.inicializar();
+                    
+                    // Garantir que o container esteja visível
+                    const container = document.getElementById('charts-rankings-container');
+                    if (container) {
+                        container.style.display = 'block';
+                        container.style.visibility = 'visible';
+                        console.log('✅ [DASHBOARD] Container de gráficos forçado como visível');
+                    }
+                } else {
+                    console.error('❌ [DASHBOARD] ChartsDashboard não encontrado!');
+                }
+            }, 3000);
+            
+            // Escutar eventos do FirebaseTableSystem
+            window.addEventListener('firebaseTableDataLoaded', function(event) {
+                console.log('📢 [DASHBOARD] Recebidos dados do Firebase, atualizando gráficos...');
+                if (ChartsDashboard && ChartsDashboard.atualizar) {
+                    ChartsDashboard.atualizar(event.detail.data);
+                }
+            });
+        });
+        
+        // ============= CARREGAR DADOS AUTOMATICAMENTE =============
+        setTimeout(async () => {
+            console.log('🔄 [DASHBOARD] Carregando dados automaticamente...');
+            
+            // Tentar carregar dados via loadStatistics se disponível
+            if (typeof window.loadStatistics === 'function') {
+                try {
+                    await window.loadStatistics();
+                    console.log('✅ [DASHBOARD] Dados carregados via loadStatistics');
+                } catch (error) {
+                    console.warn('⚠️ [DASHBOARD] Erro ao carregar dados via loadStatistics:', error);
+                }
+            }
+            
+            // Tentar criar gráficos diretamente se disponível
+            if (typeof window.criarTodosGraficos === 'function') {
+                try {
+                    await window.criarTodosGraficos();
+                    console.log('✅ [DASHBOARD] Gráficos criados automaticamente');
+                } catch (error) {
+                    console.warn('⚠️ [DASHBOARD] Erro ao criar gráficos automaticamente:', error);
+                }
+            }
+        }, 5000); // Aguardar 5 segundos para todos os scripts carregarem
         
         // ============= CORRIGIR STATUS FIREBASE =============
         setTimeout(() => {
@@ -1566,10 +1706,7 @@
         }, 3000);
         
         // ============= FUNÇÕES GLOBAIS DE GERENCIAMENTO =============
-        function abrirNovoEndereco() {
-            document.getElementById('modalTitle').textContent = 'Novo Endereço';
-            document.getElementById('crudModal').style.display = 'block';
-        }
+        // function abrirNovoEndereco() - Agora gerenciado por endereco-gestao-integrado.js
         
         function closeModal() {
             document.getElementById('crudModal').style.display = 'none';
@@ -1583,20 +1720,30 @@
             document.getElementById(modalId).style.display = 'none';
         }
         
+        // FUNÇÃO INTEGRADA COM NOVO SISTEMA
         function showGestaoTab(tabName) {
-            // Esconder todas as abas
-            const tabs = document.querySelectorAll('.gestao-tab-content');
-            tabs.forEach(tab => tab.classList.remove('active'));
+            console.log(`🎯 [GESTAO-DASHBOARD] showGestaoTab chamado para: ${tabName}`);
             
-            // Remover classe active de todos os botões
-            const buttons = document.querySelectorAll('.gestao-tab-btn');
-            buttons.forEach(btn => btn.classList.remove('active'));
-            
-            // Mostrar aba selecionada
-            document.getElementById(`gestao-${tabName}-tab`).classList.add('active');
-            
-            // Adicionar classe active no botão clicado
-            event.target.classList.add('active');
+            // Chamar sistema de gestão quando estiver disponível
+            if (window.GestaoProjetosSystem && typeof window.GestaoProjetosSystem.mostrarAba === 'function') {
+                console.log(`✅ [GESTAO-DASHBOARD] Chamando sistema de gestão para: ${tabName}`);
+                window.GestaoProjetosSystem.mostrarAba(tabName);
+            } else {
+                console.warn(`⚠️ [GESTAO-DASHBOARD] Sistema ainda não carregado, aguardando...`);
+                // Tentar novamente em 2 segundos
+                setTimeout(() => {
+                    if (window.GestaoProjetosSystem && typeof window.GestaoProjetosSystem.mostrarAba === 'function') {
+                        console.log(`✅ [GESTAO-DASHBOARD] Sistema carregado na segunda tentativa`);
+                        window.GestaoProjetosSystem.mostrarAba(tabName);
+                    } else {
+                console.warn(`⚠️ [DASHBOARD] Sistema de gestão não disponível para: ${tabName}`);
+                console.log('💡 [DASHBOARD] Tentando novamente em 2 segundos...');
+                setTimeout(() => {
+                    if (window.mostrarNovaAba && typeof window.mostrarNovaAba === 'function') {
+                        window.mostrarNovaAba(tabName);
+                    }
+                }, 2000);
+            }
         }
         
         function showSection(sectionName, event) {
@@ -1625,6 +1772,58 @@
             };
             
             document.getElementById('section-title').textContent = titles[sectionName] || sectionName;
+            
+            // Carregar dados específicos da seção - SISTEMA MELHORADO
+            if (sectionName === 'enderecos') {
+                console.log('📋 [SHOW-SECTION] Carregando dados da tabela de endereços...');
+                
+                // Função recursiva para aguardar FirebaseTableSystem
+                const aguardarECarregar = (tentativas = 0, maxTentativas = 10) => {
+                    if (window.FirebaseTableSystem && window.FirebaseTableSystem.loadData) {
+                        console.log('✅ [SHOW-SECTION] FirebaseTableSystem encontrado, carregando...');
+                        window.FirebaseTableSystem.loadData().then(() => {
+                            console.log('✅ [SHOW-SECTION] Dados da tabela carregados com sucesso');
+                        }).catch((error) => {
+                            console.error('❌ [SHOW-SECTION] Erro ao carregar dados:', error);
+                        });
+                    } else if (tentativas < maxTentativas) {
+                        console.log(`⏳ [SHOW-SECTION] Aguardando FirebaseTableSystem... (${tentativas + 1}/${maxTentativas})`);
+                        setTimeout(() => aguardarECarregar(tentativas + 1, maxTentativas), 1000);
+                    } else {
+                        console.error('❌ [SHOW-SECTION] FirebaseTableSystem não carregou após 10 tentativas');
+                        console.log('🔍 [SHOW-SECTION] Verificando o que está disponível no window:', Object.keys(window).filter(k => k.includes('Firebase')));
+                    }
+                };
+                
+                setTimeout(aguardarECarregar, 500);
+            }
+            
+            // Para infraestrutura, forçar carregamento de dados e gráficos
+            if (sectionName === 'infraestrutura') {
+                console.log('📊 [SHOW-SECTION] Carregando infraestrutura...');
+                setTimeout(() => {
+                    // Primeiro carregar dados
+                    if (window.FirebaseTableSystem && window.FirebaseTableSystem.loadData) {
+                        window.FirebaseTableSystem.loadData().then(() => {
+                            console.log('✅ [SHOW-SECTION] Dados carregados, iniciando dashboard...');
+                            // Depois inicializar dashboard
+                            setTimeout(() => {
+                                if (window.inicializarDashboard) {
+                                    window.inicializarDashboard();
+                                }
+                                // Tabela resume será atualizada automaticamente pelos eventos
+                            }, 1000);
+                        });
+                    } else {
+                        // Se não há FirebaseTableSystem, inicializar tabela diretamente
+                        setTimeout(() => {
+                            if (window.initFilteredTableFromDashboard) {
+                                window.initFilteredTableFromDashboard();
+                            }
+                        }, 2000);
+                    }
+                }, 500);
+            }
         }
         
         // Funções para modo colorblind e perfil de usuário (caso não existam)
@@ -1641,16 +1840,113 @@
             document.getElementById('userProfileScreen').style.display = 'none';
         }
         
+        // Usar a função de logout unificada do firebase-complete.js
         function confirmLogout() {
-            if (confirm('Deseja realmente sair do sistema?')) {
-                // TODO: Implementar logout
-                console.log('Logout confirmado');
+            if (typeof window.confirmLogout === 'function') {
+                // Usar função unificada se disponível
+                window.confirmLogout();
+            } else {
+                // Fallback local
+                if (confirm('Deseja realmente sair do sistema?')) {
+                    console.log('🚪 [LOGOUT] Realizando logout...');
+                    if (firebase && firebase.auth) {
+                        firebase.auth().signOut().then(() => {
+                            console.log('✅ [LOGOUT] Logout realizado com sucesso');
+                            window.location.href = 'index.html';
+                        }).catch((error) => {
+                            console.error('❌ [LOGOUT] Erro no logout:', error);
+                            window.location.href = 'index.html'; // Forçar redirecionamento mesmo com erro
+                        });
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                }
             }
         }
         
         function toggleNewDropdown() {
             const dropdown = document.getElementById('newUserDropdown');
             dropdown.classList.toggle('active');
+        }
+        
+        // ============= SISTEMA DE TROCA DE SENHA =============
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            const button = input.nextElementSibling.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                button.className = 'fas fa-eye';
+            }
+        }
+        
+        async function changePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            // Validações
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                alert('❌ Erro: Todos os campos são obrigatórios');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                alert('❌ Erro: Nova senha e confirmação não coincidem');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                alert('❌ Erro: Nova senha deve ter no mínimo 6 caracteres');
+                return;
+            }
+            
+            try {
+                console.log('🔐 [PASSWORD] Iniciando alteração de senha...');
+                
+                if (!firebase || !firebase.auth) {
+                    throw new Error('Firebase não disponível');
+                }
+                
+                const user = firebase.auth().currentUser;
+                if (!user) {
+                    throw new Error('Usuário não autenticado');
+                }
+                
+                // Re-autenticar usuário com senha atual
+                const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPassword);
+                
+                await user.reauthenticateWithCredential(credential);
+                console.log('✅ [PASSWORD] Re-autenticação realizada');
+                
+                // Alterar senha
+                await user.updatePassword(newPassword);
+                console.log('✅ [PASSWORD] Senha alterada com sucesso');
+                
+                // Limpar campos
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+                
+                // Fechar modal
+                closeUserProfileScreen();
+                
+                alert('✅ Senha alterada com sucesso!');
+                
+            } catch (error) {
+                console.error('❌ [PASSWORD] Erro ao alterar senha:', error);
+                
+                if (error.code === 'auth/wrong-password') {
+                    alert('❌ Erro: Senha atual incorreta');
+                } else if (error.code === 'auth/weak-password') {
+                    alert('❌ Erro: Nova senha muito fraca');
+                } else {
+                    alert('❌ Erro ao alterar senha: ' + error.message);
+                }
+            }
         }
         
         // Fechar dropdown quando clicar fora
@@ -1664,7 +1960,7 @@
         // ============= FUNÇÕES DE ADMIN PARA LIMPEZA =============
         function checkAdminPermissions() {
             // Verificar se o usuário é admin baseado no role
-            const userRole = document.getElementById('userRoleSimple')?.textContent;
+            const userRole = document.getElementById('userDisplayRole')?.textContent;
             const isAdmin = userRole && (userRole.includes('ADMIN') || userRole.includes('admin'));
             
             const adminControls = document.getElementById('adminControls');
@@ -1673,6 +1969,52 @@
             }
             
             return isAdmin;
+        }
+        
+        // ============= SISTEMA DE CONTROLE DE PERMISSÕES =============
+        function setupUserPermissions() {
+            const userRole = document.getElementById('userDisplayRole')?.textContent;
+            if (!userRole) return;
+            
+            console.log('🔐 [PERMISSIONS] Configurando permissões para:', userRole);
+            
+            // Elementos do menu lateral
+            const menuItems = {
+                'inicio': document.querySelector('a[onclick*="inicio"]')?.parentElement,
+                'infraestrutura': document.querySelector('a[onclick*="infraestrutura"]')?.parentElement,  
+                'enderecos': document.querySelector('a[onclick*="enderecos"]')?.parentElement,
+                'gestao-projetos': document.querySelector('a[onclick*="gestao-projetos"]')?.parentElement
+            };
+            
+            // Controle de acesso baseado no role
+            if (userRole.toLowerCase().includes('admin')) {
+                console.log('👑 [PERMISSIONS] Usuário ADMIN - Acesso total');
+                // Admin tem acesso a tudo - não ocultar nada
+                
+            } else if (userRole.toLowerCase().includes('supervisor')) {
+                console.log('👨‍💼 [PERMISSIONS] Usuário SUPERVISOR - Acesso restrito');
+                // Supervisor: início, dashboard, gestão de projetos, cadastro de endereços
+                // Garantir que todos os módulos estejam visíveis para supervisor
+                Object.values(menuItems).forEach(item => {
+                    if (item) item.style.display = 'block';
+                });
+                
+            } else {
+                console.log('👤 [PERMISSIONS] Usuário COMUM - Acesso limitado');
+                // Usuário comum: apenas início e dashboard
+                if (menuItems['enderecos']) {
+                    menuItems['enderecos'].style.display = 'none';
+                }
+                if (menuItems['gestao-projetos']) {
+                    menuItems['gestao-projetos'].style.display = 'none';
+                }
+                
+                // Se estiver em uma seção restrita, redirecionar para início
+                const currentSection = document.querySelector('.section.active')?.id;
+                if (currentSection === 'enderecos' || currentSection === 'gestao-projetos') {
+                    showSection('inicio');
+                }
+            }
         }
         
         function showAdminCleanupOptions() {
@@ -1725,6 +2067,7 @@ Digite o número da opção desejada:`;
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 checkAdminPermissions();
+                setupUserPermissions();
             }, 2000);
         });
         
@@ -1735,10 +2078,103 @@ Digite o número da opção desejada:`;
             if (sectionName === 'enderecos') {
                 setTimeout(() => {
                     checkAdminPermissions();
+                    // Carregar tabela de endereços se não foi carregada ainda
+                    if (window.carregarTabelaEnderecos && typeof window.carregarTabelaEnderecos === 'function') {
+                        console.log('🏠 Carregando tabela de endereços...');
+                        window.carregarTabelaEnderecos();
+                    }
                 }, 500);
+            } else if (sectionName === 'inicio' || sectionName === 'infraestrutura') {
+                // 🔥 FORÇAR GRÁFICOS A APARECEREM QUANDO VOLTAR AO INÍCIO OU DASHBOARD
+                setTimeout(() => {
+                    console.log('🚀 [INÍCIO] Forçando reinicialização dos gráficos...');
+                    if (typeof ChartsDashboard !== 'undefined') {
+                        // Garantir que o container esteja visível
+                        const container = document.getElementById('charts-rankings-container');
+                        if (container) {
+                            container.style.display = 'block';
+                            container.style.visibility = 'visible';
+                            container.style.opacity = '1';
+                        }
+                        
+                        // Reinicializar sistema completo
+                        ChartsDashboard.destruirGraficos();
+                        ChartsDashboard.isInitialized = false;
+                        ChartsDashboard.inicializar();
+                        
+                        console.log('✅ [INÍCIO] Gráficos forçados a reaparecer!');
+                    } else {
+                        console.error('❌ [INÍCIO] ChartsDashboard não encontrado!');
+                    }
+                }, 100);
             }
         };
 
     </script>
-</body>
-</html>
+
+    <!-- Script Dark Mode Melhorado -->
+    <script>
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            
+            // Salvar preferência
+            localStorage.setItem('darkMode', isDark);
+            
+            // Atualizar elementos do dropdown
+            updateDarkModeUI(isDark);
+            
+            console.log('🌓 Dark Mode:', isDark ? 'Ativado' : 'Desativado');
+        }
+
+        function updateDarkModeUI(isDark) {
+            const textElement = document.getElementById('darkModeText');
+            const indicatorElement = document.getElementById('darkModeIndicator');
+            const iconElement = document.querySelector('#darkModeOption i');
+            
+            if (textElement) {
+                textElement.textContent = isDark ? 'Modo Claro' : 'Modo Escuro';
+            }
+            
+            if (indicatorElement) {
+                indicatorElement.textContent = isDark ? '☀️' : '🌙';
+            }
+            
+            if (iconElement) {
+                iconElement.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            }
+            
+            // Atualizar cores dos gráficos Chart.js se existirem
+            // No modo escuro, gráficos têm fundo claro, então títulos devem ser escuros
+            if (window.Chart && window.Chart.instances) {
+                Object.values(window.Chart.instances).forEach(chart => {
+                    if (chart.options && chart.options.plugins && chart.options.plugins.title) {
+                        chart.options.plugins.title.color = isDark ? '#000000' : '#000000';
+                    }
+                    if (chart.options && chart.options.scales) {
+                        Object.values(chart.options.scales).forEach(scale => {
+                            if (scale.title) {
+                                scale.title.color = isDark ? '#000000' : '#000000';
+                            }
+                        });
+                    }
+                    chart.update();
+                });
+            }
+        }
+
+        // Aplicar preferência salva ao carregar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedMode = localStorage.getItem('darkMode');
+            if (savedMode === 'true') {
+                document.body.classList.add('dark-mode');
+                updateDarkModeUI(true);
+            }
+            
+            // Adicionar evento ao item do dropdown
+            const darkModeOption = document.getElementById('darkModeOption');
+            if (darkModeOption) {
+                darkModeOption.addEventListener('click', toggleDarkMode);
+            }
+        });
+    </script>
