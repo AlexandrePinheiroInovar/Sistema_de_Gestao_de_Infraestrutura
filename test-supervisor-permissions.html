@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Permissões de Supervisor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+        .uid-input {
+            width: 300px;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .btn {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .supervisor-info {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Teste de Permissões de Supervisor</h1>
+
+        <div class="test-section info">
+            <h3>UIDs Autorizados como Supervisores:</h3>
+            <ul>
+                <li><code>uncffP1B7HcgPYtC9Z7goxvfkbm1</code></li>
+                <li><code>MihB6XV6vzOTh9PJOotFgzJynjc2</code></li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>Teste Manual de UID</h3>
+            <input type="text" id="testUID" class="uid-input" placeholder="Digite um UID para testar">
+            <br>
+            <button class="btn" onclick="testUID()">Testar UID</button>
+            <div id="testResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Status do Sistema</h3>
+            <div id="systemStatus"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Testes Automáticos</h3>
+            <button class="btn" onclick="runAutomatedTests()">Executar Testes</button>
+            <div id="automatedResults"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <!-- Sistema de Permissões -->
+    <script src="src/js/supervisor-permissions.js"></script>
+
+    <script>
+        // Aguardar o sistema carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 Página de teste carregada');
+
+            // Aguardar o sistema de permissões carregar
+            setTimeout(() => {
+                checkSystemStatus();
+            }, 1000);
+        });
+
+        function testUID() {
+            const uid = document.getElementById('testUID').value.trim();
+            const resultDiv = document.getElementById('testResult');
+
+            if (!uid) {
+                resultDiv.innerHTML = '<div class="error">Por favor, digite um UID</div>';
+                return;
+            }
+
+            // Verificar se existe o sistema de permissões
+            if (typeof window.SupervisorPermissions === 'undefined') {
+                resultDiv.innerHTML = '<div class="error">Sistema de permissões não carregado</div>';
+                return;
+            }
+
+            const isAuthorized = window.SupervisorPermissions.isAuthorizedSupervisor(uid);
+            const permissions = window.SupervisorPermissions.getSupervisorPermissions(uid);
+
+            if (isAuthorized) {
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h4>✅ UID Autorizado como Supervisor</h4>
+                        <p><strong>UID:</strong> ${uid}</p>
+                        <p><strong>Role:</strong> ${permissions.role}</p>
+                        <p><strong>Data de Autorização:</strong> ${new Date(permissions.grantedDate).toLocaleString()}</p>
+                        <div class="supervisor-info">
+                            <strong>Permissões:</strong>
+                            <ul>
+                                <li>Visualizar: ${permissions.permissions.canView ? '✅' : '❌'}</li>
+                                <li>Criar: ${permissions.permissions.canCreate ? '✅' : '❌'}</li>
+                                <li>Editar: ${permissions.permissions.canEdit ? '✅' : '❌'}</li>
+                                <li>Deletar: ${permissions.permissions.canDelete ? '✅' : '❌'}</li>
+                                <li>Upload: ${permissions.permissions.canUpload ? '✅' : '❌'}</li>
+                                <li>Exportar: ${permissions.permissions.canExport ? '✅' : '❌'}</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ UID NÃO Autorizado</h4>
+                        <p><strong>UID:</strong> ${uid}</p>
+                        <p>Este UID não possui permissões de supervisor.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function checkSystemStatus() {
+            const statusDiv = document.getElementById('systemStatus');
+
+            let status = '';
+
+            // Verificar se o sistema está carregado
+            if (typeof window.SupervisorPermissions !== 'undefined') {
+                status += '<div class="success">✅ Sistema de Permissões Carregado</div>';
+
+                const authorizedCount = Object.keys(window.SupervisorPermissions.AUTHORIZED_SUPERVISORS).length;
+                status += `<div class="info">📊 Total de Supervisores Autorizados: ${authorizedCount}</div>`;
+
+                // Listar supervisores
+                const supervisors = Object.keys(window.SupervisorPermissions.AUTHORIZED_SUPERVISORS);
+                status += '<div class="supervisor-info"><strong>Supervisores Registrados:</strong><ul>';
+                supervisors.forEach(uid => {
+                    status += `<li><code>${uid}</code></li>`;
+                });
+                status += '</ul></div>';
+
+            } else {
+                status += '<div class="error">❌ Sistema de Permissões NÃO Carregado</div>';
+            }
+
+            // Verificar Firebase
+            if (typeof firebase !== 'undefined') {
+                status += '<div class="success">✅ Firebase SDK Carregado</div>';
+            } else {
+                status += '<div class="error">❌ Firebase SDK NÃO Carregado</div>';
+            }
+
+            statusDiv.innerHTML = status;
+        }
+
+        function runAutomatedTests() {
+            const resultsDiv = document.getElementById('automatedResults');
+            let results = '<h4>Resultados dos Testes Automáticos:</h4>';
+
+            if (typeof window.SupervisorPermissions === 'undefined') {
+                results += '<div class="error">❌ Sistema não disponível para testes</div>';
+                resultsDiv.innerHTML = results;
+                return;
+            }
+
+            // Teste 1: UID autorizado 1
+            const uid1 = 'uncffP1B7HcgPYtC9Z7goxvfkbm1';
+            const test1 = window.SupervisorPermissions.isAuthorizedSupervisor(uid1);
+            results += `<div class="${test1 ? 'success' : 'error'}">
+                Teste 1 - UID1 Autorizado: ${test1 ? '✅ PASSOU' : '❌ FALHOU'}
+            </div>`;
+
+            // Teste 2: UID autorizado 2
+            const uid2 = 'MihB6XV6vzOTh9PJOotFgzJynjc2';
+            const test2 = window.SupervisorPermissions.isAuthorizedSupervisor(uid2);
+            results += `<div class="${test2 ? 'success' : 'error'}">
+                Teste 2 - UID2 Autorizado: ${test2 ? '✅ PASSOU' : '❌ FALHOU'}
+            </div>`;
+
+            // Teste 3: UID não autorizado
+            const uid3 = 'teste123naoautorizado';
+            const test3 = !window.SupervisorPermissions.isAuthorizedSupervisor(uid3);
+            results += `<div class="${test3 ? 'success' : 'error'}">
+                Teste 3 - UID Não Autorizado: ${test3 ? '✅ PASSOU' : '❌ FALHOU'}
+            </div>`;
+
+            // Teste 4: Verificar permissões
+            const permissions1 = window.SupervisorPermissions.getSupervisorPermissions(uid1);
+            const test4 = permissions1 && permissions1.role === 'SUPERVISOR';
+            results += `<div class="${test4 ? 'success' : 'error'}">
+                Teste 4 - Permissões UID1: ${test4 ? '✅ PASSOU' : '❌ FALHOU'}
+            </div>`;
+
+            const allPassed = test1 && test2 && test3 && test4;
+            results += `<div class="${allPassed ? 'success' : 'error'}">
+                <strong>Resultado Geral: ${allPassed ? '✅ TODOS OS TESTES PASSARAM' : '❌ ALGUNS TESTES FALHARAM'}</strong>
+            </div>`;
+
+            resultsDiv.innerHTML = results;
+        }
+
+        // Função para simular login (para teste)
+        function simulateLogin(uid) {
+            if (typeof window.SupervisorPermissions !== 'undefined') {
+                window.SupervisorPermissions.applySupervisorPermissions(uid);
+            }
+        }
+    </script>
+</body>
+</html>
