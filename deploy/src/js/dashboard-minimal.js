@@ -3,10 +3,10 @@ console.log('📊 [DASHBOARD-MINIMAL] Inicializando funções mínimas...');
 
 // ============= SISTEMA DE PERMISSÕES POR ROLE =============
 const USER_ROLES = {
-    USER: 'USER',           // Usuário comum - só Início e Dashboard
+    USER: 'USER', // Usuário comum - só Início e Dashboard
     SUPERVISOR: 'SUPERVISOR', // Supervisor - Início, Dashboard, Cadastro de Endereços
-    GESTOR: 'GESTOR',       // Gestor - tudo exceto algumas funções admin
-    ADMIN: 'ADMIN'          // Admin - acesso total
+    GESTOR: 'GESTOR', // Gestor - tudo exceto algumas funções admin
+    ADMIN: 'ADMIN' // Admin - acesso total
 };
 
 // Configuração de permissões por role
@@ -41,7 +41,7 @@ async function getUserRole() {
         }
 
         console.log('🔍 [PERMISSIONS] Buscando role do usuário no Firestore...');
-        
+
         if (window.firestore) {
             const userDoc = await window.firestore.collection('users').doc(user.uid).get();
             if (userDoc.exists) {
@@ -51,7 +51,7 @@ async function getUserRole() {
                 return role;
             }
         }
-        
+
         console.log('⚠️ [PERMISSIONS] Role não encontrado, usando USER como padrão');
         return USER_ROLES.USER;
     } catch (error) {
@@ -63,37 +63,43 @@ async function getUserRole() {
 // Função para aplicar permissões no menu
 function applyRolePermissions(role) {
     console.log(`🔧 [PERMISSIONS] Aplicando permissões para role: ${role}`);
-    
+
     currentUserRole = role;
     const permissions = ROLE_PERMISSIONS[role] || ROLE_PERMISSIONS[USER_ROLES.USER];
-    
+
     // Atualizar display do role no header
     const roleElement = document.getElementById('userRoleSimple');
     if (roleElement) {
         roleElement.textContent = role;
     }
-    
+
     const dropdownRoleElement = document.getElementById('userRoleSimple');
     if (dropdownRoleElement) {
         dropdownRoleElement.textContent = role;
     }
-    
+
     // Controlar visibilidade dos itens do menu
     const menuItems = document.querySelectorAll('.sidebar-menu li');
-    
+
     menuItems.forEach(li => {
         const link = li.querySelector('a');
-        if (!link) return;
-        
+        if (!link) {
+            return;
+        }
+
         const onclick = link.getAttribute('onclick');
-        if (!onclick) return;
-        
+        if (!onclick) {
+            return;
+        }
+
         // Extrair nome da seção do onclick
         const sectionMatch = onclick.match(/showSection\('([^']+)'/);
-        if (!sectionMatch) return;
-        
+        if (!sectionMatch) {
+            return;
+        }
+
         const sectionName = sectionMatch[1];
-        
+
         // Verificar se o usuário tem permissão para esta seção
         if (permissions.sections.includes(sectionName)) {
             li.style.display = '';
@@ -112,7 +118,7 @@ function hasPermission(action) {
 }
 
 // Função para teste - alterar role temporariamente (apenas para testes)
-window.setUserRoleForTesting = function(role) {
+window.setUserRoleForTesting = function (role) {
     console.log(`🧪 [TEST] Alterando role para: ${role}`);
     if (USER_ROLES[role]) {
         applyRolePermissions(role);
@@ -126,19 +132,19 @@ window.setUserRoleForTesting = function(role) {
 // ============= SISTEMA DE GESTÃO DE PERMISSÕES POR UID =============
 
 // Função para listar todos os usuários (para admins)
-window.listAllUsers = async function() {
+window.listAllUsers = async function () {
     try {
         if (!hasPermission('admin')) {
             console.error('❌ [PERMISSIONS] Sem permissão para listar usuários');
             return [];
         }
-        
+
         console.log('📋 [ADMIN] Listando todos os usuários...');
-        
+
         if (window.firestore) {
             const usersRef = window.firestore.collection('users');
             const snapshot = await usersRef.get();
-            
+
             const users = [];
             snapshot.forEach(doc => {
                 const userData = doc.data();
@@ -150,12 +156,12 @@ window.listAllUsers = async function() {
                     createdAt: userData.createdAt
                 });
             });
-            
+
             console.log(`✅ [ADMIN] ${users.length} usuários encontrados`);
             console.table(users);
             return users;
         }
-        
+
         return [];
     } catch (error) {
         console.error('❌ [ADMIN] Erro ao listar usuários:', error);
@@ -164,32 +170,32 @@ window.listAllUsers = async function() {
 };
 
 // Função para atualizar role do usuário por UID (método principal)
-window.updateUserRoleByUID = async function(uid, newRole) {
+window.updateUserRoleByUID = async function (uid, newRole) {
     try {
         if (!hasPermission('admin')) {
             console.error('❌ [PERMISSIONS] Sem permissão para alterar roles');
             return false;
         }
-        
+
         if (!USER_ROLES[newRole]) {
             console.error('❌ [ADMIN] Role inválido:', newRole);
             console.log('✅ [ADMIN] Roles válidos:', Object.keys(USER_ROLES));
             return false;
         }
-        
+
         console.log(`🔧 [ADMIN] Atualizando role do UID ${uid} para ${newRole}`);
-        
+
         if (window.firestore) {
             const userDoc = window.firestore.collection('users').doc(uid);
             const docSnapshot = await userDoc.get();
-            
+
             if (docSnapshot.exists) {
-                await userDoc.update({ 
+                await userDoc.update({
                     role: newRole,
                     roleUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                     roleUpdatedBy: window.getCurrentUser()?.uid || 'system'
                 });
-                
+
                 const userData = docSnapshot.data();
                 console.log(`✅ [ADMIN] Role de ${userData.email} atualizado para ${newRole}`);
                 return true;
@@ -198,7 +204,7 @@ window.updateUserRoleByUID = async function(uid, newRole) {
                 return false;
             }
         }
-        
+
         return false;
     } catch (error) {
         console.error('❌ [ADMIN] Erro ao atualizar role:', error);
@@ -207,20 +213,20 @@ window.updateUserRoleByUID = async function(uid, newRole) {
 };
 
 // Função para atualizar role do usuário por email (método alternativo)
-window.updateUserRoleByEmail = async function(userEmail, newRole) {
+window.updateUserRoleByEmail = async function (userEmail, newRole) {
     try {
         if (!hasPermission('admin')) {
             console.error('❌ [PERMISSIONS] Sem permissão para alterar roles');
             return false;
         }
-        
+
         console.log(`🔧 [ADMIN] Buscando usuário por email: ${userEmail}`);
-        
+
         if (window.firestore) {
             // Buscar usuário por email
             const usersRef = window.firestore.collection('users');
             const query = await usersRef.where('email', '==', userEmail).get();
-            
+
             if (!query.empty) {
                 const userDoc = query.docs[0];
                 const uid = userDoc.id;
@@ -230,7 +236,7 @@ window.updateUserRoleByEmail = async function(userEmail, newRole) {
                 return false;
             }
         }
-        
+
         return false;
     } catch (error) {
         console.error('❌ [ADMIN] Erro ao buscar usuário por email:', error);
@@ -239,18 +245,18 @@ window.updateUserRoleByEmail = async function(userEmail, newRole) {
 };
 
 // Função para obter dados de um usuário específico
-window.getUserData = async function(uid) {
+window.getUserData = async function (uid) {
     try {
         if (!hasPermission('admin')) {
             console.error('❌ [PERMISSIONS] Sem permissão para visualizar dados de usuários');
             return null;
         }
-        
+
         console.log(`🔍 [ADMIN] Buscando dados do usuário: ${uid}`);
-        
+
         if (window.firestore) {
             const userDoc = await window.firestore.collection('users').doc(uid).get();
-            
+
             if (userDoc.exists) {
                 const userData = userDoc.data();
                 console.log('✅ [ADMIN] Dados encontrados:', userData);
@@ -260,7 +266,7 @@ window.getUserData = async function(uid) {
                 return null;
             }
         }
-        
+
         return null;
     } catch (error) {
         console.error('❌ [ADMIN] Erro ao buscar dados do usuário:', error);
@@ -269,22 +275,22 @@ window.getUserData = async function(uid) {
 };
 
 // Função para criar/promover primeiro admin (usar apenas uma vez)
-window.createFirstAdmin = async function(email) {
+window.createFirstAdmin = async function (email) {
     try {
         console.log(`🛡️ [SETUP] Promovendo primeiro admin: ${email}`);
-        
+
         if (window.firestore) {
             const usersRef = window.firestore.collection('users');
             const query = await usersRef.where('email', '==', email).get();
-            
+
             if (!query.empty) {
                 const userDoc = query.docs[0];
-                await userDoc.ref.update({ 
+                await userDoc.ref.update({
                     role: 'ADMIN',
                     roleUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                     roleUpdatedBy: 'SYSTEM_SETUP'
                 });
-                
+
                 console.log('✅ [SETUP] Primeiro admin criado com sucesso!');
                 console.log('🔄 [SETUP] Recarregue a página para aplicar permissões');
                 return true;
@@ -293,7 +299,7 @@ window.createFirstAdmin = async function(email) {
                 return false;
             }
         }
-        
+
         return false;
     } catch (error) {
         console.error('❌ [SETUP] Erro ao criar primeiro admin:', error);
@@ -301,91 +307,79 @@ window.createFirstAdmin = async function(email) {
     }
 };
 
-// Função para popular filtros da infraestrutura - versão minimalista
-window.populateInfraFilters = function() {
-    console.log('📋 [FILTERS] Populando filtros da infraestrutura...');
-    
-    // Implementação mínima para evitar erros nos dropdowns
-    const filters = [
-        'infraFilterProjeto',
-        'infraFilterSubProjeto', 
-        'infraFilterEquipe',
-        'infraFilterStatus',
-        'infraFilterCidade',
-        'infraFilterSupervisor',
-        'infraFilterTipoAcao'
-    ];
-    
-    filters.forEach(filterId => {
-        const select = document.getElementById(filterId);
-        if (select) {
-            // Limpar opções existentes
-            select.innerHTML = '<option value="">Todos</option>';
-            console.log(`✅ [FILTERS] ${filterId} inicializado`);
-        }
-    });
-    
-    return Promise.resolve();
+// Função para popular filtros da infraestrutura - delegada para firebase-table-system.js
+window.populateInfraFilters = function () {
+    console.log('📋 [FILTERS] Delegando população de filtros para firebase-table-system.js...');
+
+    // Chamar a função do sistema Firebase se disponível
+    if (
+        window.FirebaseTableSystem &&
+        typeof window.FirebaseTableSystem.updateFilters === 'function'
+    ) {
+        return window.FirebaseTableSystem.updateFilters();
+    } else {
+        console.warn('⚠️ [FILTERS] Sistema Firebase não disponível, criando filtros vazios');
+
+        // Fallback: criar filtros vazios
+        const filters = [
+            'infraFilterProjeto',
+            'infraFilterSubProjeto',
+            'infraFilterEquipe',
+            'infraFilterStatus',
+            'infraFilterCidade',
+            'infraFilterSupervisor',
+            'infraFilterTipoAcao',
+            'infraFilterCondominio'
+        ];
+
+        filters.forEach(filterId => {
+            const select = document.getElementById(filterId);
+            if (select) {
+                select.innerHTML = '<option value="">Todos</option>';
+                console.log(`✅ [FILTERS] ${filterId} inicializado (vazio)`);
+            }
+        });
+
+        return Promise.resolve();
+    }
 };
 
-// Função para aplicar filtros da infraestrutura - versão minimalista  
-window.applyInfraFilters = function() {
-    console.log('🔍 [FILTERS] Aplicando filtros...');
-    // Implementação mínima - apenas log
-};
+// FUNÇÃO REMOVIDA - Conflitava com dashboard-integration.js
+// A função applyInfraFilters está implementada no dashboard-integration.js
 
-// Função para limpar filtros da infraestrutura
-window.clearInfraFilters = function() {
-    console.log('🧹 [FILTERS] Limpando filtros...');
-    
-    const filters = [
-        'infraFilterProjeto',
-        'infraFilterSubProjeto', 
-        'infraFilterEquipe',
-        'infraFilterStatus',
-        'infraFilterCidade',
-        'infraFilterSupervisor',
-        'infraFilterTipoAcao'
-    ];
-    
-    filters.forEach(filterId => {
-        const select = document.getElementById(filterId);
-        if (select) {
-            select.selectedIndex = 0;
-        }
-    });
-};
+// FUNÇÃO REMOVIDA - Conflitava com dashboard-integration.js
+// A função clearInfraFilters está implementada no dashboard-integration.js
 
 // Função para alternar seções
-window.showSection = function(sectionId, event) {
+window.showSection = function (sectionId, event) {
     if (event) {
         event.preventDefault();
     }
-    
+
     console.log(`📄 [SECTION] Mostrando seção: ${sectionId}`);
-    
+
     // Ocultar todas as seções
     const sections = document.querySelectorAll('.section');
     sections.forEach(section => {
         section.classList.remove('active');
     });
-    
+
     // Mostrar seção selecionada
     const targetSection = document.getElementById(sectionId);
     if (targetSection) {
         targetSection.classList.add('active');
     }
-    
+
     // Atualizar menu ativo
     const menuItems = document.querySelectorAll('.sidebar-menu a');
     menuItems.forEach(item => {
         item.classList.remove('active');
     });
-    
+
     if (event && event.target) {
         event.target.closest('a').classList.add('active');
     }
-    
+
     // Ações específicas por seção
     if (sectionId === 'enderecos') {
         // Carregar endereços automaticamente ao abrir a seção
@@ -396,14 +390,14 @@ window.showSection = function(sectionId, event) {
             }
         }, 500);
     }
-    
+
     // Atualizar título
     const titleElement = document.getElementById('section-title');
     if (titleElement) {
         const titles = {
-            'inicio': 'Início',
-            'infraestrutura': 'Dashboard - Infraestrutura', 
-            'enderecos': 'Cadastro de Endereços',
+            inicio: 'Início',
+            infraestrutura: 'Dashboard - Infraestrutura',
+            enderecos: 'Cadastro de Endereços',
             'gestao-projetos': 'Gestão de Projetos'
         };
         titleElement.textContent = titles[sectionId] || 'Dashboard';
@@ -413,59 +407,24 @@ window.showSection = function(sectionId, event) {
 // ============= DROPDOWN DO USUÁRIO =============
 
 // Função para alternar dropdown do usuário
+// window.toggleNewDropdown - DESABILITADO - SUBSTITUÍDO POR user-dropdown-system.js
+/*
 window.toggleNewDropdown = function() {
     console.log('👤 [DROPDOWN] Alternando dropdown do usuário...');
-    const dropdownContainer = document.getElementById('newUserDropdown');
-    const dropdown = document.getElementById('dropdownMenu');
-    const arrow = document.getElementById('dropdownArrow');
-    
-    if (dropdownContainer && dropdown) {
-        // Usar a classe 'active' conforme o CSS
-        const isActive = dropdownContainer.classList.contains('active');
-        
-        if (isActive) {
-            dropdownContainer.classList.remove('active');
-            dropdown.style.display = 'none';
-            dropdown.style.visibility = 'hidden';
-            dropdown.style.opacity = '0';
-        } else {
-            dropdownContainer.classList.add('active');
-            dropdown.style.display = 'block';
-            dropdown.style.visibility = 'visible';
-            dropdown.style.opacity = '1';
-        }
-        
-        if (arrow) {
-            arrow.style.transform = isActive ? '' : 'rotate(180deg)';
-        }
-        
-        console.log('👤 [DROPDOWN] Estado alterado:', isActive ? 'fechado' : 'aberto');
-    } else {
-        console.error('❌ [DROPDOWN] Elementos do dropdown não encontrados');
-        console.log('Elementos encontrados:', {
-            dropdownContainer: !!dropdownContainer,
-            dropdown: !!dropdown
-        });
-    }
+    // FUNÇÃO DESABILITADA - USANDO NOVO SISTEMA DE DROPDOWN
 };
+*/
 
-// Função para abrir perfil do usuário
+// window.openUserProfile - DESABILITADO - SUBSTITUÍDO POR user-dropdown-system.js
+/*
 window.openUserProfile = function() {
     console.log('👤 [PROFILE] Abrindo perfil do usuário...');
-    const profileScreen = document.getElementById('userProfileScreen');
-    if (profileScreen) {
-        profileScreen.style.display = 'block';
-    }
-    
-    // Fechar dropdown
-    const dropdown = document.getElementById('dropdownMenu');
-    if (dropdown) {
-        dropdown.style.display = 'none';
-    }
+    // FUNÇÃO DESABILITADA - USANDO NOVO SISTEMA DE DROPDOWN
 };
+*/
 
 // Função para fechar tela de perfil
-window.closeUserProfileScreen = function() {
+window.closeUserProfileScreen = function () {
     console.log('👤 [PROFILE] Fechando perfil do usuário...');
     const profileScreen = document.getElementById('userProfileScreen');
     if (profileScreen) {
@@ -474,21 +433,13 @@ window.closeUserProfileScreen = function() {
 };
 
 // Função para alternar modo daltônico
+// window.toggleColorblindMode - DESABILITADO - SUBSTITUÍDO POR user-dropdown-system.js
+/*
 window.toggleColorblindMode = function() {
     console.log('🎨 [ACCESSIBILITY] Alternando modo daltônico...');
-    const body = document.body;
-    const toggleText = document.getElementById('colorblindToggleText');
-    
-    if (body.classList.contains('colorblind-mode')) {
-        body.classList.remove('colorblind-mode');
-        if (toggleText) toggleText.textContent = 'Modo Daltônico';
-        localStorage.setItem('colorblindMode', 'false');
-    } else {
-        body.classList.add('colorblind-mode');
-        if (toggleText) toggleText.textContent = 'Modo Normal';
-        localStorage.setItem('colorblindMode', 'true');
-    }
+    // FUNÇÃO DESABILITADA - USANDO NOVO SISTEMA DE DROPDOWN
 };
+*/
 
 // Função para atualizar informações do usuário no dropdown
 function updateUserInfo() {
@@ -497,41 +448,41 @@ function updateUserInfo() {
         console.log('⚠️ [USER-INFO] Usuário não logado, não é possível atualizar informações');
         return;
     }
-    
+
     console.log('👤 [USER-INFO] Atualizando informações do usuário...', user);
-    
+
     // Atualizar nome
     const userNameElements = document.querySelectorAll('#userNameSimple, #dropdownUserName');
     const displayName = user.displayName || user.email.split('@')[0];
     console.log('👤 [USER-INFO] Nome para exibir:', displayName);
-    
+
     userNameElements.forEach(el => {
         if (el) {
             el.textContent = displayName;
             console.log('✅ [USER-INFO] Nome atualizado no elemento:', el.id);
         }
     });
-    
+
     // Atualizar email
     const emailElement = document.getElementById('dropdownUserEmail');
     if (emailElement) {
         emailElement.textContent = user.email;
         console.log('✅ [USER-INFO] Email atualizado:', user.email);
     }
-    
+
     // Atualizar role no dropdown
     const roleElement = document.getElementById('userRoleSimple');
     if (roleElement) {
         roleElement.textContent = currentUserRole;
         console.log('✅ [USER-INFO] Role atualizado:', currentUserRole);
     }
-    
+
     // Atualizar avatares
     const avatarElements = document.querySelectorAll('#userAvatarSimple, #userAvatarLarge');
     const initials = (user.displayName || user.email).charAt(0).toUpperCase();
     const avatarUrl40 = `https://ui-avatars.com/api/?name=${initials}&background=667eea&color=fff&size=40`;
     const avatarUrl60 = `https://ui-avatars.com/api/?name=${initials}&background=667eea&color=fff&size=60`;
-    
+
     avatarElements.forEach(img => {
         if (img) {
             // Usar tamanho apropriado baseado no ID
@@ -547,123 +498,10 @@ function updateUserInfo() {
 let isEditMode = false;
 let currentEditId = null;
 
-// Função para abrir modal de novo endereço - VERSÃO NOVA  
-window.abrirNovoEndereco = function() {
-    console.log('📝 [ENDERECO-V2] Função abrirNovoEndereco NOVA chamada!');
-    
-    try {
-        // Aguardar um pouco para garantir que o DOM está pronto
-        setTimeout(() => {
-            const modal = document.getElementById('crudModal');
-            const modalTitle = document.getElementById('modalTitle');
-            const form = document.getElementById('enderecoForm');
-            
-            console.log('🔍 [ENDERECO-V2] Buscando elementos do modal:', {
-                modal: !!modal,
-                modalTitle: !!modalTitle, 
-                form: !!form
-            });
-            
-            if (modal && modalTitle && form) {
-                // Resetar modo de edição
-                isEditMode = false;
-                currentEditId = null;
-                
-                // Configurar modal para novo endereço
-                modalTitle.textContent = 'Novo Endereço';
-                form.reset();
-                
-                console.log('📝 [ENDERECO-V2] Modal configurado, carregando dropdowns...');
-                
-                // Carregar dados dos dropdowns
-                if (typeof loadFormDropdowns === 'function') {
-                    loadFormDropdowns();
-                }
-                
-                // Mostrar modal com múltiplas propriedades CSS
-                modal.style.display = 'block';
-                modal.style.visibility = 'visible';
-                modal.style.opacity = '1';
-                modal.classList.add('show');
-                
-                // Forçar reflow
-                modal.offsetHeight;
-                
-                console.log('✅ [ENDERECO-V2] Modal de novo endereço aberto com sucesso!');
-                
-                // Debug: listar todos os campos do formulário
-                const fields = form.querySelectorAll('input, select, textarea');
-                console.log(`📋 [ENDERECO-V2] Formulário tem ${fields.length} campos`);
-                fields.forEach((field, index) => {
-                    console.log(`  ${index + 1}. ${field.tagName} - ID: "${field.id}" - Name: "${field.name}"`);
-                });
-                
-            } else {
-                console.error('❌ [ENDERECO-V2] Elementos do modal não encontrados!');
-                
-                // Debug mais detalhado
-                console.log('🔍 [DEBUG] Todos os elementos com "modal" no ID:', document.querySelectorAll('[id*="modal"]'));
-                console.log('🔍 [DEBUG] Todos os formulários:', document.querySelectorAll('form'));
-                
-                // Fallback: tentar criar alerta
-                alert('Modal de endereço não encontrado. Verifique se você está na seção correta.');
-            }
-        }, 100);
-        
-    } catch (error) {
-        console.error('💥 [ENDERECO-V2] Erro crítico:', error);
-        alert('Erro ao abrir modal: ' + error.message);
-    }
-};
-
-// Função para carregar dados dos dropdowns
-async function loadFormDropdowns() {
-    try {
-        console.log('🔄 [FORM] Carregando dados dos dropdowns...');
-        
-        // Carregar dados básicos para os dropdowns
-        const collections = {
-            projeto: 'gestao/projetos',
-            cidade: 'gestao/cidades', 
-            equipe: 'gestao/equipes',
-            supervisor: 'gestao/supervisores'
-        };
-        
-        for (const [fieldName, collectionPath] of Object.entries(collections)) {
-            const dropdown = document.getElementById(fieldName);
-            if (dropdown) {
-                // Limpar opções existentes
-                dropdown.innerHTML = '<option value="">Selecione...</option>';
-                
-                try {
-                    const snapshot = await window.firestore.collection(collectionPath.split('/')[0])
-                        .doc(collectionPath.split('/')[1])
-                        .collection(collectionPath.split('/')[2] || '')
-                        .get();
-                    
-                    if (!snapshot.empty) {
-                        snapshot.forEach(doc => {
-                            const data = doc.data();
-                            const option = document.createElement('option');
-                            option.value = doc.id;
-                            option.textContent = data.nome || data.name || doc.id;
-                            dropdown.appendChild(option);
-                        });
-                    }
-                } catch (e) {
-                    console.warn(`⚠️ [FORM] Erro ao carregar ${fieldName}:`, e.message);
-                }
-            }
-        }
-        
-        console.log('✅ [FORM] Dropdowns carregados');
-    } catch (error) {
-        console.error('❌ [FORM] Erro ao carregar dropdowns:', error);
-    }
-}
+// FUNÇÃO ANTIGA REMOVIDA - Agora usando novo-endereco-limpo.js
 
 // Função para fechar modal
-window.closeModal = function() {
+window.closeModal = function () {
     console.log('❌ [MODAL] Fechando modal...');
     const modal = document.getElementById('crudModal');
     if (modal) {
@@ -681,28 +519,28 @@ window.closeModal = function() {
 window.fecharModal = window.closeModal;
 
 // Função para salvar endereço
-window.saveEndereco = async function(formData) {
+window.saveEndereco = async function (formData) {
     try {
         console.log('💾 [ENDERECO] Iniciando salvamento...', formData);
-        
+
         // Verificar se Firebase está disponível
         if (!window.firestore) {
             console.error('❌ [ENDERECO] Firestore não está disponível!');
             throw new Error('Sistema não conectado ao Firebase. Tente recarregar a página.');
         }
-        
+
         if (!firebase || !firebase.firestore) {
             console.error('❌ [ENDERECO] Firebase não está disponível!');
             throw new Error('Firebase não carregado. Tente recarregar a página.');
         }
-        
+
         const user = window.getCurrentUser();
         if (!user) {
             throw new Error('Usuário não autenticado. Faça login novamente.');
         }
-        
+
         console.log('✅ [ENDERECO] Verificações passou - Firebase OK, User OK');
-        
+
         // Preparar dados para salvar
         const enderecoData = {
             ...formData,
@@ -712,9 +550,9 @@ window.saveEndereco = async function(formData) {
             updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
             status: formData.status || 'ATIVO'
         };
-        
+
         console.log('📊 [ENDERECO] Dados preparados:', enderecoData);
-        
+
         let docRef;
         if (isEditMode && currentEditId) {
             // Atualizar existente
@@ -733,74 +571,76 @@ window.saveEndereco = async function(formData) {
             docRef = await window.firestore.collection('enderecos').add(enderecoData);
             console.log('✅ [ENDERECO] Novo endereço criado:', docRef.id);
         }
-        
+
         // Fechar modal e recarregar tabela
         console.log('🔄 [ENDERECO] Fechando modal e recarregando...');
         closeModal();
-        
+
         // Aguardar um pouco antes de recarregar
         setTimeout(() => {
             loadEnderecos();
         }, 500);
-        
+
         // Mostrar notificação de sucesso
         const message = `Endereço ${isEditMode ? 'atualizado' : 'criado'} com sucesso!`;
         console.log('✅ [ENDERECO] ' + message);
-        
+
         if (typeof window.showCustomNotification === 'function') {
             window.showCustomNotification('✅ Sucesso', message, 'success');
         } else {
             alert(message);
         }
-        
+
         return true;
     } catch (error) {
         console.error('❌ [ENDERECO] Erro ao salvar:', error);
-        
+
         const errorMsg = `Erro ao salvar endereço: ${error.message}`;
-        
+
         if (typeof window.showCustomNotification === 'function') {
             window.showCustomNotification('❌ Erro', errorMsg, 'error');
         } else {
             alert(errorMsg);
         }
-        
+
         return false;
     }
 };
 
 // Função para carregar endereços na tabela
-window.loadEnderecos = async function() {
+window.loadEnderecos = async function () {
     try {
         console.log('🔄 [ENDERECO] Iniciando carregamento de endereços...');
-        
+
         // Verificar se Firebase está disponível
         if (!window.firestore) {
             console.error('❌ [ENDERECO] Firestore não disponível para carregamento');
             throw new Error('Firebase Firestore não está conectado');
         }
-        
+
         const tableBody = document.getElementById('enderecosTableBody');
         if (!tableBody) {
             console.warn('⚠️ [ENDERECO] Tabela de endereços não encontrada no DOM');
             return;
         }
-        
+
         console.log('📊 [ENDERECO] Elementos OK, buscando dados...');
-        
+
         // Limpar tabela e mostrar loading
-        tableBody.innerHTML = '<tr><td colspan="25" style="text-align: center;">🔄 Carregando endereços...</td></tr>';
-        
+        tableBody.innerHTML =
+            '<tr><td colspan="25" style="text-align: center;">🔄 Carregando endereços...</td></tr>';
+
         // Buscar endereços no Firestore
-        const snapshot = await window.firestore.collection('enderecos')
+        const snapshot = await window.firestore
+            .collection('enderecos')
             .orderBy('createdAt', 'desc')
             .get();
-        
+
         console.log('📦 [ENDERECO] Snapshot obtido:', snapshot.size, 'documentos');
-        
+
         // Limpar tabela novamente
         tableBody.innerHTML = '';
-        
+
         if (snapshot.empty) {
             tableBody.innerHTML = `
                 <tr>
@@ -813,7 +653,7 @@ window.loadEnderecos = async function() {
             console.log('ℹ️ [ENDERECO] Nenhum endereço encontrado');
             return;
         }
-        
+
         // Adicionar cada endereço à tabela
         let count = 0;
         snapshot.forEach(doc => {
@@ -826,12 +666,11 @@ window.loadEnderecos = async function() {
                 console.error('❌ [ENDERECO] Erro ao criar linha para:', doc.id, rowError);
             }
         });
-        
+
         console.log(`✅ [ENDERECO] ${count}/${snapshot.size} endereços carregados na tabela`);
-        
     } catch (error) {
         console.error('❌ [ENDERECO] Erro ao carregar endereços:', error);
-        
+
         const tableBody = document.getElementById('enderecosTableBody');
         if (tableBody) {
             tableBody.innerHTML = `
@@ -884,8 +723,10 @@ function createEnderecoTableRow(id, data) {
 
 // Função para formatar data
 function formatDate(dateValue) {
-    if (!dateValue) return '-';
-    
+    if (!dateValue) {
+        return '-';
+    }
+
     try {
         let date;
         if (dateValue.toDate) {
@@ -895,7 +736,7 @@ function formatDate(dateValue) {
         } else {
             date = dateValue;
         }
-        
+
         return date.toLocaleDateString('pt-BR');
     } catch (e) {
         return dateValue.toString();
@@ -903,27 +744,27 @@ function formatDate(dateValue) {
 }
 
 // Função para editar endereço
-window.editEndereco = async function(id) {
+window.editEndereco = async function (id) {
     try {
         console.log(`✏️ [ENDERECO] Editando endereço: ${id}`);
-        
+
         const doc = await window.firestore.collection('enderecos').doc(id).get();
         if (!doc.exists) {
             throw new Error('Endereço não encontrado');
         }
-        
+
         const data = doc.data();
         isEditMode = true;
         currentEditId = id;
-        
+
         // Abrir modal e preencher campos
         const modal = document.getElementById('crudModal');
         const modalTitle = document.getElementById('modalTitle');
         const form = document.getElementById('enderecoForm');
-        
+
         if (modal && modalTitle && form) {
             modalTitle.textContent = 'Editar Endereço';
-            
+
             // Preencher campos
             Object.keys(data).forEach(key => {
                 const field = document.getElementById(key);
@@ -935,8 +776,21 @@ window.editEndereco = async function(id) {
                     }
                 }
             });
-            
-            loadFormDropdowns();
+
+            // Carregar seletores para edição
+            if (typeof NovoEndereco !== 'undefined' && NovoEndereco.carregarSeletores) {
+                try {
+                    if (NovoEndereco.initialized && NovoEndereco.firestore) {
+                        await NovoEndereco.carregarSeletores();
+                    } else {
+                        NovoEndereco.carregarSeletoresFallback();
+                    }
+                } catch (error) {
+                    console.error('❌ [ENDERECO] Erro ao carregar seletores, usando fallback:', error);
+                    NovoEndereco.carregarSeletoresFallback();
+                }
+            }
+
             modal.style.display = 'block';
         }
     } catch (error) {
@@ -945,25 +799,29 @@ window.editEndereco = async function(id) {
 };
 
 // Função para deletar endereço
-window.deleteEndereco = async function(id) {
+window.deleteEndereco = async function (id) {
     if (!confirm('Tem certeza que deseja excluir este endereço?')) {
         return;
     }
-    
+
     try {
         console.log(`🗑️ [ENDERECO] Deletando endereço: ${id}`);
-        
+
         await window.firestore.collection('enderecos').doc(id).delete();
-        
+
         console.log('✅ [ENDERECO] Endereço deletado com sucesso');
         loadEnderecos();
-        
+
         if (typeof window.showCustomNotification === 'function') {
-            window.showCustomNotification('✅ Sucesso', 'Endereço excluído com sucesso!', 'success');
+            window.showCustomNotification(
+                '✅ Sucesso',
+                'Endereço excluído com sucesso!',
+                'success'
+            );
         }
     } catch (error) {
         console.error('❌ [ENDERECO] Erro ao deletar:', error);
-        
+
         if (typeof window.showCustomNotification === 'function') {
             window.showCustomNotification('❌ Erro', `Erro ao excluir: ${error.message}`, 'error');
         }
@@ -971,18 +829,20 @@ window.deleteEndereco = async function(id) {
 };
 
 // Função para filtrar tabela
-window.filterTable = function() {
+window.filterTable = function () {
     console.log('🔍 [TABLE] Filtrando tabela...');
-    
+
     const searchInput = document.getElementById('searchInput');
     const tableBody = document.getElementById('enderecosTableBody');
-    
-    if (!searchInput || !tableBody) return;
-    
+
+    if (!searchInput || !tableBody) {
+        return;
+    }
+
     const filter = searchInput.value.toLowerCase();
     const rows = tableBody.getElementsByTagName('tr');
-    
-    for (let row of rows) {
+
+    for (const row of rows) {
         const text = row.textContent || row.innerText;
         row.style.display = text.toLowerCase().includes(filter) ? '' : 'none';
     }
@@ -991,7 +851,7 @@ window.filterTable = function() {
 // Função para upload modal - VERSÃO NOVA - DESABILITADA PARA USAR SISTEMA DINÂMICO
 // window.openUploadModal = function() {
 //     console.log('📁 [MODAL-V2] Abrindo modal de upload VERSÃO NOVA...');
-//     
+//
 //     try {
 //         // Verificar se já existe um modal de upload e removê-lo
 //         const existingModal = document.getElementById('uploadModal');
@@ -999,12 +859,12 @@ window.filterTable = function() {
 //             existingModal.remove();
 //             console.log('🗑️ [MODAL-V2] Modal antigo removido');
 //         }
-//         
+//
 //         // Criar modal de upload dinamicamente
 //         const uploadModal = createUploadModal();
 //         document.body.appendChild(uploadModal);
 //         uploadModal.style.display = 'block';
-//         
+//
 //         console.log('✅ [MODAL-V2] Modal de upload criado e exibido');
 //     } catch (error) {
 //         console.error('❌ [MODAL-V2] Erro ao abrir modal:', error);
@@ -1055,7 +915,7 @@ window.filterTable = function() {
 //             </div>
 //         </div>
 //     `;
-//     
+//
 //     const div = document.createElement('div');
 //     div.innerHTML = modalHTML;
 //     return div.firstElementChild;
@@ -1071,45 +931,45 @@ window.filterTable = function() {
 // };
 
 // Função desabilitada - usar dashboard-handlers.js
-window.processUploadOLD = async function() {
+window.processUploadOLD = async function () {
     const fileInput = document.getElementById('uploadFile');
     const uploadType = document.getElementById('uploadType').value;
     const progressDiv = document.getElementById('uploadProgress');
     const resultsDiv = document.getElementById('uploadResults');
     const progressBar = document.getElementById('uploadProgressBar');
     const statusText = document.getElementById('uploadStatus');
-    
+
     if (!fileInput.files.length) {
         alert('Por favor, selecione um arquivo');
         return;
     }
-    
+
     const file = fileInput.files[0];
     console.log('📁 [UPLOAD] Processando arquivo:', file.name);
-    
+
     // Mostrar progresso
     progressDiv.style.display = 'block';
     statusText.textContent = 'Lendo arquivo...';
     progressBar.style.width = '20%';
-    
+
     try {
         // Simular processamento
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
+
         statusText.textContent = 'Validando dados...';
         progressBar.style.width = '50%';
-        
+
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
+
         statusText.textContent = 'Salvando no Firebase...';
         progressBar.style.width = '80%';
-        
+
         // Upload foi removido - usar sistema principal de upload
         console.log('⚠️ [UPLOAD] Esta função foi desabilitada. Use o sistema principal de upload.');
-        
+
         statusText.textContent = 'Upload concluído!';
         progressBar.style.width = '100%';
-        
+
         // Mostrar resultados
         resultsDiv.style.display = 'block';
         document.getElementById('uploadResultsContent').innerHTML = `
@@ -1119,9 +979,9 @@ window.processUploadOLD = async function() {
                 💾 Dados salvos no Firestore
             </div>
         `;
-        
+
         console.log('✅ [UPLOAD] Upload concluído com sucesso');
-        
+
         // Recarregar dados se estiver na seção correspondente
         if (uploadType === 'enderecos') {
             setTimeout(() => {
@@ -1130,7 +990,6 @@ window.processUploadOLD = async function() {
                 }
             }, 2000);
         }
-        
     } catch (error) {
         console.error('❌ [UPLOAD] Erro no upload:', error);
         statusText.textContent = 'Erro no upload: ' + error.message;
@@ -1143,10 +1002,10 @@ window.processUploadOLD = async function() {
 // ============= FUNÇÕES DO PERFIL DE USUÁRIO =============
 
 // Função para alternar visibilidade da senha
-window.togglePasswordVisibility = function(fieldId) {
+window.togglePasswordVisibility = function (fieldId) {
     const field = document.getElementById(fieldId);
     const button = field?.parentElement?.querySelector('.toggle-password');
-    
+
     if (field && button) {
         if (field.type === 'password') {
             field.type = 'text';
@@ -1159,57 +1018,56 @@ window.togglePasswordVisibility = function(fieldId) {
 };
 
 // Função para alterar senha
-window.changePassword = async function() {
+window.changePassword = async function () {
     console.log('🔑 [PASSWORD] Iniciando alteração de senha...');
-    
+
     const currentPassword = document.getElementById('currentPassword')?.value;
     const newPassword = document.getElementById('newPassword')?.value;
     const confirmPassword = document.getElementById('confirmPassword')?.value;
-    
+
     // Validações
     if (!currentPassword || !newPassword || !confirmPassword) {
         alert('Todos os campos são obrigatórios');
         return;
     }
-    
+
     if (newPassword !== confirmPassword) {
         alert('As senhas não coincidem');
         return;
     }
-    
+
     if (newPassword.length < 6) {
         alert('A nova senha deve ter pelo menos 6 caracteres');
         return;
     }
-    
+
     try {
         const user = window.getCurrentUser();
         if (!user) {
             alert('Usuário não autenticado');
             return;
         }
-        
+
         // Reautenticar usuário com senha atual
         const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPassword);
         await user.reauthenticateWithCredential(credential);
-        
+
         // Alterar senha
         await user.updatePassword(newPassword);
-        
+
         console.log('✅ [PASSWORD] Senha alterada com sucesso');
         alert('Senha alterada com sucesso!');
-        
+
         // Limpar campos
         document.getElementById('currentPassword').value = '';
         document.getElementById('newPassword').value = '';
         document.getElementById('confirmPassword').value = '';
-        
+
         // Fechar modal
         window.closeUserProfileScreen();
-        
     } catch (error) {
         console.error('❌ [PASSWORD] Erro ao alterar senha:', error);
-        
+
         let errorMessage = 'Erro ao alterar senha';
         switch (error.code) {
             case 'auth/wrong-password':
@@ -1224,26 +1082,26 @@ window.changePassword = async function() {
             default:
                 errorMessage = error.message;
         }
-        
+
         alert(errorMessage);
     }
 };
 
 // Inicializar quando DOM estiver pronto
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log('✅ [DASHBOARD-MINIMAL] Funções mínimas carregadas');
-    
+
     // Popular filtros automaticamente
     if (typeof window.populateInfraFilters === 'function') {
         window.populateInfraFilters();
     }
-    
+
     // Mostrar seção inicial
     window.showSection('inicio');
-    
+
     // Configurar handler do formulário de endereços
     setupEnderecoFormHandler();
-    
+
     // Tentar atualizar informações do usuário após um delay
     setTimeout(() => {
         console.log('🔄 [INIT] Tentando atualizar informações do usuário...');
@@ -1254,25 +1112,25 @@ document.addEventListener('DOMContentLoaded', function() {
 // Função para configurar handler do formulário de endereços
 function setupEnderecoFormHandler() {
     console.log('🔧 [SETUP] Configurando handler do formulário...');
-    
+
     // Aguardar um pouco para o DOM estar totalmente carregado
     setTimeout(() => {
         const form = document.getElementById('enderecoForm');
         console.log('🔍 [SETUP] Procurando formulário enderecoForm:', !!form);
-        
+
         if (form) {
             // Remover listeners antigos se existirem
             form.removeEventListener('submit', handleFormSubmit);
             form.addEventListener('submit', handleFormSubmit);
-            
+
             console.log('✅ [FORM] Handler do formulário configurado');
-            
+
             // Debug: listar campos do formulário
             const inputs = form.querySelectorAll('input, select, textarea');
             console.log(`📋 [FORM] Formulário encontrado com ${inputs.length} campos`);
         } else {
             console.warn('⚠️ [FORM] Formulário de endereços não encontrado. Tentando novamente...');
-            
+
             // Tentar novamente após mais tempo
             setTimeout(() => {
                 setupEnderecoFormHandler();
@@ -1284,47 +1142,47 @@ function setupEnderecoFormHandler() {
 // Handler separado para o formulário
 async function handleFormSubmit(e) {
     e.preventDefault();
-    
+
     console.log('📝 [FORM] Formulário submetido!');
-    
+
     try {
         const form = e.target;
-        
+
         // Coletar dados do formulário manualmente
         const data = {};
         const formElements = form.querySelectorAll('input, select, textarea');
-        
+
         console.log(`📊 [FORM] Coletando dados de ${formElements.length} elementos...`);
-        
+
         formElements.forEach(element => {
             if (element.name || element.id) {
                 const key = element.name || element.id;
-                let value = element.value;
-                
+                const value = element.value;
+
                 if (value && value.trim() !== '') {
                     data[key] = value.trim();
                 }
             }
         });
-        
+
         console.log('📝 [FORM] Dados coletados:', data);
-        
+
         // Validação básica
         if (!data.projeto && !data.condominio) {
             alert('Por favor, preencha pelo menos o Projeto ou Condomínio');
             return;
         }
-        
+
         if (!data.endereco) {
             alert('Campo Endereço é obrigatório');
             return;
         }
-        
+
         console.log('✅ [FORM] Validação passou, salvando...');
-        
+
         // Salvar endereço
         const success = await saveEndereco(data);
-        
+
         if (success) {
             console.log('✅ [FORM] Endereço salvo com sucesso!');
         }
@@ -1335,15 +1193,15 @@ async function handleFormSubmit(e) {
 }
 
 // Inicializar permissões quando Firebase estiver pronto
-document.addEventListener('firebaseIsolatedReady', async function() {
+document.addEventListener('firebaseIsolatedReady', async function () {
     console.log('🔒 [PERMISSIONS] Firebase pronto, inicializando sistema...');
-    
+
     // Aguardar um pouco para garantir que o usuário está autenticado
     setTimeout(async () => {
         updateUserInfo();
         const role = await getUserRole();
         applyRolePermissions(role);
-        
+
         // Restaurar modo daltônico se salvo
         const colorblindMode = localStorage.getItem('colorblindMode');
         if (colorblindMode === 'true') {
@@ -1353,9 +1211,9 @@ document.addEventListener('firebaseIsolatedReady', async function() {
 });
 
 // Listener para quando usuário fizer login (backup)
-window.addEventListener('authStateChanged', async function() {
+window.addEventListener('authStateChanged', async function () {
     console.log('🔒 [PERMISSIONS] Estado de auth mudou, atualizando sistema...');
-    
+
     setTimeout(async () => {
         updateUserInfo();
         const role = await getUserRole();
@@ -1364,10 +1222,10 @@ window.addEventListener('authStateChanged', async function() {
 });
 
 // Fechar dropdown quando clicar fora
-document.addEventListener('click', function(event) {
+document.addEventListener('click', function (event) {
     const dropdownContainer = document.getElementById('newUserDropdown');
     const userProfileBtn = document.getElementById('userProfileBtn');
-    
+
     if (dropdownContainer && userProfileBtn) {
         if (!dropdownContainer.contains(event.target)) {
             dropdownContainer.classList.remove('active');
@@ -1378,7 +1236,9 @@ document.addEventListener('click', function(event) {
                 dropdown.style.opacity = '0';
             }
             const arrow = document.getElementById('dropdownArrow');
-            if (arrow) arrow.style.transform = '';
+            if (arrow) {
+                arrow.style.transform = '';
+            }
         }
     }
 });
@@ -1386,7 +1246,7 @@ document.addEventListener('click', function(event) {
 // ============= FUNÇÕES DE CONVENIÊNCIA PARA GESTÃO =============
 
 // Função para mostrar todas as funções de administração disponíveis
-window.showAdminCommands = function() {
+window.showAdminCommands = function () {
     console.log('\n🛠️ ========== COMANDOS DE ADMINISTRAÇÃO ==========');
     console.log('📋 Listar usuários:');
     console.log('   listAllUsers()');
@@ -1411,7 +1271,7 @@ window.showAdminCommands = function() {
 };
 
 // Função para obter o UID do usuário atual (útil para gestão)
-window.getMyUID = function() {
+window.getMyUID = function () {
     const user = window.getCurrentUser();
     if (user) {
         console.log(`🆔 Seu UID: ${user.uid}`);
@@ -1424,7 +1284,7 @@ window.getMyUID = function() {
 };
 
 // Função para verificar meu role atual
-window.getMyRole = function() {
+window.getMyRole = function () {
     console.log(`🔒 Seu role atual: ${currentUserRole}`);
     const permissions = ROLE_PERMISSIONS[currentUserRole];
     console.log('✅ Seções acessíveis:', permissions.sections);
@@ -1433,7 +1293,7 @@ window.getMyRole = function() {
 };
 
 // Função para forçar atualização das informações do usuário
-window.forceUpdateUserInfo = function() {
+window.forceUpdateUserInfo = function () {
     console.log('🔄 [FORCE-UPDATE] Forçando atualização das informações do usuário...');
     updateUserInfo();
     getUserRole().then(role => {
@@ -1443,28 +1303,28 @@ window.forceUpdateUserInfo = function() {
 };
 
 // Função específica para promover usuário específico
-window.promoteSpecificUser = async function(uid = 'HB1zk2ya1xar3f8va1GuAN7PSJ12') {
+window.promoteSpecificUser = async function (uid = 'HB1zk2ya1xar3f8va1GuAN7PSJ12') {
     try {
         console.log(`🛡️ [PROMOTE] Promovendo usuário ${uid} para ADMIN...`);
-        
+
         const userDoc = window.firestore.collection('users').doc(uid);
         const userData = await userDoc.get();
-        
+
         if (!userData.exists) {
             console.error(`❌ [PROMOTE] Usuário ${uid} não encontrado`);
             return false;
         }
-        
+
         const currentUser = window.getCurrentUser();
         const data = userData.data();
-        
+
         await userDoc.update({
             role: 'ADMIN',
             promotedAt: firebase.firestore.FieldValue.serverTimestamp(),
             promotedBy: currentUser?.uid || 'SYSTEM',
             promotedByEmail: currentUser?.email || 'system@admin'
         });
-        
+
         console.log(`✅ [PROMOTE] ${data.email} (${uid}) promovido para ADMIN com sucesso!`);
         return true;
     } catch (error) {
@@ -1474,9 +1334,9 @@ window.promoteSpecificUser = async function(uid = 'HB1zk2ya1xar3f8va1GuAN7PSJ12'
 };
 
 // Função para testar elementos do modal
-window.testEnderecoModal = function() {
+window.testEnderecoModal = function () {
     console.log('🧪 [TEST] Testando elementos do modal...');
-    
+
     const elements = {
         modal: document.getElementById('crudModal'),
         modalTitle: document.getElementById('modalTitle'),
@@ -1484,54 +1344,56 @@ window.testEnderecoModal = function() {
         closeBtn: document.querySelector('#crudModal .close'),
         submitBtn: document.querySelector('#enderecoForm button[type="submit"]')
     };
-    
+
     console.log('🔍 [TEST] Elementos encontrados:', elements);
-    
+
     // Testar abertura do modal
     if (elements.modal) {
         console.log('✅ [TEST] Abrindo modal de teste...');
         elements.modal.style.display = 'block';
-        
+
         setTimeout(() => {
             console.log('❌ [TEST] Fechando modal de teste...');
             elements.modal.style.display = 'none';
         }, 2000);
     }
-    
+
     // Listar todos os campos do formulário
     if (elements.form) {
         const fields = elements.form.querySelectorAll('input, select, textarea');
         console.log(`📋 [TEST] Formulário tem ${fields.length} campos:`);
         fields.forEach((field, index) => {
-            console.log(`  ${index + 1}. ${field.tagName} - ID: "${field.id}" - Name: "${field.name}"`);
+            console.log(
+                `  ${index + 1}. ${field.tagName} - ID: "${field.id}" - Name: "${field.name}"`
+            );
         });
     }
-    
+
     return elements;
 };
 
 // Função para limpar cache e recarregar sistema
-window.clearCacheAndReload = function() {
+window.clearCacheAndReload = function () {
     console.log('🧹 [CACHE] Limpando cache...');
-    
+
     // Limpar localStorage relacionado ao sistema
     Object.keys(localStorage).forEach(key => {
         if (key.includes('firebase') || key.includes('user') || key.includes('endereco')) {
             localStorage.removeItem(key);
         }
     });
-    
+
     // Limpar sessionStorage
     sessionStorage.clear();
-    
+
     // Recarregar página forçando busca no servidor
     window.location.reload(true);
 };
 
 // Função para verificar status das funções
-window.checkSystemStatus = function() {
+window.checkSystemStatus = function () {
     console.log('🔍 [STATUS] Verificando status detalhado do sistema...');
-    
+
     const functions = {
         abrirNovoEndereco: typeof window.abrirNovoEndereco,
         openUploadModal: typeof window.openUploadModal,
@@ -1542,13 +1404,13 @@ window.checkSystemStatus = function() {
         firebase: typeof firebase,
         FirebaseAuthIsolated: typeof window.FirebaseAuthIsolated
     };
-    
+
     console.log('📊 [STATUS] Funções disponíveis:', functions);
-    
+
     // Testar Firebase detalhadamente
     if (window.firestore) {
         console.log('✅ [STATUS] Firebase Firestore conectado via window.firestore');
-        
+
         // Testar uma operação simples
         try {
             const testCollection = window.firestore.collection('_test');
@@ -1559,14 +1421,14 @@ window.checkSystemStatus = function() {
     } else {
         console.log('❌ [STATUS] Firebase Firestore NÃO conectado');
     }
-    
+
     if (typeof firebase !== 'undefined' && firebase.firestore) {
         console.log('✅ [STATUS] Firebase global disponível');
         console.log('📋 [STATUS] Firebase apps:', firebase.apps.length);
     } else {
         console.log('❌ [STATUS] Firebase global NÃO disponível');
     }
-    
+
     // Testar usuário
     try {
         const user = window.getCurrentUser();
@@ -1578,16 +1440,16 @@ window.checkSystemStatus = function() {
     } catch (e) {
         console.log('❌ [STATUS] Erro ao verificar usuário:', e.message);
     }
-    
+
     // Verificar elementos do DOM
     const domElements = {
         crudModal: !!document.getElementById('crudModal'),
         enderecoForm: !!document.getElementById('enderecoForm'),
         enderecosTableBody: !!document.getElementById('enderecosTableBody')
     };
-    
+
     console.log('🏗️ [STATUS] Elementos DOM:', domElements);
-    
+
     return { functions, domElements };
 };
 

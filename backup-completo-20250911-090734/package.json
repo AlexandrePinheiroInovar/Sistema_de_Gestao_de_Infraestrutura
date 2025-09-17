@@ -1,0 +1,80 @@
+{
+  "name": "sistema-mdu",
+  "version": "1.0.0",
+  "description": "Sistema de Análises MDU - Infraestrutura de Telecomunicações",
+  "main": "script.js",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "dev:debug": "nodemon --inspect server.js",
+    "dev-live": "live-server --port=3000 --host=localhost --open=index.html --ignore=node_modules",
+    "start": "node server.js",
+    "start:prod": "NODE_ENV=production node server.js",
+    "build": "npm run clean && npm run minify:css && npm run minify:js && npm run copy:assets",
+    "minify:css": "cleancss -o dist/src/css/styles.min.css src/css/*.css",
+    "minify:js": "terser src/js/*.js -o dist/src/js/bundle.min.js --compress --mangle",
+    "copy:assets": "cp -r src/assets dist/src/ && cp *.html dist/",
+    "watch": "concurrently \"npm run watch:css\" \"npm run watch:js\" \"npm run dev\"",
+    "watch:css": "nodemon --watch src/css --ext css --exec \"npm run minify:css\"",
+    "watch:js": "nodemon --watch src/js --ext js --exec \"npm run lint:js\"",
+    "lint": "npm run lint:js && npm run lint:html",
+    "lint:js": "eslint src/js/*.js --fix",
+    "lint:html": "html-validate *.html",
+    "format": "prettier --write \"*.{html,css,js,json}\" \"src/**/*.{css,js}\"",
+    "serve:dist": "live-server dist --port=8080",
+    "clean": "rimraf dist",
+    "test": "echo \"No tests specified\" && exit 0",
+    "precommit": "npm run lint && npm run format",
+    "prepare": "husky install",
+    "firebase:serve": "firebase serve --port=5000",
+    "firebase:deploy": "echo 'DEPLOY MANUAL: Execute apenas quando solicitado!' && npm run build && firebase deploy",
+    "deploy:manual": "echo '🚀 Deploy Manual para Produção...' && npm run build && firebase deploy",
+    "analyze": "npm run analyze:js && npm run analyze:css",
+    "analyze:js": "echo 'Analyzing JavaScript...' && find src/js -name '*.js' -exec wc -l {} + | tail -1",
+    "analyze:css": "echo 'Analyzing CSS...' && find src/css -name '*.css' -exec wc -l {} + | tail -1"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "firebase": "^12.1.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "clean-css-cli": "^5.6.3",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "html-validate": "^8.15.0",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "live-server": "^1.2.2",
+    "nodemon": "^3.1.0",
+    "prettier": "^3.2.5",
+    "rimraf": "^5.0.5",
+    "terser": "^5.29.1"
+  },
+  "keywords": [
+    "mdu",
+    "telecomunicações",
+    "análise",
+    "dashboard",
+    "infraestrutura"
+  ],
+  "author": "Equipe Desenvolvimento",
+  "license": "ISC",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{html,css,json}": [
+      "prettier --write"
+    ],
+    "*.html": [
+      "html-validate"
+    ]
+  }
+}

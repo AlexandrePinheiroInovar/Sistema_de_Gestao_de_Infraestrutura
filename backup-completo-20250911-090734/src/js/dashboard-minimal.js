@@ -777,20 +777,7 @@ window.editEndereco = async function (id) {
                 }
             });
 
-            // Carregar seletores para edição
-            if (typeof NovoEndereco !== 'undefined' && NovoEndereco.carregarSeletores) {
-                try {
-                    if (NovoEndereco.initialized && NovoEndereco.firestore) {
-                        await NovoEndereco.carregarSeletores();
-                    } else {
-                        NovoEndereco.carregarSeletoresFallback();
-                    }
-                } catch (error) {
-                    console.error('❌ [ENDERECO] Erro ao carregar seletores, usando fallback:', error);
-                    NovoEndereco.carregarSeletoresFallback();
-                }
-            }
-
+            loadFormDropdowns();
             modal.style.display = 'block';
         }
     } catch (error) {

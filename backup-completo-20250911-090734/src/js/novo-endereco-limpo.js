@@ -121,17 +121,12 @@ window.novoEnderecoLimpo = async function () {
 
         // Carregar dados dos seletores
         console.log('📋 [NOVO-ENDERECO-LIMPO] Carregando seletores...');
-        try {
-            if (NovoEndereco.initialized && NovoEndereco.firestore) {
-                await NovoEndereco.carregarSeletores();
-            } else {
-                console.warn(
-                    '⚠️ [NOVO-ENDERECO-LIMPO] Firebase não disponível, carregando seletores manualmente...'
-                );
-                NovoEndereco.carregarSeletoresFallback();
-            }
-        } catch (error) {
-            console.error('❌ [NOVO-ENDERECO-LIMPO] Erro ao carregar seletores do Firebase, usando fallback:', error);
+        if (NovoEndereco.initialized && NovoEndereco.firestore) {
+            await NovoEndereco.carregarSeletores();
+        } else {
+            console.warn(
+                '⚠️ [NOVO-ENDERECO-LIMPO] Firebase não disponível, carregando seletores manualmente...'
+            );
             NovoEndereco.carregarSeletoresFallback();
         }
 
@@ -226,7 +221,7 @@ NovoEndereco.carregarSeletoresFallback = function () {
         cidade: dadosDaTabela.cidade.length > 0 ? dadosDaTabela.cidade : ['SALVADOR', 'LAURO DE FREITAS', 'CAMAÇARI', 'FEIRA DE SANTANA'],
         equipe: dadosDaTabela.equipe.length > 0 ? dadosDaTabela.equipe : ['EQUIPE A', 'EQUIPE B', 'EQUIPE C', 'EQUIPE D'],
         supervisor: dadosDaTabela.supervisor.length > 0 ? dadosDaTabela.supervisor : ['JOÃO SILVA', 'MARIA SANTOS', 'PEDRO OLIVEIRA'],
-        pep: dadosDaTabela.pep.length > 0 ? Array.from(dadosDaTabela.pep) : [] // PEP da tabela ou vazio
+        pep: dadosDaTabela.pep // PEP sempre da tabela
     };
 
     // Popular cada seletor com dados estáticos
