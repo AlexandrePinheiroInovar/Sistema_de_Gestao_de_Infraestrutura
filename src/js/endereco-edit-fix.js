@@ -11,8 +11,10 @@ async function editEnderecoMelhorado(id) {
     console.log('✏️ [EDIT-FIX] Iniciando edição melhorada para ID:', id);
 
     try {
-        // Limpar estado anterior
-        resetEditState();
+        // Limpar estado anterior de forma simples
+        isEditMode = false;
+        currentEditId = null;
+        window.modalTentativas = 0;
 
         // Verificar Firebase
         if (!window.firestore) {
@@ -35,13 +37,17 @@ async function editEnderecoMelhorado(id) {
         isEditMode = true;
         currentEditId = id;
 
-        // Usar abordagem híbrida mais confiável
+        // Usar a mesma abordagem do novo-endereco-limpo
         await abrirModalParaEdicao(data);
 
     } catch (error) {
         console.error('❌ [EDIT-FIX] Erro na edição:', error);
         alert('Erro ao abrir edição: ' + error.message);
-        resetEditState();
+
+        // Reset simples em caso de erro
+        isEditMode = false;
+        currentEditId = null;
+        window.modalTentativas = 0;
     }
 }
 
@@ -49,12 +55,25 @@ async function editEnderecoMelhorado(id) {
 function resetEditState() {
     isEditMode = false;
     currentEditId = null;
+    window.modalTentativas = 0;
 
-    // Fechar modal se estiver aberto
+    // Fechar modal de forma simples (similar ao novo-endereco-limpo)
     const modal = document.getElementById('crudModal');
     if (modal) {
         modal.style.display = 'none';
+        modal.style.visibility = 'hidden';
+        modal.style.opacity = '0';
         modal.classList.remove('show');
+
+        // Limpar backdrop do Bootstrap se existir
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => backdrop.remove());
+
+        // Resetar body
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+
+        console.log('🔄 [EDIT-FIX] Modal fechado');
     }
 }
 
@@ -62,45 +81,81 @@ function resetEditState() {
 async function abrirModalParaEdicao(data) {
     console.log('🎯 [EDIT-FIX] Abrindo modal para edição...');
 
-    // CORREÇÃO: Sempre resetar contador no início de nova edição
-    window.modalTentativas = 0;
+    try {
+        // REPLICANDO EXATAMENTE O MÉTODO DO NOVO-ENDERECO-LIMPO
 
-    const tentativaCount = window.modalTentativas || 0;
-    window.modalTentativas = tentativaCount + 1;
+        // 1. Tentar inicializar sem aguardar muito se falhar (IGUAL ao novo-endereco-limpo)
+        if (!window.NovoEndereco || !window.NovoEndereco.initialized) {
+            console.log('🔧 [EDIT-FIX] Inicializando NovoEndereco...');
+            try {
+                await Promise.race([
+                    window.NovoEndereco.init(),
+                    new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('Timeout na inicialização')), 10000)
+                    )
+                ]);
+            } catch (initError) {
+                console.warn('⚠️ [EDIT-FIX] Falha na inicialização, tentando sem Firebase:', initError.message);
+                // Continuar mesmo sem Firebase para pelo menos abrir o modal
+            }
+        }
 
-    console.log(`🔢 [EDIT-FIX] Tentativa #${window.modalTentativas} de abrir modal`);
+        // 2. Obter elementos do DOM (IGUAL ao novo-endereco-limpo)
+        const modal = document.getElementById('crudModal');
+        const form = document.getElementById('enderecoForm');
+        const modalTitle = document.getElementById('modalTitle');
 
-    // Primeiro, resetar completamente o modal
-    await resetarModalCompleto();
+        if (!modal || !form || !modalTitle) {
+            throw new Error('Elementos do modal não encontrados');
+        }
 
-    // Método 1: SEMPRE tentar usando função existente primeiro
-    if (typeof window.novoEnderecoLimpo === 'function') {
-        console.log('🔄 [EDIT-FIX] Tentando com função existente...');
+        // 3. Configurar modal (IGUAL ao novo-endereco-limpo, exceto título)
+        modalTitle.textContent = '✏️ Editar Endereço';
+        form.reset();
 
+        // 4. Carregar dados dos seletores (EXATAMENTE igual ao novo-endereco-limpo)
+        console.log('📋 [EDIT-FIX] Carregando seletores...');
         try {
-            window.novoEnderecoLimpo();
-
-            // Aguardar modal aparecer
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            const modal = document.getElementById('crudModal');
-            if (modal && modal.style.display === 'block') {
-                console.log('✅ [EDIT-FIX] Modal aberto via função existente');
-                await finalizarAbertura(data);
-                return;
+            if (window.NovoEndereco.initialized && window.NovoEndereco.firestore) {
+                await window.NovoEndereco.carregarSeletores();
+            } else {
+                console.warn('⚠️ [EDIT-FIX] Firebase não disponível, carregando seletores manualmente...');
+                window.NovoEndereco.carregarSeletoresFallback();
             }
         } catch (error) {
-            console.warn('⚠️ [EDIT-FIX] Função existente falhou:', error);
+            console.error('❌ [EDIT-FIX] Erro ao carregar seletores do Firebase, usando fallback:', error);
+            window.NovoEndereco.carregarSeletoresFallback();
         }
+
+        // 5. Configurar event listener do formulário (apenas uma vez) - IGUAL ao novo-endereco-limpo
+        if (window.NovoEndereco.configurarFormulario) {
+            window.NovoEndereco.configurarFormulario();
+        }
+
+        // 6. Mostrar modal (EXATAMENTE igual ao novo-endereco-limpo)
+        modal.style.display = 'block';
+        modal.style.visibility = 'visible';
+        modal.style.opacity = '1';
+        modal.classList.add('show');
+
+        // 7. DIFERENCIAL: Após carregar seletores, preencher com dados de edição
+        console.log('📝 [EDIT-FIX] Preenchendo dados para edição...');
+
+        // Aguardar um pouco para garantir que seletores carregaram
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Remover obrigatoriedade dos campos
+        removerCamposObrigatorios();
+
+        // Preencher formulário com os dados
+        await preencherFormularioEdicao(data);
+
+        console.log('✅ [EDIT-FIX] Modal de edição aberto com sucesso');
+
+    } catch (error) {
+        console.error('❌ [EDIT-FIX] Erro ao abrir modal de edição:', error);
+        alert('Erro ao abrir formulário de edição: ' + error.message);
     }
-
-    // Método 2: Se falhou, tentar destruir e recriar
-    console.log('💥 [EDIT-FIX] Primeira tentativa falhou - Modo DESTRUIR E RECRIAR');
-    await destruirERecriarModal();
-
-    // Método 3: Forçar abertura direta
-    console.log('🔄 [EDIT-FIX] Forçando abertura direta...');
-    await forcarAberturaModal(data);
 }
 
 // ============= DESTRUIR E RECRIAR MODAL =============
@@ -146,28 +201,63 @@ async function resetarModalCompleto() {
     const modal = document.getElementById('crudModal');
     if (!modal) return;
 
-    // FORÇAR fechamento total
-    modal.style.cssText = 'display: none !important; opacity: 0 !important; visibility: hidden !important;';
-    modal.classList.remove('show', 'fade', 'in', 'modal');
+    // FORÇAR fechamento total com CSS mais específico
+    modal.style.cssText = `
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        position: static !important;
+        z-index: auto !important;
+        top: auto !important;
+        left: auto !important;
+        width: auto !important;
+        height: auto !important;
+        background: transparent !important;
+    `;
+
+    // Remover TODAS as classes que podem afetar o modal
+    modal.classList.remove('show', 'fade', 'in', 'modal', 'modal-open', 'd-block');
     modal.removeAttribute('aria-hidden');
     modal.removeAttribute('aria-modal');
     modal.removeAttribute('role');
+    modal.removeAttribute('tabindex');
 
-    // Limpar backdrop Bootstrap agressivamente
-    const backdrops = document.querySelectorAll('.modal-backdrop, .fade, .show');
+    // Limpar backdrop Bootstrap mais agressivamente
+    const backdrops = document.querySelectorAll(
+        '.modal-backdrop, .fade, .show, [class*="modal-backdrop"], [style*="backdrop"]'
+    );
     backdrops.forEach(backdrop => {
-        if (backdrop.classList.contains('modal-backdrop')) {
-            backdrop.remove();
-        }
+        backdrop.remove();
     });
 
-    // Reset completo do body
+    // Reset completo do body e html
     document.body.classList.remove('modal-open');
     document.body.style.cssText = '';
     document.body.removeAttribute('style');
+    document.documentElement.classList.remove('modal-open');
+
+    // Limpar form dentro do modal
+    const form = document.getElementById('enderecoForm');
+    if (form) {
+        form.reset();
+
+        // Limpar todos os selects
+        const selects = form.querySelectorAll('select');
+        selects.forEach(select => {
+            select.innerHTML = '<option value="">Selecione...</option>';
+        });
+
+        // Limpar inputs
+        const inputs = form.querySelectorAll('input, textarea');
+        inputs.forEach(input => {
+            input.value = '';
+            input.removeAttribute('readonly');
+            input.removeAttribute('disabled');
+        });
+    }
 
     // Aguardar mais tempo para garantir
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 300));
     console.log('✅ [EDIT-FIX] Modal resetado completamente');
 }
 
@@ -553,6 +643,65 @@ async function recarregarSelectsManualmenteRobusto() {
     }
 
     console.log('💪 [EDIT-FIX] Carregamento robusto dos selects concluído');
+}
+
+// ============= CONFIGURAR BOTÕES DE FECHAMENTO =============
+function configurarBotoesFechamento() {
+    console.log('🚪 [EDIT-FIX] Configurando botões de fechamento do modal...');
+
+    const modal = document.getElementById('crudModal');
+    if (!modal) return;
+
+    // Buscar TODOS os possíveis botões de fechamento
+    const botoesFechamento = modal.querySelectorAll(`
+        .btn-close,
+        .close,
+        [data-dismiss="modal"],
+        [data-bs-dismiss="modal"],
+        .btn-secondary,
+        button[type="button"]:not([type="submit"]),
+        [onclick*="close"],
+        [onclick*="Cancel"]
+    `);
+
+    console.log(`🚪 [EDIT-FIX] Encontrados ${botoesFechamento.length} botões de fechamento`);
+
+    botoesFechamento.forEach((botao, index) => {
+        // Remover listeners antigos
+        botao.removeEventListener('click', handleModalClose);
+
+        // Adicionar novo listener
+        botao.addEventListener('click', handleModalClose);
+
+        console.log(`🚪 [EDIT-FIX] Botão ${index + 1} configurado: ${botao.textContent.trim() || botao.className}`);
+    });
+
+    // Configurar fechamento por clique no backdrop
+    modal.addEventListener('click', handleBackdropClick);
+}
+
+// ============= HANDLER PARA FECHAMENTO DO MODAL =============
+function handleModalClose(e) {
+    console.log('🚪 [EDIT-FIX] Botão de fechamento clicado');
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Reset completo do estado
+    resetEditState();
+
+    console.log('✅ [EDIT-FIX] Modal fechado e estado resetado');
+}
+
+// ============= HANDLER PARA CLIQUE NO BACKDROP =============
+function handleBackdropClick(e) {
+    const modal = document.getElementById('crudModal');
+
+    // Só fechar se clicou no backdrop (fora do conteúdo)
+    if (e.target === modal) {
+        console.log('🚪 [EDIT-FIX] Clique no backdrop detectado');
+        handleModalClose(e);
+    }
 }
 
 // ============= FUNÇÃO ESPECIALIZADA PARA PREENCHER SELECTS =============
@@ -947,6 +1096,9 @@ function melhorarBotoesEdicaoExistentes() {
                 e.preventDefault();
                 e.stopPropagation();
 
+                // GARANTIR reset completo antes de nova edição
+                resetEditState();
+
                 // Extrair ID
                 let id = null;
                 const onclickOriginal = botao.getAttribute('onclick');
@@ -960,7 +1112,11 @@ function melhorarBotoesEdicaoExistentes() {
 
                 if (id) {
                     console.log(`🖱️ [EDIT-FIX] Clique delegado no botão editar ID: ${id}`);
-                    editEnderecoMelhorado(id);
+
+                    // Aguardar um pouco para garantir que o reset foi aplicado
+                    setTimeout(() => {
+                        editEnderecoMelhorado(id);
+                    }, 100);
                 } else {
                     console.warn('⚠️ [EDIT-FIX] ID não encontrado no botão');
                 }
@@ -970,6 +1126,9 @@ function melhorarBotoesEdicaoExistentes() {
         tbody.setAttribute('data-edit-delegated', 'true');
         console.log('✅ [EDIT-FIX] Delegação de eventos configurada na tabela principal');
     }
+
+    // NOVO: Melhorar botões de fechar modal para garantir reset
+    configurarBotoesFechamento();
 
     // NOVO: Também melhorar tabelas das abas de gestão de projetos
     melhorarBotoesGestaoProj();
