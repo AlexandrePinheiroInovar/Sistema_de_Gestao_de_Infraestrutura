@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - Sistema de Análises</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="images/Inovar-Telecom-Logo-Site_.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Meta tags para evitar cache -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+</head>
+<body class="login-body">
+    <!-- Notificação Firebase -->
+    <div id="firebaseNotification" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 10000; padding: 15px 20px; border-radius: 5px; color: white; font-weight: bold; max-width: 350px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"></div>
+
+    <div class="login-center-wrapper">
+        <div class="login-card-modern">
+            <div style="text-align:center; margin-bottom: 18px;">
+                <img src="images/Inovar-Telecom-Logo-Site_.png" alt="Logo Inovar Telecom" style="max-width: 120px;">
+            </div>
+            
+            <!-- Status de conexão Firebase -->
+            <div id="firebaseStatus" style="text-align: center; margin-bottom: 15px; padding: 8px; border-radius: 4px; font-size: 13px; display: none;">
+                <i class="fas fa-circle" style="color: #28a745;"></i>
+                <span style="color: #28a745; font-weight: 500;">Conectado ao Firebase</span>
+            </div>
+            
+            <form id="registerForm" class="login-form-modern" novalidate>
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <span class="input-icon"><i class="fas fa-user"></i></span>
+                        <input type="text" id="firstName" name="firstName" placeholder="Nome" required autocomplete="given-name">
+                        <div class="field-error" id="firstNameError" style="display: none;"></div>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <span class="input-icon"><i class="fas fa-user"></i></span>
+                        <input type="text" id="lastName" name="lastName" placeholder="Sobrenome" required autocomplete="family-name">
+                        <div class="field-error" id="lastNameError" style="display: none;"></div>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <span class="input-icon"><i class="fas fa-envelope"></i></span>
+                        <input type="email" id="email" name="email" placeholder="E-mail" required autocomplete="email">
+                        <div class="field-error" id="emailError" style="display: none;"></div>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <span class="input-icon"><i class="fas fa-lock"></i></span>
+                        <input type="password" id="password" name="password" placeholder="Senha (mínimo 6 caracteres)" required autocomplete="new-password" minlength="6">
+                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('password')" aria-label="Mostrar/ocultar senha">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <div class="field-error" id="passwordError" style="display: none;"></div>
+                        <!-- Indicador de força da senha -->
+                        <div class="password-strength" id="passwordStrength" style="display: none; margin-top: 5px;">
+                            <div class="strength-bar">
+                                <div class="strength-fill" id="strengthFill"></div>
+                            </div>
+                            <span class="strength-text" id="strengthText"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <span class="input-icon"><i class="fas fa-lock"></i></span>
+                        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Repita a senha" required autocomplete="new-password">
+                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('confirmPassword')" aria-label="Mostrar/ocultar confirmação de senha">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <div class="field-error" id="confirmPasswordError" style="display: none;"></div>
+                    </div>
+                </div>
+                
+                <div class="form-options-modern">
+                    <label class="remember-me">
+                        <input type="checkbox" id="agreeTerms" required>
+                        <span class="checkbox-custom"></span>
+                        Concordo com os <a href="#" onclick="showTerms(); return false;" style="color: #007bff; text-decoration: underline;">termos de uso</a>
+                    </label>
+                    <div class="field-error" id="termsError" style="display: none;"></div>
+                </div>
+                
+                <button type="submit" id="submitBtn" class="login-btn-modern">
+                    <span id="submitText">Criar Conta</span>
+                    <i id="submitSpinner" class="fas fa-spinner fa-spin" style="display: none; margin-left: 8px;"></i>
+                </button>
+                
+                <!-- Status do formulário -->
+                <div id="formStatus" style="text-align: center; margin-top: 15px; font-size: 13px; display: none;"></div>
+            </form>
+            
+            <div class="auth-switch-modern">
+                <span>Já possui uma conta?</span> <a href="index.html" class="auth-link">Fazer Login</a>
+            </div>
+            
+            <div class="login-footer-modern">
+                <span>© 2025 Sistema MDU</span>
+                <a href="#" onclick="showSupport(); return false;">Suporte</a> · 
+                <a href="#" onclick="showPrivacy(); return false;">Política de Privacidade</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Termos de Uso -->
+    <div id="termsModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-contract"></i> Termos de Uso</h3>
+                <span class="close" onclick="closeTerms()">&times;</span>
+            </div>
+            <div style="padding: 20px; max-height: 400px; overflow-y: auto;">
+                <h4>Sistema MDU - Termos de Uso</h4>
+                <p>Ao utilizar o Sistema de Análises MDU, você concorda com os seguintes termos:</p>
+                <ul>
+                    <li>Os dados fornecidos serão utilizados exclusivamente para fins profissionais relacionados à análise de infraestrutura.</li>
+                    <li>Você se compromete a manter a confidencialidade dos dados acessados através da plataforma.</li>
+                    <li>É proibido o compartilhamento não autorizado de credenciais de acesso.</li>
+                    <li>O sistema deve ser utilizado de acordo com as políticas da empresa.</li>
+                    <li>Qualquer uso indevido resultará na suspensão do acesso.</li>
+                </ul>
+                <p><strong>Privacidade:</strong> Seus dados pessoais são protegidos conforme a LGPD e não são compartilhados com terceiros.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-primary" onclick="acceptTerms()">
+                    <i class="fas fa-check"></i> Aceitar e Continuar
+                </button>
+                <button type="button" class="btn-cancel" onclick="closeTerms()">
+                    <i class="fas fa-times"></i> Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+    
+    <!-- Firebase Sistema Unificado (PRODUCTION ONLY) -->
+    <script src="firebase-complete.js"></script>
+    
+    <!-- Script de Cadastro otimizado para Firebase -->
+    <script>
+        console.log('📝 [CADASTRO] Inicializando página de cadastro Firebase...');
+        
+        // Estado da aplicação
+        let isProcessing = false;
+        let firebaseReady = false;
+        
+        // ============= UTILITÁRIOS =============
+        
+        function showFirebaseNotification(message, type = 'info', duration = 5000) {
+            const notification = document.getElementById('firebaseNotification');
+            const colors = {
+                success: '#28a745',
+                error: '#dc3545',
+                warning: '#ffc107',
+                info: '#17a2b8'
+            };
+            
+            notification.style.backgroundColor = colors[type] || colors.info;
+            notification.textContent = message;
+            notification.style.display = 'block';
+            
+            if (duration > 0) {
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, duration);
+            }
+        }
+        
+        function showFieldError(fieldId, message) {
+            const errorDiv = document.getElementById(fieldId + 'Error');
+            const field = document.getElementById(fieldId);
+            
+            if (errorDiv && field) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                errorDiv.style.color = '#dc3545';
+                errorDiv.style.fontSize = '12px';
+                errorDiv.style.marginTop = '5px';
+                field.style.borderColor = '#dc3545';
+            }
+        }
+        
+        function clearFieldError(fieldId) {
+            const errorDiv = document.getElementById(fieldId + 'Error');
+            const field = document.getElementById(fieldId);
+            
+            if (errorDiv && field) {
+                errorDiv.style.display = 'none';
+                field.style.borderColor = '';
+            }
+        }
+        
+        function clearAllErrors() {
+            ['firstName', 'lastName', 'email', 'password', 'confirmPassword', 'terms'].forEach(clearFieldError);
+        }
+        
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+        
+        function validatePassword(password) {
+            const strength = {
+                score: 0,
+                feedback: []
+            };
+            
+            if (password.length >= 6) strength.score += 1;
+            if (password.length >= 8) strength.score += 1;
+            if (/[A-Z]/.test(password)) strength.score += 1;
+            if (/[a-z]/.test(password)) strength.score += 1;
+            if (/[0-9]/.test(password)) strength.score += 1;
+            if (/[^A-Za-z0-9]/.test(password)) strength.score += 1;
+            
+            if (password.length < 6) strength.feedback.push('Mínimo 6 caracteres');
+            if (!/[A-Z]/.test(password)) strength.feedback.push('Uma letra maiúscula');
+            if (!/[0-9]/.test(password)) strength.feedback.push('Um número');
+            
+            return strength;
+        }
+        
+        function updatePasswordStrength(password) {
+            const strengthDiv = document.getElementById('passwordStrength');
+            const strengthFill = document.getElementById('strengthFill');
+            const strengthText = document.getElementById('strengthText');
+            
+            if (!password) {
+                strengthDiv.style.display = 'none';
+                return;
+            }
+            
+            const strength = validatePassword(password);
+            strengthDiv.style.display = 'block';
+            
+            const percentage = Math.min((strength.score / 6) * 100, 100);
+            strengthFill.style.width = percentage + '%';
+            
+            const colors = ['#dc3545', '#fd7e14', '#ffc107', '#28a745'];
+            const labels = ['Fraca', 'Regular', 'Boa', 'Forte'];
+            const colorIndex = Math.min(Math.floor(strength.score / 2), 3);
+            
+            strengthFill.style.backgroundColor = colors[colorIndex];
+            strengthText.textContent = labels[colorIndex];
+            strengthText.style.color = colors[colorIndex];
+        }
+        
+        function togglePasswordVisibility(fieldId) {
+            const field = document.getElementById(fieldId);
+            const icon = field.nextElementSibling.querySelector('i');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                field.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+        
+        // ============= MODAL DE TERMOS =============
+        
+        function showTerms() {
+            document.getElementById('termsModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeTerms() {
+            document.getElementById('termsModal').style.display = 'none';
+            document.body.style.overflow = '';
+        }
+        
+        function acceptTerms() {
+            document.getElementById('agreeTerms').checked = true;
+            clearFieldError('terms');
+            closeTerms();
+        }
+        
+        function showSupport() {
+            showFirebaseNotification('Entre em contato: suporte@inovar.com', 'info');
+        }
+        
+        function showPrivacy() {
+            showFirebaseNotification('Seus dados são protegidos conforme a LGPD', 'info');
+        }
+        
+        // ============= VALIDAÇÕES EM TEMPO REAL =============
+        
+        function setupRealtimeValidation() {
+            // Validação do nome
+            document.getElementById('firstName').addEventListener('input', function() {
+                if (this.value.trim().length < 2) {
+                    showFieldError('firstName', 'Nome deve ter pelo menos 2 caracteres');
+                } else {
+                    clearFieldError('firstName');
+                }
+            });
+            
+            // Validação do sobrenome
+            document.getElementById('lastName').addEventListener('input', function() {
+                if (this.value.trim().length < 2) {
+                    showFieldError('lastName', 'Sobrenome deve ter pelo menos 2 caracteres');
+                } else {
+                    clearFieldError('lastName');
+                }
+            });
+            
+            // Validação do email
+            document.getElementById('email').addEventListener('input', function() {
+                if (!validateEmail(this.value)) {
+                    showFieldError('email', 'E-mail inválido');
+                } else {
+                    clearFieldError('email');
+                }
+            });
+            
+            // Validação da senha
+            document.getElementById('password').addEventListener('input', function() {
+                const password = this.value;
+                updatePasswordStrength(password);
+                
+                if (password.length < 6) {
+                    showFieldError('password', 'Senha deve ter pelo menos 6 caracteres');
+                } else {
+                    clearFieldError('password');
+                }
+                
+                // Revalidar confirmação se já foi preenchida
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                if (confirmPassword && password !== confirmPassword) {
+                    showFieldError('confirmPassword', 'As senhas não coincidem');
+                } else if (confirmPassword) {
+                    clearFieldError('confirmPassword');
+                }
+            });
+            
+            // Validação da confirmação de senha
+            document.getElementById('confirmPassword').addEventListener('input', function() {
+                const password = document.getElementById('password').value;
+                const confirmPassword = this.value;
+                
+                if (confirmPassword && password !== confirmPassword) {
+                    showFieldError('confirmPassword', 'As senhas não coincidem');
+                } else {
+                    clearFieldError('confirmPassword');
+                }
+            });
+            
+            // Validação dos termos
+            document.getElementById('agreeTerms').addEventListener('change', function() {
+                if (this.checked) {
+                    clearFieldError('terms');
+                }
+            });
+        }
+        
+        // ============= HANDLER DO FORMULÁRIO =============
+        
+        function setupFormHandler() {
+            const form = document.getElementById('registerForm');
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                if (isProcessing) {
+                    console.log('⏳ [CADASTRO] Processamento em andamento...');
+                    return;
+                }
+                
+                console.log('📝 [CADASTRO] Iniciando processo de cadastro...');
+                isProcessing = true;
+                clearAllErrors();
+                
+                // UI de carregamento
+                const submitBtn = document.getElementById('submitBtn');
+                const submitText = document.getElementById('submitText');
+                const submitSpinner = document.getElementById('submitSpinner');
+                const formStatus = document.getElementById('formStatus');
+                
+                submitBtn.disabled = true;
+                submitText.textContent = 'Criando conta...';
+                submitSpinner.style.display = 'inline';
+                formStatus.style.display = 'block';
+                formStatus.textContent = 'Conectando ao Firebase...';
+                formStatus.style.color = '#17a2b8';
+                
+                try {
+                    // Coletar dados do formulário
+                    const firstName = document.getElementById('firstName').value.trim();
+                    const lastName = document.getElementById('lastName').value.trim();
+                    const email = document.getElementById('email').value.trim();
+                    const password = document.getElementById('password').value;
+                    const confirmPassword = document.getElementById('confirmPassword').value;
+                    const agreeTerms = document.getElementById('agreeTerms').checked;
+                    
+                    console.log('📝 [CADASTRO] Dados coletados:', { firstName, lastName, email });
+                    
+                    // Validações finais
+                    let hasErrors = false;
+                    
+                    if (!firstName || firstName.length < 2) {
+                        showFieldError('firstName', 'Nome é obrigatório e deve ter pelo menos 2 caracteres');
+                        hasErrors = true;
+                    }
+                    
+                    if (!lastName || lastName.length < 2) {
+                        showFieldError('lastName', 'Sobrenome é obrigatório e deve ter pelo menos 2 caracteres');
+                        hasErrors = true;
+                    }
+                    
+                    if (!validateEmail(email)) {
+                        showFieldError('email', 'E-mail inválido');
+                        hasErrors = true;
+                    }
+                    
+                    if (password.length < 6) {
+                        showFieldError('password', 'Senha deve ter pelo menos 6 caracteres');
+                        hasErrors = true;
+                    }
+                    
+                    if (password !== confirmPassword) {
+                        showFieldError('confirmPassword', 'As senhas não coincidem');
+                        hasErrors = true;
+                    }
+                    
+                    if (!agreeTerms) {
+                        showFieldError('terms', 'Você deve aceitar os termos de uso');
+                        hasErrors = true;
+                    }
+                    
+                    if (hasErrors) {
+                        throw new Error('Por favor, corrija os erros no formulário');
+                    }
+                    
+                    // Aguardar Firebase estar pronto
+                    if (!firebaseReady) {
+                        formStatus.textContent = 'Aguardando Firebase...';
+                        await new Promise(resolve => {
+                            const checkFirebase = () => {
+                                if (window.auth && window.registerWithEmailPassword) {
+                                    firebaseReady = true;
+                                    resolve();
+                                } else {
+                                    setTimeout(checkFirebase, 100);
+                                }
+                            };
+                            checkFirebase();
+                        });
+                    }
+                    
+                    formStatus.textContent = 'Criando conta no Firebase...';
+                    
+                    // Chamar função de registro do Firebase
+                    const displayName = `${firstName} ${lastName}`;
+                    const result = await window.registerWithEmailPassword(email, password, displayName);
+                    
+                    if (result.success) {
+                        console.log('✅ [CADASTRO] Conta criada com sucesso!');
+                        
+                        formStatus.textContent = 'Conta criada com sucesso!';
+                        formStatus.style.color = '#28a745';
+                        
+                        showFirebaseNotification('✅ Conta criada com sucesso! Redirecionando...', 'success', 3000);
+                        
+                        // Redirecionar para dashboard
+                        setTimeout(() => {
+                            console.log('🔄 [CADASTRO] Redirecionando para dashboard...');
+                            window.location.href = 'dashboard.html';
+                        }, 2000);
+                        
+                    } else {
+                        throw new Error(result.message || 'Erro ao criar conta no Firebase');
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ [CADASTRO] Erro:', error);
+                    
+                    formStatus.textContent = 'Erro no cadastro: ' + error.message;
+                    formStatus.style.color = '#dc3545';
+                    
+                    showFirebaseNotification('❌ ' + error.message, 'error');
+                    
+                    // Restaurar botão
+                    submitBtn.disabled = false;
+                    submitText.textContent = 'Criar Conta';
+                    submitSpinner.style.display = 'none';
+                    isProcessing = false;
+                }
+            });
+        }
+        
+        // ============= INICIALIZAÇÃO =============
+        
+        function init() {
+            console.log('🚀 [CADASTRO] Inicializando página...');
+            
+            // Configurar validações em tempo real
+            setupRealtimeValidation();
+            
+            // Configurar handler do formulário
+            setupFormHandler();
+            
+            // Verificar se Firebase está pronto
+            const checkFirebase = () => {
+                if (window.auth && window.registerWithEmailPassword) {
+                    firebaseReady = true;
+                    document.getElementById('firebaseStatus').style.display = 'block';
+                    console.log('✅ [CADASTRO] Firebase pronto para uso');
+                } else {
+                    setTimeout(checkFirebase, 100);
+                }
+            };
+            
+            setTimeout(checkFirebase, 500);
+        }
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', init);
+        
+        // Event listener para Firebase Ready
+        document.addEventListener('firebaseReady', function() {
+            firebaseReady = true;
+            document.getElementById('firebaseStatus').style.display = 'block';
+            console.log('🔥 [CADASTRO] Evento firebaseReady recebido');
+        });
+        
+        // Tornar funções globais para onclick
+        window.togglePasswordVisibility = togglePasswordVisibility;
+        window.showTerms = showTerms;
+        window.closeTerms = closeTerms;
+        window.acceptTerms = acceptTerms;
+        window.showSupport = showSupport;
+        window.showPrivacy = showPrivacy;
+        
+        console.log('✅ [CADASTRO] Script de cadastro carregado');
+    </script>
+    
+    <!-- CSS adicional para melhorias visuais -->
+    <style>
+        .field-error {
+            font-size: 12px;
+            color: #dc3545;
+            margin-top: 5px;
+        }
+        
+        .password-strength {
+            margin-top: 5px;
+        }
+        
+        .strength-bar {
+            width: 100%;
+            height: 4px;
+            background-color: #e9ecef;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .strength-fill {
+            height: 100%;
+            transition: width 0.3s ease, background-color 0.3s ease;
+            border-radius: 2px;
+        }
+        
+        .strength-text {
+            font-size: 11px;
+            margin-top: 2px;
+            display: block;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 10001;
+        }
+        
+        .modal-content {
+            position: relative;
+            background-color: white;
+            margin: 5% auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #dee2e6;
+            text-align: right;
+        }
+        
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+        
+        .close:hover {
+            color: #000;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</body>
+</html>

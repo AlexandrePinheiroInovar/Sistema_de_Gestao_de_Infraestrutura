@@ -1,0 +1,39 @@
+/* ============= CORREÇÃO SIMPLES PARA DROPDOWNS ============= */
+
+/* REGRA 1: Dropdown aberto sempre por cima */
+.checkbox-dropdown.open .checkbox-dropdown-content {
+    position: absolute !important;
+    z-index: 1000 !important;
+    display: block !important;
+    background: white !important;
+    border: 2px solid #3b82f6 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 25px 75px rgba(0, 0, 0, 0.9) !important;
+    min-width: 250px !important;
+    max-height: 350px !important;
+    overflow-y: auto !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin-top: 2px !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* REGRA 2: Container do dropdown */
+.checkbox-dropdown.open {
+    z-index: 1000 !important;
+    position: relative !important;
+}
+
+/* REGRA 3: Todos os elementos de filtro com position relative e z-index baixo */
+.filter-group {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.filter-group label {
+    position: relative !important;
+    z-index: 1 !important;
+}

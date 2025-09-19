@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Debug Excel Upload</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <h1>🔍 Debug Excel Upload</h1>
+    
+    <div style="margin: 20px 0;">
+        <label for="fileInput">📁 Selecione o arquivo MDU 2025.xlsx:</label>
+        <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="debugExcelUpload()">
+    </div>
+    
+    <div id="resultado"></div>
+    
+    <script>
+        function debugExcelUpload() {
+            const fileInput = document.getElementById('fileInput');
+            const arquivo = fileInput.files[0];
+            
+            if (!arquivo) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {
+                        type: 'array',
+                        cellDates: true,
+                        cellNF: false,
+                        cellText: false,
+                        raw: false
+                    });
+                    
+                    // Ler da aba BD_Controle
+                    const targetSheetName = 'BD_Controle';
+                    const sheetName = workbook.SheetNames.includes(targetSheetName) ? targetSheetName : workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    
+                    // Método 1: header: 1 (como sistema atual)
+                    const jsonData1 = XLSX.utils.sheet_to_json(worksheet, {
+                        header: 1,
+                        raw: false,
+                        dateNF: 'dd/mm/yyyy'
+                    });
+                    
+                    const headers1 = jsonData1[0];
+                    
+                    // Método 2: Sem header especificado (automático)
+                    const jsonData2 = XLSX.utils.sheet_to_json(worksheet, {
+                        raw: false,
+                        dateNF: 'dd/mm/yyyy'
+                    });
+                    
+                    const headers2 = jsonData2.length > 0 ? Object.keys(jsonData2[0]) : [];
+                    
+                    console.log('🔥 [DEBUG-COMPARAÇÃO] Método 1 (header: 1)');
+                    console.log('Headers:', headers1);
+                    console.log('Total de colunas:', headers1.length);
+                    console.log('Primeira linha de dados:', jsonData1[1]);
+                    
+                    console.log('🔥 [DEBUG-COMPARAÇÃO] Método 2 (automático)');
+                    console.log('Headers:', headers2);
+                    console.log('Total de colunas:', headers2.length);
+                    console.log('Primeira linha de dados:', jsonData2[0]);
+                    
+                    // Simular o processo de upload
+                    console.log('🔥 [SIMULANDO UPLOAD] Processando dados...');
+                    
+                    // Usando método 1
+                    const processedData1 = jsonData1.slice(1).map(row => {
+                        const rowObj = {};
+                        headers1.forEach((header, index) => {
+                            const value = row && row[index] !== undefined && row[index] !== null ? row[index] : '';
+                            rowObj[header] = String(value).trim();
+                        });
+                        return rowObj;
+                    });
+                    
+                    console.log('🔥 [RESULTADO MÉTODO 1] Primeiro objeto:', processedData1[0]);
+                    console.log('🔥 [RESULTADO MÉTODO 1] Campos do objeto:', Object.keys(processedData1[0]));
+                    console.log('🔥 [RESULTADO MÉTODO 1] Total de campos:', Object.keys(processedData1[0]).length);
+                    
+                    // VERIFICAR QUAIS CAMPOS TÊM DADOS REAIS
+                    console.log('🔥 [DADOS REAIS] Analisando primeiro registro...');
+                    const primeiroRegistro = processedData1[0];
+                    const camposComDados = [];
+                    const camposVazios = [];
+                    
+                    Object.keys(primeiroRegistro).forEach(campo => {
+                        const valor = primeiroRegistro[campo];
+                        if (valor && valor !== '' && valor.trim() !== '') {
+                            camposComDados.push(`"${campo}" = "${valor}"`);
+                        } else {
+                            camposVazios.push(`"${campo}" = "${valor}"`);
+                        }
+                    });
+                    
+                    console.log('🔥 [CAMPOS COM DADOS]', camposComDados.length, 'campos:');
+                    camposComDados.forEach(campo => console.log('  ✅', campo));
+                    
+                    console.log('🔥 [CAMPOS VAZIOS]', camposVazios.length, 'campos:');
+                    camposVazios.slice(0, 10).forEach(campo => console.log('  ❌', campo));
+                    
+                    // Resultado na tela
+                    document.getElementById('resultado').innerHTML = `
+                        <h2>🔍 Resultado da Análise</h2>
+                        <p><strong>Aba:</strong> ${sheetName}</p>
+                        <p><strong>Método 1 - Headers encontrados:</strong> ${headers1.length}</p>
+                        <p><strong>Método 2 - Headers encontrados:</strong> ${headers2.length}</p>
+                        <p><strong>Primeiro objeto processado tem:</strong> ${Object.keys(processedData1[0]).length} campos</p>
+                        <p><strong>Campos:</strong> ${Object.keys(processedData1[0]).join(', ')}</p>
+                    `;
+                    
+                } catch (error) {
+                    console.error('Erro:', error);
+                    document.getElementById('resultado').innerHTML = `<p style="color: red;">Erro: ${error.message}</p>`;
+                }
+            };
+            
+            reader.readAsArrayBuffer(arquivo);
+        }
+    </script>
+</body>
+</html>

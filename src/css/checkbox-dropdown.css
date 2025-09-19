@@ -1,0 +1,392 @@
+/* ============= DROPDOWN AVANÇADO COM SELEÇÃO MÚLTIPLA ============= */
+/* Estilo moderno e funcional para dropdowns com checkboxes */
+
+/* Garantir hierarquia de z-index correta */
+.infra-filters-container {
+    position: relative !important;
+    z-index: 1000 !important;
+}
+
+.filters-grid {
+    position: relative !important;
+    z-index: 1001 !important;
+}
+
+.filter-group {
+    position: relative !important;
+    z-index: 1002 !important;
+}
+
+.checkbox-dropdown {
+    position: relative;
+    width: 100%;
+    z-index: 9999 !important;
+}
+
+.checkbox-dropdown.open {
+    z-index: 999999999 !important;
+}
+
+.checkbox-dropdown-button {
+    width: 100%;
+    padding: 10px 35px 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #ffffff;
+    font-size: 14px;
+    color: #374151;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    position: relative;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-dropdown-button:hover {
+    border-color: #9ca3af;
+}
+
+.checkbox-dropdown-button:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.checkbox-dropdown-arrow {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: transform 0.2s ease;
+    color: #6b7280;
+}
+
+.checkbox-dropdown.open .checkbox-dropdown-arrow {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+.checkbox-dropdown-content {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: white !important;
+    border: 2px solid #3b82f6 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8) !important;
+    z-index: 999999999 !important;
+    max-height: 320px !important;
+    overflow-y: auto !important;
+    display: none;
+    margin-top: 2px !important;
+    min-width: 250px !important;
+}
+
+.checkbox-dropdown.open .checkbox-dropdown-content {
+    display: block !important;
+    animation: fadeInDown 0.2s ease;
+    z-index: 2147483647 !important;
+    position: absolute !important;
+    background: white !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Regra extra para garantir prioridade máxima */
+.checkbox-dropdown.open .checkbox-dropdown-content,
+.infra-filters-container .checkbox-dropdown.open .checkbox-dropdown-content,
+.filters-grid .checkbox-dropdown.open .checkbox-dropdown-content,
+.filter-group .checkbox-dropdown.open .checkbox-dropdown-content {
+    z-index: 2147483647 !important;
+    position: absolute !important;
+    background: white !important;
+    display: block !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Forçar todos os elementos do dashboard para z-index baixo */
+.analysis-section,
+.chart-container,
+.infra-stats-cards,
+.endereco-stats-cards,
+.infra-stat-card,
+.endereco-stat-card,
+.section,
+.main-content,
+.content-area {
+    z-index: 1 !important;
+    position: relative;
+}
+
+/* Reduzir z-index de elementos que possam interferir */
+.infra-stat-card,
+.endereco-stat-card,
+.analysis-section,
+.chart-container,
+.periodo-filter,
+.periodo-inputs,
+.infra-stats-cards,
+.endereco-stats-cards {
+    z-index: 1 !important;
+    position: relative;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.checkbox-dropdown-item {
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.1s ease;
+    border-bottom: 1px solid #f3f4f6;
+    position: relative;
+    min-height: 40px;
+    user-select: none;
+    color: #1f2937 !important;
+}
+
+.checkbox-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.checkbox-dropdown-item:hover {
+    background-color: #f9fafb;
+    color: #1f2937 !important;
+}
+
+.checkbox-dropdown-item.selected {
+    background-color: #eff6ff;
+    color: #1f2937 !important;
+}
+
+.checkbox-dropdown-checkbox {
+    margin-right: 10px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #3b82f6;
+    flex-shrink: 0;
+    pointer-events: auto;
+}
+
+.checkbox-dropdown-label {
+    flex: 1;
+    font-size: 14px;
+    color: #1f2937 !important;
+    cursor: pointer;
+    user-select: none;
+    padding: 4px 0;
+    display: flex;
+    align-items: center;
+    min-height: 24px;
+    font-weight: 500;
+}
+
+/* Texto do placeholder */
+.checkbox-dropdown-placeholder {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+/* Forçar cores escuras para todos os textos do dropdown */
+.checkbox-dropdown-content,
+.checkbox-dropdown-content *,
+.checkbox-dropdown-item *,
+.checkbox-dropdown-label * {
+    color: #1f2937 !important;
+}
+
+.checkbox-dropdown-content {
+    color: #1f2937 !important;
+}
+
+/* Texto de "nenhum resultado" */
+.checkbox-dropdown-no-results {
+    color: #6b7280 !important;
+}
+
+/* Tags dos itens selecionados */
+.checkbox-dropdown-selected {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-height: 20px;
+    align-items: center;
+}
+
+.checkbox-dropdown-tag {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.checkbox-dropdown-tag .remove {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.checkbox-dropdown-tag .remove:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Search box dentro do dropdown */
+.checkbox-dropdown-search {
+    padding: 8px 12px;
+    border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
+}
+
+.checkbox-dropdown-search input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 12px;
+    outline: none;
+    color: #1f2937 !important;
+    background: white !important;
+}
+
+.checkbox-dropdown-search input:focus {
+    border-color: #3b82f6;
+}
+
+/* Contador de selecionados */
+.checkbox-dropdown-counter {
+    background: #f3f4f6;
+    color: #374151;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-left: auto;
+}
+
+/* Botões de ação do dropdown */
+.action-btn {
+    background: white !important;
+    color: #1f2937 !important;
+    border: 1px solid #d1d5db !important;
+}
+
+.action-btn:hover {
+    border-color: #3b82f6 !important;
+    color: #3b82f6 !important;
+    background: white !important;
+}
+
+/* Regra global para todos os elementos do dropdown - FORÇA MÁXIMA */
+.checkbox-dropdown *,
+.checkbox-dropdown *:before,
+.checkbox-dropdown *:after,
+.checkbox-dropdown-content *,
+.checkbox-dropdown-item,
+.checkbox-dropdown-item *,
+.checkbox-dropdown-label,
+.checkbox-dropdown-label *,
+.checkbox-dropdown-options *,
+.checkbox-dropdown option,
+.checkbox-dropdown select * {
+    color: #000000 !important;
+    text-shadow: none !important;
+}
+
+/* Exceções para elementos que devem ter cores específicas */
+.checkbox-dropdown-placeholder {
+    color: #9ca3af !important;
+}
+
+.checkbox-dropdown-tag {
+    color: white !important;
+}
+
+.checkbox-dropdown-no-results {
+    color: #6b7280 !important;
+}
+
+/* Garantir que checkboxes estejam visíveis */
+.checkbox-dropdown-checkbox {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Estados especiais */
+.checkbox-dropdown-button.has-selection {
+    border-color: #3b82f6;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .checkbox-dropdown-content {
+        max-height: 200px;
+    }
+    
+    .checkbox-dropdown-item {
+        padding: 8px 10px;
+    }
+    
+    .checkbox-dropdown-label {
+        font-size: 13px;
+    }
+    
+    .checkbox-dropdown-tag {
+        font-size: 10px;
+        padding: 2px 6px;
+        max-width: 80px;
+    }
+}
+
+/* Scrollbar customizada */
+.checkbox-dropdown-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.checkbox-dropdown-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.checkbox-dropdown-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.checkbox-dropdown-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}

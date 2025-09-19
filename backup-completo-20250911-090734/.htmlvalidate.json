@@ -1,0 +1,24 @@
+{
+  "extends": [],
+  "rules": {
+    "void-style": "off",
+    "attribute-boolean-style": "off",
+    "doctype-style": "off",
+    "no-trailing-whitespace": "off",
+    "require-sri": "off",
+    "script-type": "off",
+    "tel-non-breaking": "off",
+    "no-inline-style": "off",
+    "element-permitted-content": "off",
+    "no-unknown-elements": "off",
+    "no-implicit-close": "off",
+    "element-required-attributes": "off",
+    "no-implicit-button-type": "off",
+    "no-raw-characters": "off",
+    "input-attributes": "off",
+    "wcag/h63": "off",
+    "no-dup-id": "off",
+    "wcag/h32": "off",
+    "text-content": "off"
+  }
+}

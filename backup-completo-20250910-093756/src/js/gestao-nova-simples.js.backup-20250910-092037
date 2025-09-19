@@ -1,0 +1,849 @@
+// ============= SISTEMA DE GESTÃO NOVO E SIMPLES =============
+console.log('🚀 [GESTAO-NOVA] Iniciando sistema de gestão novo...');
+
+// ============= CONFIGURAÇÕES COMPLETAS DAS COLEÇÕES =============
+const GESTAO_NOVA_CONFIG = {
+    projetos: {
+        column: 'Projeto',
+        collection: 'nova_gestao_projetos',
+        displayName: 'Projetos',
+        description: 'Gerenciamento de projetos de telecomunicações'
+    },
+    subprojetos: {
+        column: 'Sub Projeto',
+        collection: 'nova_gestao_subprojetos',
+        displayName: 'Sub Projetos',
+        description: 'Sub divisões dos projetos principais'
+    },
+    'tipos-acao': {
+        column: 'Tipo de Ação',
+        collection: 'nova_gestao_tipos_acao',
+        displayName: 'Tipos de Ação',
+        description: 'Tipos de ações executadas em campo'
+    },
+    supervisores: {
+        column: 'Supervisor',
+        collection: 'nova_gestao_supervisores',
+        displayName: 'Supervisores',
+        description: 'Supervisores responsáveis pelas equipes'
+    },
+    equipes: {
+        column: 'EQUIPE',
+        collection: 'nova_gestao_equipes',
+        displayName: 'Equipes',
+        description: 'Equipes de campo para execução dos serviços'
+    },
+    cidades: {
+        column: 'Cidade',
+        collection: 'nova_gestao_cidades',
+        displayName: 'Cidades',
+        description: 'Cidades onde os serviços são executados'
+    }
+};
+
+// ============= VARIÁVEIS =============
+let dadosExtraidos = [];
+let sistemaIniciado = false;
+
+// Exportar para janela global
+window.sistemaIniciado = false;
+
+// ============= INICIALIZAÇÃO =============
+document.addEventListener('DOMContentLoaded', function () {
+    console.log('🔧 [GESTAO-NOVA] DOM carregado, aguardando Firebase...');
+    setTimeout(iniciarSistema, 2000);
+});
+
+async function iniciarSistema() {
+    if (!window.firebase || !firebase.firestore) {
+        console.warn('⚠️ [GESTAO-NOVA] Firebase não disponível, tentando novamente...');
+        setTimeout(iniciarSistema, 1000);
+        return;
+    }
+
+    console.log('✅ [GESTAO-NOVA] Firebase disponível, iniciando...');
+    sistemaIniciado = true;
+    window.sistemaIniciado = true;
+
+    // Substituir função principal
+    window.showGestaoTab = mostrarNovaAba;
+    window.mostrarNovaAba = mostrarNovaAba;
+
+    // Verificar e criar coleções se necessário
+    await verificarColecoes();
+
+    console.log('✅ [GESTAO-NOVA] Sistema iniciado e função substituída!');
+    console.log('🔍 [GESTAO-NOVA] Verificando funções globais:');
+    console.log('   - window.showGestaoTab:', typeof window.showGestaoTab);
+    console.log('   - window.mostrarNovaAba:', typeof window.mostrarNovaAba);
+
+    // AUTO-EXECUTAR: Carregar automaticamente a aba projetos após 3 segundos
+    setTimeout(async () => {
+        console.log('🚀 [AUTO-EXEC] Sistema pronto - aguardando interação do usuário');
+        console.log('💡 [AUTO-EXEC] Para testar, acesse qualquer aba de Gestão de Projetos');
+    }, 3000);
+}
+
+// ============= VERIFICAR E CRIAR COLEÇÕES =============
+async function verificarColecoes() {
+    console.log('🔍 [COLEÇÕES] Verificando todas as coleções do Firebase...');
+
+    for (const [_tabId, config] of Object.entries(GESTAO_NOVA_CONFIG)) {
+        try {
+            console.log(`🔍 [COLEÇÕES] Verificando coleção: ${config.collection}`);
+
+            // Tentar acessar a coleção - Firebase criará automaticamente quando necessário
+            const snapshot = await firebase
+                .firestore()
+                .collection(config.collection)
+                .limit(1)
+                .get();
+
+            console.log(`✅ [COLEÇÕES] ${config.collection}: ${snapshot.size} documentos`);
+        } catch (error) {
+            console.error(`❌ [COLEÇÕES] Erro ao verificar ${config.collection}:`, error);
+        }
+    }
+
+    console.log(
+        '🎯 [COLEÇÕES] Verificação completa - Firebase criará coleções conforme necessário'
+    );
+}
+
+// ============= EXTRAÇÃO DE DADOS =============
+function extrairDadosTabela() {
+    console.log('📊 [GESTAO-NOVA] Extraindo dados da tabela...');
+
+    const tbody = document.getElementById('enderecoTableBody');
+    if (!tbody) {
+        console.warn('⚠️ [GESTAO-NOVA] Tabela não encontrada');
+        return [];
+    }
+
+    const linhas = tbody.querySelectorAll('tr:not(.empty-state)');
+    console.log(`📊 [GESTAO-NOVA] Encontradas ${linhas.length} linhas`);
+
+    const dados = [];
+    linhas.forEach(linha => {
+        const colunas = linha.querySelectorAll('td');
+        if (colunas.length >= 25) {
+            dados.push({
+                Projeto: colunas[0]?.textContent?.trim() || '',
+                'Sub Projeto': colunas[1]?.textContent?.trim() || '',
+                'Tipo de Ação': colunas[2]?.textContent?.trim() || '',
+                Supervisor: colunas[17]?.textContent?.trim() || '',
+                EQUIPE: colunas[16]?.textContent?.trim() || '',
+                Cidade: colunas[6]?.textContent?.trim() || ''
+            });
+        }
+    });
+
+    dadosExtraidos = dados;
+    console.log(`✅ [GESTAO-NOVA] ${dados.length} registros extraídos`);
+    return dados;
+}
+
+// ============= EXTRAÇÃO DE DADOS DA TABELA ORIGINAL (REVERTED) =============
+function extrairTodosOsDadosCompletos() {
+    console.log('📊 [GESTAO-NOVA] SISTEMA REVERTIDO: Extraindo dados diretamente da tabela DOM...');
+
+    const tbody = document.getElementById('enderecoTableBody');
+    if (!tbody) {
+        console.warn('⚠️ [GESTAO-NOVA] Tabela enderecoTableBody não encontrada');
+        return [];
+    }
+
+    const linhas = tbody.querySelectorAll('tr:not(.empty-state)');
+    console.log(`📊 [GESTAO-NOVA] Encontradas ${linhas.length} linhas na tabela`);
+
+    const dados = [];
+    linhas.forEach((linha, index) => {
+        const colunas = linha.querySelectorAll('td');
+        if (colunas.length >= 25) {
+            const registro = {
+                Projeto: colunas[0]?.textContent?.trim() || '',
+                'Sub Projeto': colunas[1]?.textContent?.trim() || '',
+                'Tipo de Ação': colunas[2]?.textContent?.trim() || '',
+                Supervisor: colunas[17]?.textContent?.trim() || '',
+                EQUIPE: colunas[16]?.textContent?.trim() || '',
+                Cidade: colunas[6]?.textContent?.trim() || ''
+            };
+
+            dados.push(registro);
+
+            // Debug dos primeiros 3 registros
+            if (index < 3) {
+                console.log(`🔍 [GESTAO-NOVA] Registro ${index + 1}:`, registro);
+            }
+        }
+    });
+
+    console.log(`✅ [GESTAO-NOVA] ${dados.length} registros extraídos da tabela DOM`);
+    return dados;
+}
+
+// ============= FUNÇÃO PRINCIPAL =============
+function mostrarNovaAba(tabId) {
+    console.log(`📑 [GESTAO-NOVA] === MOSTRANDO ABA ${tabId.toUpperCase()} ===`);
+
+    if (!sistemaIniciado) {
+        console.warn('⚠️ [GESTAO-NOVA] Sistema não iniciado, aguardando...');
+        setTimeout(() => mostrarNovaAba(tabId), 1000);
+        return;
+    }
+
+    // Atualizar interface das abas
+    document.querySelectorAll('.gestao-tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.gestao-tab-btn').forEach(btn => btn.classList.remove('active'));
+
+    const targetTab = document.getElementById(`gestao-${tabId}-tab`);
+    if (targetTab) {
+        targetTab.classList.add('active');
+    }
+
+    const activeButton = document.querySelector(`[onclick*="showGestaoTab('${tabId}'"]`);
+    if (activeButton) {
+        activeButton.classList.add('active');
+    }
+
+    // Carregar dados
+    carregarDadosAba(tabId);
+}
+
+async function carregarDadosAba(tabId) {
+    console.log(`🔄 [GESTAO-NOVA] === CARREGANDO ${tabId.toUpperCase()} DIRETO DO FIRESTORE ===`);
+
+    const config = GESTAO_NOVA_CONFIG[tabId];
+    if (!config) {
+        console.error(`❌ [GESTAO-NOVA] Configuração não encontrada para ${tabId}`);
+        console.log(`🔍 [GESTAO-NOVA] Configurações disponíveis:`, Object.keys(GESTAO_NOVA_CONFIG));
+        return;
+    }
+
+    console.log(`🔍 [GESTAO-NOVA] Config para ${tabId}:`, config);
+
+    // Carregar dados DIRETO do Firestore (sem depender da tabela de endereços)
+    const dadosFirestore = [];
+    let contadorUsos = {};
+    
+    try {
+        // Carregar dados da coleção específica
+        const snapshot = await firebase.firestore().collection(config.collection).get();
+        snapshot.forEach(doc => {
+            dadosFirestore.push({
+                id: doc.id,
+                ...doc.data(),
+                source: 'firestore'
+            });
+        });
+        console.log(`🔥 [GESTAO-NOVA] ${dadosFirestore.length} dados carregados da coleção ${config.collection}`);
+
+        // Carregar dados da coleção 'enderecos' para contar usos (se existir)
+        try {
+            const enderecosSnapshot = await firebase.firestore().collection('enderecos').get();
+            enderecosSnapshot.forEach(doc => {
+                const data = doc.data();
+                const valor = data[config.column];
+                if (valor && valor.trim()) {
+                    contadorUsos[valor] = (contadorUsos[valor] || 0) + 1;
+                }
+            });
+            console.log(`📊 [GESTAO-NOVA] Contador de usos criado da coleção enderecos`);
+        } catch (error) {
+            console.log(`ℹ️ [GESTAO-NOVA] Coleção enderecos não disponível para contagem:`, error.message);
+        }
+
+    } catch (error) {
+        console.error(`❌ [GESTAO-NOVA] Erro ao carregar dados do Firestore:`, error);
+        
+        // Se não há dados, criar dados de exemplo
+        if (dadosFirestore.length === 0) {
+            console.log(`🎯 [GESTAO-NOVA] Criando dados de exemplo para ${tabId}...`);
+            await criarDadosExemplo();
+            // Tentar carregar novamente
+            const retrySnapshot = await firebase.firestore().collection(config.collection).get();
+            retrySnapshot.forEach(doc => {
+                dadosFirestore.push({
+                    id: doc.id,
+                    ...doc.data(),
+                    source: 'firestore'
+                });
+            });
+        }
+    }
+
+    // Preparar dados para renderização
+    const todosDados = dadosFirestore.map(item => ({
+        id: item.id,
+        nome: item.nome || 'Sem nome',
+        descricao: item.descricao || 'Sem descrição',
+        status: item.status || 'ATIVO',
+        source: 'firestore',
+        count: contadorUsos[item.nome] || 0,
+        createdAt: item.createdAt,
+        isExample: item.isExample || false
+    }));
+
+    console.log(`✅ [GESTAO-NOVA] ${todosDados.length} itens preparados para renderização`);
+
+    // Renderizar tabela
+    renderizarTabela(tabId, todosDados);
+}
+
+function renderizarTabela(tabId, dados) {
+    console.log(`🎨 [GESTAO-NOVA] === RENDERIZANDO ${tabId.toUpperCase()} ===`);
+    console.log(`📊 [GESTAO-NOVA] Total de dados recebidos: ${dados.length}`);
+
+    // Mapear IDs corretos das tabelas (baseado no HTML real)
+    const tableBodyIds = {
+        projetos: 'projetosTableBody',
+        subprojetos: 'subprojetosTableBody',
+        'tipos-acao': 'tiposAcaoTableBody',
+        supervisores: 'supervisoresTableBody',
+        equipes: 'equipesTableBody',
+        cidades: 'cidadesTableBody'
+    };
+
+    const tbodyId = tableBodyIds[tabId];
+    console.log(`🎯 [GESTAO-NOVA] Procurando elemento: ${tbodyId}`);
+
+    // Verificar todos os elementos com TableBody no ID
+    const allTableBodies = document.querySelectorAll('[id*="TableBody"], [id*="tableBody"], [id*="tbody"]');
+    console.log(`🔍 [GESTAO-NOVA] Todos os elementos de tabela encontrados:`, 
+        Array.from(allTableBodies).map(el => ({ id: el.id, tagName: el.tagName }))
+    );
+
+    let tbody = document.getElementById(tbodyId);
+    
+    // Se não encontrou, tentar alternativas
+    if (!tbody) {
+        console.warn(`⚠️ [GESTAO-NOVA] Elemento ${tbodyId} não encontrado, tentando alternativas...`);
+        
+        // Tentar nomes alternativos
+        const alternativeIds = [
+            `${tabId}TableBody`,
+            `${tabId}tbody`,
+            `table-${tabId}-body`,
+            `gestao-${tabId}-tbody`
+        ];
+        
+        for (const altId of alternativeIds) {
+            tbody = document.getElementById(altId);
+            if (tbody) {
+                console.log(`✅ [GESTAO-NOVA] Encontrado elemento alternativo: ${altId}`);
+                break;
+            }
+        }
+    }
+
+    // Se ainda não encontrou, tentar buscar dentro da aba ativa
+    if (!tbody) {
+        const activeTab = document.getElementById(`gestao-${tabId}-tab`);
+        if (activeTab) {
+            tbody = activeTab.querySelector('tbody');
+            if (tbody) {
+                console.log(`✅ [GESTAO-NOVA] Tbody encontrado dentro da aba ativa`);
+            }
+        }
+    }
+
+    if (!tbody) {
+        console.error(`❌ [GESTAO-NOVA] ERRO CRÍTICO: Tbody não encontrado para ${tabId}`);
+        console.error(`❌ Tentativas feitas:`, [tbodyId, ...alternativeIds]);
+        
+        // Mostrar notificação de erro ao usuário
+        if (typeof showNotification === 'function') {
+            showNotification(`Erro: Tabela ${tabId} não encontrada no HTML`, 'error');
+        }
+        return;
+    }
+
+    console.log(`✅ [GESTAO-NOVA] Tbody encontrado:`, tbody.id || tbody.tagName);
+
+    // Se não há dados, mostrar mensagem
+    if (!dados || dados.length === 0) {
+        console.log(`ℹ️ [GESTAO-NOVA] Nenhum dado para renderizar em ${tabId}`);
+        tbody.innerHTML = `
+            <tr class="empty-state">
+                <td colspan="6" style="text-align:center;padding:30px;color:#6b7280;">
+                    <div style="font-size:16px;margin-bottom:10px;">📝</div>
+                    <div>Nenhum item encontrado</div>
+                    <div style="font-size:12px;margin-top:5px;">
+                        <button onclick="adicionarItem('${tabId}')" style="background:#10b981;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;margin-top:10px;">
+                            ➕ Adicionar Novo
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    // Renderizar dados
+    const htmlRows = dados.map((item, index) => {
+        const statusColor = item.status === 'ATIVO' ? '#10b981' : '#ef4444';
+        const isExample = item.isExample ? '🎯 Exemplo' : '💾 Firestore';
+        
+        return `
+            <tr data-id="${item.id}" style="border-bottom:1px solid #e5e7eb;">
+                <td style="padding:12px 8px;font-weight:600;">${index + 1}</td>
+                <td style="padding:12px 8px;">
+                    <div style="font-weight:600;color:#1f2937;">${item.nome}</div>
+                    <div style="font-size:10px;color:#6b7280;margin-top:2px;">
+                        ${isExample}
+                    </div>
+                </td>
+                <td style="padding:12px 8px;color:#4b5563;max-width:200px;">${item.descricao}</td>
+                <td style="padding:12px 8px;">
+                    <span style="background:#f3f4f6;color:#374151;padding:4px 8px;border-radius:12px;font-size:11px;font-weight:600;">
+                        ${item.count} usos
+                    </span>
+                </td>
+                <td style="padding:12px 8px;">
+                    <span style="background:${statusColor};color:white;padding:4px 12px;border-radius:12px;font-size:11px;font-weight:600;">
+                        ${item.status}
+                    </span>
+                </td>
+                <td style="padding:12px 8px;">
+                    <button onclick="editarItem('${tabId}', '${item.id}')" 
+                            style="background:#f59e0b;color:white;border:none;padding:8px 10px;border-radius:6px;margin-right:5px;cursor:pointer;font-size:12px;" 
+                            title="Editar item">
+                        ✏️
+                    </button>
+                    <button onclick="excluirItem('${tabId}', '${item.id}')" 
+                            style="background:#ef4444;color:white;border:none;padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;" 
+                            title="Excluir item">
+                        🗑️
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    tbody.innerHTML = htmlRows;
+    console.log(`✅ [GESTAO-NOVA] Tabela ${tabId} renderizada com ${dados.length} itens`);
+
+    // Adicionar animação suave
+    tbody.style.opacity = '0';
+    setTimeout(() => {
+        tbody.style.transition = 'opacity 0.3s ease';
+        tbody.style.opacity = '1';
+    }, 100);
+}
+
+// ============= FUNÇÕES CRUD =============
+async function adicionarItem(tabId) {
+    const config = GESTAO_NOVA_CONFIG[tabId];
+    const nome = prompt(`Adicionar novo item em ${tabId}:\n\nNome:`);
+    if (!nome || !nome.trim()) {
+        return;
+    }
+
+    const descricao = prompt(`Descrição para "${nome}":`);
+
+    try {
+        await firebase
+            .firestore()
+            .collection(config.collection)
+            .add({
+                nome: nome.trim(),
+                descricao: (descricao || '').trim(),
+                status: 'ATIVO',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+        alert('✅ Item adicionado com sucesso!');
+        carregarDadosAba(tabId);
+    } catch (error) {
+        alert('❌ Erro: ' + error.message);
+    }
+}
+
+async function salvarItem(tabId, nome) {
+    const config = GESTAO_NOVA_CONFIG[tabId];
+    const descricao = prompt(`Salvar "${nome}" no Firestore:\n\nDescrição:`);
+
+    try {
+        await firebase
+            .firestore()
+            .collection(config.collection)
+            .add({
+                nome: nome.trim(),
+                descricao: (descricao || '').trim(),
+                status: 'ATIVO',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+        alert('✅ Item salvo no Firestore!');
+        carregarDadosAba(tabId);
+    } catch (error) {
+        alert('❌ Erro: ' + error.message);
+    }
+}
+
+// ============= SALVAMENTO AUTOMÁTICO DIRETO E SIMPLES =============
+async function salvarItensAutomaticamente(config, itensParaSalvar) {
+    console.log(`💾 [AUTO-SAVE] Salvando ${itensParaSalvar.length} itens em ${config.collection}`);
+
+    for (const item of itensParaSalvar) {
+        try {
+            // Salvar diretamente no Firestore
+            const docData = {
+                nome: item.nome.trim(),
+                descricao: `Extraído da tabela de endereços - ${new Date().toLocaleString()}`,
+                status: 'ATIVO',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                autoSaved: true
+            };
+            
+            await firebase.firestore().collection(config.collection).add(docData);
+            console.log(`✅ Salvou: ${item.nome} → ${config.collection}`);
+            
+        } catch (error) {
+            console.error(`❌ Erro ao salvar ${item.nome}:`, error);
+        }
+    }
+
+    console.log(`🎉 Salvamento concluído para ${config.collection}`);
+}
+
+async function editarItem(tabId, itemId) {
+    if (itemId.startsWith('temp_')) {
+        alert('⚠️ Salve este item no Firestore primeiro');
+        return;
+    }
+
+    const config = GESTAO_NOVA_CONFIG[tabId];
+
+    try {
+        const doc = await firebase.firestore().collection(config.collection).doc(itemId).get();
+        if (!doc.exists) {
+            alert('❌ Item não encontrado');
+            return;
+        }
+
+        const data = doc.data();
+        const novoNome = prompt('Editar nome:', data.nome);
+        if (!novoNome) {
+            return;
+        }
+
+        const novaDescricao = prompt('Editar descrição:', data.descricao);
+
+        const dadosNovos = {
+            nome: novoNome.trim(),
+            descricao: (novaDescricao || '').trim(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        await firebase
+            .firestore()
+            .collection(config.collection)
+            .doc(itemId)
+            .update(dadosNovos);
+
+        // Salvar log de edição
+        if (typeof window.salvarLogAlteracao === 'function') {
+            await window.salvarLogAlteracao(itemId, data, {...data, ...dadosNovos}, 'edit', `Editado no módulo ${config.title}`);
+        }
+
+        alert('✅ Item atualizado!');
+        carregarDadosAba(tabId);
+    } catch (error) {
+        alert('❌ Erro: ' + error.message);
+    }
+}
+
+async function excluirItem(tabId, itemId) {
+    if (!confirm('Excluir este item?')) {
+        return;
+    }
+
+    const config = GESTAO_NOVA_CONFIG[tabId];
+
+    try {
+        // Buscar dados antes de excluir para o histórico
+        const docSnapshot = await firebase.firestore().collection(config.collection).doc(itemId).get();
+        const dadosAntigos = docSnapshot.exists ? docSnapshot.data() : {};
+        
+        await firebase.firestore().collection(config.collection).doc(itemId).delete();
+        
+        // Salvar log de exclusão
+        if (typeof window.salvarLogAlteracao === 'function') {
+            await window.salvarLogAlteracao(itemId, dadosAntigos, {}, 'delete', `Excluído do módulo ${config.title}`);
+        }
+        
+        alert('✅ Item excluído!');
+        carregarDadosAba(tabId);
+    } catch (error) {
+        alert('❌ Erro: ' + error.message);
+    }
+}
+
+// ============= EXPORTAR FUNÇÕES =============
+window.mostrarNovaAba = mostrarNovaAba;
+window.adicionarItem = adicionarItem;
+window.salvarItem = salvarItem;
+window.editarItem = editarItem;
+window.excluirItem = excluirItem;
+
+// ============= DEBUG =============
+window.debugGestaoNova = function () {
+    console.log('🔍 [DEBUG] Sistema iniciado:', sistemaIniciado);
+    console.log('🔍 [DEBUG] Firebase:', !!(window.firebase && firebase.firestore));
+
+    const dados = extrairDadosTabela();
+    console.log('🔍 [DEBUG] Dados extraídos:', dados.length);
+
+    if (dados.length > 0) {
+        console.log('🔍 [DEBUG] Amostra:', {
+            Projeto: dados[0].Projeto,
+            SubProjeto: dados[0]['Sub Projeto'],
+            TipoAcao: dados[0]['Tipo de Ação'],
+            Supervisor: dados[0].Supervisor,
+            Equipe: dados[0].EQUIPE,
+            Cidade: dados[0].Cidade
+        });
+
+        // Debug específico para tipos de ação
+        const tiposUnicos = [
+            ...new Set(dados.map(d => d['Tipo de Ação']).filter(t => t && t.trim()))
+        ];
+        console.log('🔍 [DEBUG] Tipos de Ação únicos:', tiposUnicos);
+    }
+
+    return { sistemaIniciado, dados: dados.length };
+};
+
+window.debugTiposAcao = function () {
+    console.log('🔍 [DEBUG-TIPOS] === DEBUG ESPECÍFICO TIPOS DE AÇÃO ===');
+
+    // Verificar DOM primeiro
+    console.log('🔍 [DEBUG-TIPOS] DOM Ready State:', document.readyState);
+    console.log('🔍 [DEBUG-TIPOS] Sistema iniciado:', sistemaIniciado);
+
+    // Verificar todos os elementos TableBody
+    const allTableBodies = document.querySelectorAll('[id*="TableBody"]');
+    console.log(
+        '🔍 [DEBUG-TIPOS] Todos os TableBodies:',
+        Array.from(allTableBodies).map(el => el.id)
+    );
+
+    // Verificar especificamente o elemento que procuramos
+    const tbody = document.getElementById('tiposAcaoTableBody');
+    console.log('🔍 [DEBUG-TIPOS] Tbody tiposAcaoTableBody existe:', !!tbody);
+
+    if (tbody) {
+        console.log('🔍 [DEBUG-TIPOS] Tbody parent:', tbody.parentElement?.tagName);
+        console.log('🔍 [DEBUG-TIPOS] Tbody className:', tbody.className);
+        console.log('🔍 [DEBUG-TIPOS] HTML atual do tbody:', tbody.innerHTML.slice(0, 200));
+    }
+
+    // Verificar dados da tabela
+    const dados = extrairDadosTabela();
+    const tiposAcao = dados.map(d => d['Tipo de Ação']).filter(t => t && t.trim());
+    const tiposUnicos = [...new Set(tiposAcao)];
+
+    console.log('🔍 [DEBUG-TIPOS] Total dados extraídos:', dados.length);
+    console.log('🔍 [DEBUG-TIPOS] Tipos de ação encontrados:', tiposAcao.length);
+    console.log('🔍 [DEBUG-TIPOS] Tipos únicos:', tiposUnicos);
+    console.log('🔍 [DEBUG-TIPOS] Primeiro tipo:', tiposAcao[0]);
+
+    // Tentar carregar manualmente
+    console.log('🔍 [DEBUG-TIPOS] Tentando carregar manualmente...');
+    carregarDadosAba('tipos-acao');
+
+    return {
+        domReady: document.readyState,
+        sistemaIniciado,
+        tbodyExists: !!tbody,
+        dados: dados.length,
+        tipos: tiposUnicos,
+        allTableBodies: Array.from(allTableBodies).map(el => el.id)
+    };
+};
+
+// ============= FUNÇÃO PARA CRIAR DADOS DE EXEMPLO =============
+async function criarDadosExemplo() {
+    console.log('🎯 [EXEMPLO] Criando dados de exemplo para gestão...');
+    
+    const dadosExemplo = {
+        'nova_gestao_projetos': [
+            { nome: 'MDU RESIDENCIAL', descricao: 'Projetos de infraestrutura residencial', status: 'ATIVO' },
+            { nome: 'FIBRA CORPORATIVA', descricao: 'Projetos de conectividade empresarial', status: 'ATIVO' },
+            { nome: 'EXPANSÃO URBANA', descricao: 'Expansão de rede em áreas urbanas', status: 'ATIVO' }
+        ],
+        'nova_gestao_subprojetos': [
+            { nome: 'INSTALAÇÃO', descricao: 'Sub-projeto de instalação', status: 'ATIVO' },
+            { nome: 'MANUTENÇÃO', descricao: 'Sub-projeto de manutenção', status: 'ATIVO' },
+            { nome: 'UPGRADE', descricao: 'Sub-projeto de upgrade', status: 'ATIVO' }
+        ],
+        'nova_gestao_tipos_acao': [
+            { nome: 'INSTALAÇÃO NOVA', descricao: 'Instalação de nova infraestrutura', status: 'ATIVO' },
+            { nome: 'REPARO', descricao: 'Reparo de equipamentos', status: 'ATIVO' },
+            { nome: 'SURVEY', descricao: 'Levantamento técnico', status: 'ATIVO' }
+        ],
+        'nova_gestao_supervisores': [
+            { nome: 'João Silva', descricao: 'Supervisor Técnico Senior', status: 'ATIVO' },
+            { nome: 'Maria Santos', descricao: 'Supervisora de Campo', status: 'ATIVO' },
+            { nome: 'Carlos Oliveira', descricao: 'Supervisor de Projetos', status: 'ATIVO' }
+        ],
+        'nova_gestao_equipes': [
+            { nome: 'EQUIPE A', descricao: 'Equipe de instalação residencial', status: 'ATIVO' },
+            { nome: 'EQUIPE B', descricao: 'Equipe de manutenção', status: 'ATIVO' },
+            { nome: 'EQUIPE C', descricao: 'Equipe de projetos especiais', status: 'ATIVO' }
+        ],
+        'nova_gestao_cidades': [
+            { nome: 'São Paulo', descricao: 'Capital de São Paulo', status: 'ATIVO' },
+            { nome: 'Rio de Janeiro', descricao: 'Capital do Rio de Janeiro', status: 'ATIVO' },
+            { nome: 'Belo Horizonte', descricao: 'Capital de Minas Gerais', status: 'ATIVO' }
+        ]
+    };
+    
+    for (const [collection, items] of Object.entries(dadosExemplo)) {
+        try {
+            for (const item of items) {
+                const docData = {
+                    ...item,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    autoSaved: true,
+                    isExample: true
+                };
+                
+                await firebase.firestore().collection(collection).add(docData);
+                console.log(`✅ Criado: ${item.nome} → ${collection}`);
+            }
+        } catch (error) {
+            console.error(`❌ Erro ao criar dados de exemplo para ${collection}:`, error);
+        }
+    }
+    
+    console.log('🎉 Dados de exemplo criados com sucesso!');
+}
+
+// ============= FUNÇÃO DE DEBUG COMPLETA =============
+window.testarDadosGestaoCompleto = function () {
+    console.log('🧪 [TESTE-GESTAO] === TESTE COMPLETO DE DADOS ===');
+
+    console.log('1️⃣ Verificando FirebaseTableSystem...');
+    if (window.FirebaseTableSystem && window.FirebaseTableSystem.getData) {
+        const dados = window.FirebaseTableSystem.getData();
+        console.log('✅ FirebaseTableSystem.getData():', dados?.length || 'vazio');
+        if (dados && dados.length > 0) {
+            console.log('📄 Primeiro registro:', dados[0]);
+            console.log('📄 Campos disponíveis:', Object.keys(dados[0]));
+        }
+    } else {
+        console.log('❌ FirebaseTableSystem não disponível');
+    }
+
+    console.log('2️⃣ Verificando window.currentFirebaseData...');
+    if (window.currentFirebaseData) {
+        console.log('✅ currentFirebaseData:', window.currentFirebaseData.length);
+        if (window.currentFirebaseData.length > 0) {
+            console.log('📄 Primeiro registro:', window.currentFirebaseData[0]);
+        }
+    } else {
+        console.log('❌ currentFirebaseData não disponível');
+    }
+
+    console.log('3️⃣ Testando função de extração...');
+    const dadosExtraidos = extrairTodosOsDadosCompletos();
+    console.log('📊 Dados extraídos:', dadosExtraidos.length);
+    if (dadosExtraidos.length > 0) {
+        console.log('📄 Exemplo de dados extraídos:', dadosExtraidos[0]);
+    }
+
+    console.log('4️⃣ Testando carregar dados da aba projetos...');
+    try {
+        carregarDadosAba('projetos');
+    } catch (error) {
+        console.error('❌ Erro ao carregar dados da aba:', error);
+    }
+
+    console.log('🧪 [TESTE-GESTAO] === FIM DO TESTE ===');
+    console.log(
+        '💡 Para testar: Vá para Cadastro de Endereços primeiro, depois volte e execute este teste'
+    );
+};
+
+// ============= TESTE COMPLETO DO SISTEMA ATUALIZADO =============
+window.testarSistemaCompleto = async function () {
+    console.log('🚀 [TESTE-COMPLETO] === TESTE COMPLETO DO SISTEMA ATUALIZADO ===');
+
+    console.log('1️⃣ Verificando estado do sistema...');
+    console.log('   ✓ Sistema iniciado:', sistemaIniciado);
+    console.log('   ✓ Firebase disponível:', !!(window.firebase && firebase.firestore));
+
+    console.log('2️⃣ Testando extração de dados da tabela DOM...');
+    const dadosExtraidos = extrairTodosOsDadosCompletos();
+    console.log(`   ✓ Dados extraídos: ${dadosExtraidos.length} registros`);
+
+    if (dadosExtraidos.length > 0) {
+        console.log('   ✓ Exemplo de dados:', dadosExtraidos[0]);
+
+        // Teste específico para cada configuração
+        for (const [_tabId, config] of Object.entries(GESTAO_NOVA_CONFIG)) {
+            const valoresUnicos = [
+                ...new Set(
+                    dadosExtraidos
+                        .map(item => item[config.column])
+                        .filter(valor => valor && valor.trim() !== '')
+                )
+            ];
+            console.log(`   ✓ ${config.displayName}: ${valoresUnicos.length} valores únicos`);
+        }
+    } else {
+        console.warn('   ⚠️ Nenhum dado extraído - vá para Cadastro de Endereços primeiro');
+        return { status: 'error', message: 'Nenhum dado na tabela' };
+    }
+
+    console.log('3️⃣ Testando coleções do Firebase...');
+    try {
+        await verificarColecoes();
+        console.log('   ✅ Verificação de coleções concluída');
+    } catch (error) {
+        console.error('   ❌ Erro na verificação de coleções:', error);
+    }
+
+    console.log('4️⃣ Testando carregamento de uma aba (projetos)...');
+    try {
+        await carregarDadosAba('projetos');
+        console.log('   ✅ Aba projetos carregada com sucesso');
+    } catch (error) {
+        console.error('   ❌ Erro ao carregar aba projetos:', error);
+    }
+
+    console.log('🎯 [TESTE-COMPLETO] Sistema pronto para uso!');
+    console.log('💡 Para usar: Acesse qualquer aba do módulo de Gestão');
+
+    return {
+        status: 'success',
+        dadosExtraidos: dadosExtraidos.length,
+        sistemaIniciado,
+        firebaseDisponivel: !!(window.firebase && firebase.firestore)
+    };
+};
+
+// ============= FUNÇÃO PARA TESTAR RAPIDAMENTE =============
+window.testarGestaoRapido = async function(tabId = 'projetos') {
+    console.log(`🧪 [TESTE-RÁPIDO] Testando aba ${tabId}...`);
+    
+    if (!sistemaIniciado) {
+        console.log('⚠️ Sistema não iniciado, aguarde...');
+        return;
+    }
+    
+    try {
+        await mostrarNovaAba(tabId);
+        console.log(`✅ Teste da aba ${tabId} concluído`);
+    } catch (error) {
+        console.error(`❌ Erro no teste:`, error);
+    }
+};
+
+console.log('✅ [GESTAO-NOVA] Sistema atualizado - carrega dados DIRETO do Firestore!');
+console.log('🧪 TESTE RÁPIDO: testarGestaoRapido("projetos")');
+console.log('🧪 TESTE COMPLETO: testarSistemaCompleto()');
+console.log('🧪 Debug: debugGestaoNova()');
+console.log('💡 NOVO: Não depende mais da tabela de endereços!');

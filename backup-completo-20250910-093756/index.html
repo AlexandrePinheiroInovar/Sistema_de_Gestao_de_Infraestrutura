@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistema de Análises</title>
+    <link rel="stylesheet" href="src/css/styles.css">
+    <link rel="icon" type="image/png" href="src/assets/images/Inovar-Telecom-Logo-Site_.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="login-body">
+    <div class="login-center-wrapper">
+        <div class="login-card-modern">
+            <div style="text-align:center; margin-bottom: 18px;">
+                <img src="src/assets/images/Inovar-Telecom-Logo-Site_.png" alt="Logo Inovar Telecom" style="max-width: 120px;">
+            </div>
+            <form id="loginForm" class="login-form-modern">
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <span class="input-icon"><i class="fas fa-user"></i></span>
+                        <input type="text" id="username" name="username" placeholder="Usuário ou e-mail" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <span class="input-icon"><i class="fas fa-lock"></i></span>
+                        <input type="password" id="password" name="password" placeholder="Senha" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword('password')"><i class="fas fa-eye"></i></button>
+                    </div>
+                </div>
+                <div class="form-options-modern">
+                    <label class="remember-me">
+                        <input type="checkbox" id="remember">
+                        <span class="checkbox-custom"></span>
+                        Lembrar de mim
+                    </label>
+                    <a href="#" class="forgot-password" id="forgotPasswordLink">Esqueceu a senha?</a>
+                </div>
+                <button type="submit" class="login-btn-modern">Entrar</button>
+            </form>
+            <div class="auth-switch-modern">
+                <span>Não possui uma conta?</span> <a href="cadastro.html" class="auth-link">Criar Conta</a>
+            </div>
+            <div class="login-footer-modern">
+                <span>© 2025 Sistema MDU</span>
+                <a href="#">Suporte</a> · <a href="#">Política de Privacidade</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Esqueci minha senha -->
+    <div id="forgotPasswordModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 520px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-unlock-alt"></i> Redefinir senha</h3>
+                <span class="close" onclick="closeForgotPasswordModal()">&times;</span>
+            </div>
+            <form id="forgotPasswordForm" class="modal-form">
+                <div class="form-grid">
+                    <div class="form-section">
+                        <p style="margin: 0 0 12px 0; color:#64748b; font-size:13px">Crie uma nova senha segura. Você poderá usá-la no próximo login.</p>
+                        <div class="form-group">
+                            <label for="fpEmail">E-mail (opcional)</label>
+                            <input type="email" id="fpEmail" placeholder="email@exemplo.com">
+                            <small class="input-hint">Usado para registro; não enviamos e-mail nesta etapa.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="fpNewPassword">Nova senha</label>
+                            <input type="password" id="fpNewPassword" placeholder="Mínimo 6 caracteres" required>
+                            <div class="strength-meter" aria-hidden="true">
+                                <div class="strength-bar" id="fpStrengthBar"></div>
+                            </div>
+                            <small class="input-hint" id="fpStrengthText">Força: —</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="fpConfirmPassword">Confirmar nova senha</label>
+                            <input type="password" id="fpConfirmPassword" placeholder="Repita a nova senha" required>
+                            <small class="input-hint" id="fpError" style="display:none; color:#ef4444">As senhas não coincidem.</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeForgotPasswordModal()"><i class="fas fa-times"></i> Cancelar</button>
+                    <button type="submit" class="btn-save"><i class="fas fa-floppy-disk"></i> Redefinir</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+    
+    <!-- Firebase Sistema Unificado (PRODUCTION ONLY) -->
+    <script src="src/js/firebase-complete.js"></script>
+    <script src="src/js/form-handler.js"></script>
+</body>
+</html>

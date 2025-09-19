@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Gráficos</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+</head>
+<body>
+    <h1>🔍 Diagnóstico dos Gráficos</h1>
+    
+    <div id="diagnostico" style="padding: 20px; background: #f0f0f0; margin: 20px 0;">
+        <h2>📊 Status das Dependências</h2>
+        <div id="status-dependencias">Verificando...</div>
+    </div>
+
+    <div id="charts-rankings-container" style="padding: 20px;">
+        <div class="loading-charts">
+            <p>📊 Carregando gráficos e rankings...</p>
+        </div>
+    </div>
+
+    <!-- Carregamento dos scripts do sistema -->
+    <script src="src/js/dashboard-charts-novo.js?v=1.0"></script>
+    <script src="src/js/dashboard-charts-implementacao.js?v=1.0"></script>
+
+    <script>
+        console.log('🚀 [TESTE] Iniciando teste de diagnóstico...');
+
+        function diagnosticar() {
+            console.log('🔍 [TESTE] Executando diagnóstico completo...');
+            
+            const status = document.getElementById('status-dependencias');
+            let html = '';
+
+            // Verificar Chart.js
+            if (typeof Chart !== 'undefined') {
+                html += '✅ Chart.js carregado<br>';
+                console.log('✅ Chart.js versão:', Chart.version);
+            } else {
+                html += '❌ Chart.js NÃO carregado<br>';
+                console.error('❌ Chart.js não está disponível');
+            }
+
+            // Verificar ChartDataLabels
+            if (typeof ChartDataLabels !== 'undefined') {
+                html += '✅ ChartDataLabels carregado<br>';
+            } else {
+                html += '❌ ChartDataLabels NÃO carregado<br>';
+                console.error('❌ ChartDataLabels não está disponível');
+            }
+
+            // Verificar ChartsDashboard
+            if (typeof ChartsDashboard !== 'undefined') {
+                html += '✅ ChartsDashboard carregado<br>';
+                
+                if (typeof ChartsDashboard.inicializar === 'function') {
+                    html += '✅ ChartsDashboard.inicializar disponível<br>';
+                } else {
+                    html += '❌ ChartsDashboard.inicializar NÃO é função<br>';
+                }
+                
+                if (typeof ChartsDashboard.gerarDadosMock === 'function') {
+                    html += '✅ ChartsDashboard.gerarDadosMock disponível<br>';
+                } else {
+                    html += '❌ ChartsDashboard.gerarDadosMock NÃO disponível<br>';
+                }
+            } else {
+                html += '❌ ChartsDashboard NÃO carregado<br>';
+                console.error('❌ ChartsDashboard não está disponível');
+            }
+
+            status.innerHTML = html;
+
+            // Tentar inicializar se tudo estiver OK
+            if (typeof Chart !== 'undefined' && 
+                typeof ChartsDashboard !== 'undefined' && 
+                typeof ChartsDashboard.inicializar === 'function') {
+                
+                console.log('🚀 [TESTE] Tentando inicializar gráficos...');
+                
+                setTimeout(() => {
+                    try {
+                        ChartsDashboard.inicializar();
+                        console.log('✅ [TESTE] Inicialização executada!');
+                    } catch (error) {
+                        console.error('❌ [TESTE] Erro na inicialização:', error);
+                        status.innerHTML += '<br>❌ <strong>ERRO na inicialização:</strong> ' + error.message;
+                    }
+                }, 1000);
+            } else {
+                console.error('❌ [TESTE] Não é possível inicializar - dependências faltando');
+                status.innerHTML += '<br>❌ <strong>Não é possível inicializar - dependências faltando</strong>';
+            }
+        }
+
+        // Executar diagnóstico após um tempo
+        setTimeout(diagnosticar, 2000);
+        setTimeout(diagnosticar, 5000);
+    </script>
+</body>
+</html>

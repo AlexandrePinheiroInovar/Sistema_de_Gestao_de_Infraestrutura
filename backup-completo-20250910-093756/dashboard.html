@@ -1,0 +1,1963 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Análises - Dashboard</title>
+    <link rel="stylesheet" href="src/css/styles.css?v=1.3&t=2025081813">
+    <link rel="stylesheet" href="src/css/checkbox-dropdown.css?v=1.3&t=2025081813">
+    <link rel="stylesheet" href="src/css/gestao-renovada.css?v=1.0&t=2025082121">
+    <link rel="stylesheet" href="src/css/user-dropdown.css?v=1.0&t=2025082921">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="src/assets/images/Inovar-Telecom-Logo-Site_.png">
+</head>
+<body>
+    <!-- Modal de Notificação Personalizado -->
+    <div id="customNotification" class="custom-notification">
+        <div class="notification-content">
+            <div class="notification-icon">
+                <span id="notificationIcon">✅</span>
+            </div>
+            <div class="notification-body">
+                <h3 id="notificationTitle">Sucesso!</h3>
+                <p id="notificationMessage">Operação realizada com sucesso.</p>
+            </div>
+            <div class="notification-actions">
+                <button id="notificationConfirm" class="btn-confirm">OK</button>
+                <button id="notificationCancel" class="btn-cancel" style="display: none;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+        
+                <div class="sidebar-logo">
+                    <img src="src/assets/images/Inovar-Telecom-Logo-Site_.png" alt="Logo Inovar Telecom" style="max-width: 150px; display: block; margin: 0 auto;">
+                </div>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="#" onclick="showSection('inicio', event); return false;" class="active">
+                    <i class="fas fa-home"></i>
+                    <span>Início</span>
+                </a></li>
+                <li><a href="#" onclick="showSection('infraestrutura', event); return false;">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a></li>
+                <li><a href="#" onclick="showSection('enderecos', event); return false;">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Cadastro de Endereços</span>
+                </a></li>
+                <li><a href="#" onclick="showSection('gestao-projetos', event); return false;">
+                    <i class="fas fa-project-diagram"></i>
+                    <span>Gestão de Projetos</span>
+                </a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <!-- Sistema de Dropdown do Usuário - NOVO -->
+                <div class="user-dropdown-container" id="userDropdownContainer">
+                    <button class="user-dropdown-trigger" id="userDropdownTrigger">
+                        <div class="user-avatar">
+                            <img id="userAvatar" src="https://ui-avatars.com/api/?name=User&background=667eea&color=fff&size=40" alt="Avatar">
+                        </div>
+                        <div class="user-info">
+                            <span class="user-name" id="userDisplayName">Carregando...</span>
+                            <span class="user-role" id="userDisplayRole">USER</span>
+                        </div>
+                        <i class="fas fa-chevron-down user-chevron" id="userChevron"></i>
+                    </button>
+                    
+                    <div class="user-dropdown-menu" id="userDropdownMenu">
+                        <div class="dropdown-user-header">
+                            <div class="dropdown-user-avatar">
+                                <img id="dropdownUserAvatar" src="https://ui-avatars.com/api/?name=User&background=667eea&color=fff&size=50" alt="Avatar">
+                            </div>
+                            <div class="dropdown-user-info">
+                                <div class="dropdown-user-name" id="dropdownUserName">Usuário</div>
+                                <div class="dropdown-user-email" id="dropdownUserEmail">user@email.com</div>
+                            </div>
+                        </div>
+                        
+                        <div class="dropdown-separator"></div>
+                        
+                        <div class="dropdown-options">
+                            <button class="dropdown-option profile-option" id="profileOption">
+                                <i class="fas fa-user"></i>
+                                <span>Perfil</span>
+                            </button>
+                            <button class="dropdown-option colorblind-option" id="colorblindOption">
+                                <i class="fas fa-eye"></i>
+                                <span id="colorblindText">Modo Daltônico</span>
+                            </button>
+                            <div class="dropdown-separator"></div>
+                            <button class="dropdown-option logout-option" id="logoutOption">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Sair</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="top-bar-content">
+                    <div class="top-bar-decoration">
+                        <div class="decoration-line"></div>
+                        <div class="decoration-dot"></div>
+                    </div>
+                    <h1 id="section-title">Início</h1>
+                    <div class="top-bar-actions">
+                        <div class="status-indicator">
+                            <span class="status-dot"></span>
+                            <span class="status-text">Online</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="content-area">
+
+                
+                <div id="inicio" class="section active">
+                    <div class="welcome-hero">
+                        <div class="hero-particles"></div>
+                        <div class="hero-content">
+                            <div class="hero-icon-container">
+                                <span class="icon-glow"></span>
+                                <span class="hero-icon">📊</span>
+                            </div>
+                            <h1 class="hero-title title-main">Sistema de Gestão de Infraestrutura</h1>
+                            <span class="title-sub">Infraestrutura & Performance</span>
+                            <p class="hero-subtitle">Plataforma completa para análise de dados de infraestrutura com visualizações em tempo real</p>
+                        </div>
+                        <div class="hero-decoration">
+                            <span class="decoration-circle circle-1"></span>
+                            <span class="decoration-circle circle-2"></span>
+                            <span class="decoration-circle circle-3"></span>
+                        </div>
+                    </div>
+
+                    <section class="features-section">
+                        <div class="section-header-intro">
+                            <h2 class="section-title">Funcionalidades</h2>
+                            <p class="section-description">Tudo o que você precisa para monitorar, analisar e exportar dados de infraestrutura de forma simples e visual.</p>
+                        </div>
+                        <div class="features-grid">
+                            <div class="feature-card premium">
+                                <div class="feature-icon-wrapper"><span class="feature-icon">🏗️</span></div>
+                                <h3>Início</h3>
+                                <p>Visão geral completa com todos os gráficos e análises integradas para acompanhamento em tempo real.</p>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon-wrapper"><span class="feature-icon">🔍</span></div>
+                                <h3>Filtros Inteligentes</h3>
+                                <p>Sistema avançado de filtros por projeto, supervisor e período para análises específicas.</p>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon-wrapper"><span class="feature-icon">⚡</span></div>
+                                <h3>Dados em Tempo Real</h3>
+                                <p>Carregamento automático de dados direto da planilha Google Sheets com atualização contínua.</p>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon-wrapper"><span class="feature-icon">📁</span></div>
+                                <h3>Exportação Completa</h3>
+                                <p>Exporte dados filtrados em formato CSV para análises externas e relatórios personalizados.</p>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon-wrapper"><span class="feature-icon">📈</span></div>
+                                <h3>Análises Visuais</h3>
+                                <p>Gráficos interativos com Chart.js para visualização clara e intuitiva dos dados.</p>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon-wrapper"><span class="feature-icon">👥</span></div>
+                                <h3>Gestão de Equipes</h3>
+                                <p>Acompanhe a produtividade das equipes e supervisores com métricas detalhadas.</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="quick-start-section">
+                        <div class="start-header">
+                            <span class="start-icon">🚀</span>
+                            <h3>Como Começar</h3>
+                            <p>Siga os passos abaixo para explorar todo o potencial do sistema:</p>
+                        </div>
+                        <div class="steps-timeline">
+                            <div class="step-card">
+                                <div class="step-indicator">
+                                    <span class="step-number">1</span>
+                                    <span class="step-line"></span>
+                                </div>
+                                <div class="step-details">
+                                    <h4>Acesse a Infraestrutura</h4>
+                                    <p>Clique em <b>Infraestrutura</b> no menu lateral para ver todos os gráficos.</p>
+                                </div>
+                            </div>
+                            <div class="step-card">
+                                <div class="step-indicator">
+                                    <span class="step-number">2</span>
+                                    <span class="step-line"></span>
+                                </div>
+                                <div class="step-details">
+                                    <h4>Configure os Filtros</h4>
+                                    <p>Use os filtros por projeto, supervisor e período para análises específicas.</p>
+                                </div>
+                            </div>
+                            <div class="step-card">
+                                <div class="step-indicator">
+                                    <span class="step-number">3</span>
+                                </div>
+                                <div class="step-details">
+                                    <h4>Explore os Dados</h4>
+                                    <p>Navegue pelos gráficos interativos e acompanhe as métricas em tempo real.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+
+
+
+                </div>
+                
+                <div id="infraestrutura" class="section">
+                    <div class="infra-hero">
+                        <div class="infra-hero-content">
+                            <span class="infra-hero-icon">🏗️</span>
+                            <h2 class="infra-hero-title">Dashboard - Infraestrutura</h2>
+                            <span class="infra-hero-badge">Atualização Automática <span class="status-dot"></span></span>
+                            <p class="infra-hero-desc">Acompanhe a produtividade, desempenho e evolução das equipes MDU em tempo real.<br>Utilize os filtros para análises detalhadas e exporte relatórios facilmente.</p>
+                        </div>
+                        <div class="infra-hero-decoration"></div>
+                    </div>
+                    <div class="section-header">
+                        <div class="header-title">
+                            <!-- h2 removido, já está no hero -->
+                        </div>
+                    </div>
+                    <hr class="infra-divider" />
+                    
+                    <!-- Filtros da Infraestrutura -->
+                    <div class="infra-filters-container">
+                        <div class="filters-header">
+                            <h4>🔍 Filtros de Análise</h4>
+                            <p>Filtre os dados para análises específicas</p>
+                        </div>
+                        
+                        <div class="filters-grid">
+                            <div class="filter-group">
+                                <label for="infraFilterProjeto">Projeto</label>
+                                <select id="infraFilterProjeto" multiple onchange="applyInfraFilters()">
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="infraFilterSubProjeto">Sub-Projeto</label>
+                                <select id="infraFilterSubProjeto" multiple onchange="applyInfraFilters()">
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="infraFilterEquipe">Equipe</label>
+                                <select id="infraFilterEquipe" multiple onchange="applyInfraFilters()">
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="infraFilterStatus">Status</label>
+                                <select id="infraFilterStatus" multiple onchange="applyInfraFilters()">
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="infraFilterCidade">Cidade</label>
+                                <select id="infraFilterCidade" multiple onchange="applyInfraFilters()">
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="infraFilterSupervisor">Supervisor</label>
+                                <select id="infraFilterSupervisor" multiple onchange="applyInfraFilters()">
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="infraFilterTipoAcao">Tipo de Ação</label>
+                                <select id="infraFilterTipoAcao" multiple onchange="applyInfraFilters()">
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="infraFilterCondominio">Condomínio</label>
+                                <select id="infraFilterCondominio" multiple onchange="applyInfraFilters()">
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="infraFilterJustificativa">Justificativa</label>
+                                <select id="infraFilterJustificativa" multiple>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="infraFilterNodeGerencial">Node Gerencial</label>
+                                <select id="infraFilterNodeGerencial" multiple>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="infraFilterAreaTecnica">Área Técnica</label>
+                                <select id="infraFilterAreaTecnica" multiple>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group periodo-filter">
+                                <label for="infraFilterDataRecebimento">Período de Recebimento</label>
+                                <div class="periodo-inputs">
+                                    <input type="date" id="infraFilterDataInicio" placeholder="Data Início">
+                                    <span class="periodo-separator">até</span>
+                                    <input type="date" id="infraFilterDataFim" placeholder="Data Fim">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- BOTÃO LIMPAR REMOVIDO - Sistema unificado cria automaticamente -->
+                        <div id="unified-filter-actions">
+                            <!-- Botão será inserido aqui pelo sistema unificado -->
+                        </div>
+                    </div>
+                    
+                    <!-- Cards de Estatísticas da Infraestrutura -->
+                    <div class="infra-stats-cards">
+                        <div class="infra-stat-card blue">
+                            <div class="stat-content">
+                                <span class="stat-label">Total de Registros</span>
+                                <span class="stat-value" id="infraStatTotalRegistros">0</span>
+                                <span class="stat-desc">Registros cadastrados</span>
+                            </div>
+                            <div class="stat-icon">📋</div>
+                        </div>
+                        <div class="infra-stat-card green">
+                            <div class="stat-content">
+                                <span class="stat-label">Endereços Distintos</span>
+                                <span class="stat-value" id="infraStatEnderecosDistintos">0</span>
+                                <span class="stat-desc">Endereços únicos</span>
+                            </div>
+                            <div class="stat-icon">🏠</div>
+                        </div>
+                        <div class="infra-stat-card orange">
+                            <div class="stat-content">
+                                <span class="stat-label">Equipes Distintas</span>
+                                <span class="stat-value" id="infraStatEquipesDistintas">0</span>
+                                <span class="stat-desc">Equipes únicas</span>
+                            </div>
+                            <div class="stat-icon">👥</div>
+                        </div>
+                        <div class="infra-stat-card purple">
+                            <div class="stat-content">
+                                <span class="stat-label">Produtividade</span>
+                                <span class="stat-value" id="infraStatProdutividade">0%</span>
+                                <span class="stat-desc">Total / Produtiva</span>
+                            </div>
+                            <div class="stat-icon">⚡</div>
+                        </div>
+                        <div class="infra-stat-card red">
+                            <div class="stat-content">
+                                <span class="stat-label">Tempo Médio de Execução</span>
+                                <span class="stat-value" id="infraStatTempoMedio">0</span>
+                                <span class="stat-desc">Dias (Recebimento → Final)</span>
+                            </div>
+                            <div class="stat-icon">⏱️</div>
+                        </div>
+
+                        <!-- Novo: Tempo Médio Sala Técnica (Recebimento → Início) -->
+                        <div class="infra-stat-card red">
+                            <div class="stat-content">
+                                <span class="stat-label">Tempo Médio Sala Técnica</span>
+                                <span class="stat-value" id="infraStatTempoSalaTecnica">0</span>
+                                <span class="stat-desc">Dias (Recebimento → Início)</span>
+                            </div>
+                            <div class="stat-icon">🧰</div>
+                        </div>
+
+                        <!-- Novo: Tempo Médio Técnicos (Início → Final) -->
+                        <div class="infra-stat-card red">
+                            <div class="stat-content">
+                                <span class="stat-label">Tempo Médio Técnicos</span>
+                                <span class="stat-value" id="infraStatTempoTecnicos">0</span>
+                                <span class="stat-desc">Dias (Início → Final)</span>
+                            </div>
+                            <div class="stat-icon">👷</div>
+                        </div>
+                    </div>
+                    
+                    <!-- ============= TABELA DE DADOS FILTRADOS ============= -->
+                    <div class="filtered-data-section">
+                        <div class="section-header-table">
+                            <h3>📋 Resumo de Dados Filtrados</h3>
+                            <p>Visualize os dados de acordo com os filtros aplicados</p>
+                            <div class="table-actions">
+                                <button id="refreshFilteredData" class="btn-refresh" onclick="refreshFilteredTable()">
+                                    <i class="fas fa-sync-alt"></i>
+                                    Atualizar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="filtered-table-container">
+                            <div class="table-stats-info">
+                                <span id="filteredTableCount">0 registros encontrados</span>
+                                <span id="filteredTableStatus">Aguardando dados...</span>
+                            </div>
+                            
+                            <div class="filtered-table-wrapper">
+                                <table class="filtered-table" id="filteredDataTable">
+                                    <thead>
+                                        <tr>
+                                            <th class="sortable" data-column="pep" onclick="sortFilteredTable('pep')">
+                                                PEP <i class="fas fa-sort"></i>
+                                            </th>
+                                            <th class="sortable" data-column="nodeGerencial" onclick="sortFilteredTable('nodeGerencial')">
+                                                NODE GERENCIAL <i class="fas fa-sort"></i>
+                                            </th>
+                                            <th class="sortable" data-column="status" onclick="sortFilteredTable('status')">
+                                                STATUS <i class="fas fa-sort"></i>
+                                            </th>
+                                            <th class="sortable" data-column="observacao" onclick="sortFilteredTable('observacao')">
+                                                OBSERVAÇÃO <i class="fas fa-sort"></i>
+                                            </th>
+                                            <th class="sortable" data-column="justificativa" onclick="sortFilteredTable('justificativa')">
+                                                JUSTIFICATIVA <i class="fas fa-sort"></i>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="filteredTableBody">
+                                        <tr class="no-data-row">
+                                            <td colspan="5" class="no-data-cell">
+                                                <div class="no-data-content">
+                                                    <i class="fas fa-filter"></i>
+                                                    <p>Aplicue filtros para visualizar os dados</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Paginação da nova tabela -->
+                            <div class="filtered-table-pagination" id="filteredTablePagination" style="display: none;">
+                                <div class="pagination-info">
+                                    <span id="paginationInfo">Página 1 de 1</span>
+                                    <select id="pageSize" onchange="changePageSize()">
+                                        <option value="10">10 por página</option>
+                                        <option value="25" selected>25 por página</option>
+                                        <option value="50">50 por página</option>
+                                        <option value="100">100 por página</option>
+                                    </select>
+                                </div>
+                                <div class="pagination-controls">
+                                    <button id="firstPage" onclick="goToPage(1)" disabled>
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </button>
+                                    <button id="prevPage" onclick="goToPage(currentPage - 1)" disabled>
+                                        <i class="fas fa-angle-left"></i>
+                                    </button>
+                                    <span id="pageNumbers"></span>
+                                    <button id="nextPage" onclick="goToPage(currentPage + 1)" disabled>
+                                        <i class="fas fa-angle-right"></i>
+                                    </button>
+                                    <button id="lastPage" onclick="goToPage(totalPages)" disabled>
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============= ÁREA DE GRÁFICOS E RANKINGS - SISTEMA NOVO ============= -->
+                    <div id="charts-rankings-container">
+                        <!-- Conteúdo será inserido dinamicamente pelo novo sistema -->
+                        <div class="loading-charts">
+                            <p>📊 Carregando gráficos e rankings...</p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Seção CRUD de Endereços -->
+                <div id="enderecos" class="section">
+                    <!-- Cards removidos - disponíveis apenas no Dashboard -->
+                    <div class="crud-header">
+                        <div class="crud-title">
+                            <h2>🏠 Cadastro de Endereços</h2>
+                            <p>Gerencie todos os endereços do sistema MDU</p>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn-primary" onclick="novoEnderecoLimpo()">
+                                <span class="btn-icon">➕</span>
+                                Novo Endereço
+                            </button>
+                            <button class="btn-secondary" onclick="visualizarHistoricoGeral()" style="background-color: #6f42c1; color: white;">
+                                <span class="btn-icon">📋</span>
+                                Histórico Geral
+                            </button>
+                            <div class="upload-excel-container">
+                                <input type="file" id="novoExcelUpload" accept=".xlsx,.xls" style="display: none;">
+                                <button class="btn-novo-upload" onclick="document.getElementById('novoExcelUpload').click()">
+                                    <span class="btn-icon">⬆️</span>
+                                    Upload Planilha Excel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                    <!-- Status da Conexão Firebase -->
+                    <div id="firebaseStatus" class="firebase-status">
+                        <div class="status-indicator">
+                            <span class="status-dot connected"></span>
+                            <span class="status-text">Conectado ao Firebase</span>
+                        </div>
+                    </div>
+
+                    <!-- Filtros de Busca -->
+                    <div class="search-filters">
+                        <div class="search-bar">
+                            <input type="text" id="dynamicSearchInput" placeholder="🔍 Buscar nas 25 colunas..." onkeyup="filterDynamicTable()">
+                        </div>
+                        <div class="filter-actions">
+                            <button onclick="reloadCompleteInterface()" class="btn-refresh" title="Recarregar dados">
+                                <span class="btn-icon">🔄</span>
+                                Atualizar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Nova Tabela de Endereços com 25 Colunas Exatas -->
+                    <div class="endereco-table-container" id="enderecoTableContainer">
+                        <div class="table-header">
+                            <h4>📋 Tabela de Endereços</h4>
+                            <div class="table-stats">
+                                <span id="enderecoRecordCount"></span>
+                                <span id="enderecoLastUpdate"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="table-wrapper" id="enderecoTableWrapper">
+                            <table class="endereco-table" id="enderecoMainTable">
+                                <thead>
+                                    <tr>
+                                        <th data-column="1">Projeto</th>
+                                        <th data-column="2">Sub Projeto</th>
+                                        <th data-column="3">Tipo de Ação</th>
+                                        <th data-column="4">CONTRATO</th>
+                                        <th data-column="5">Condominio</th>
+                                        <th data-column="6">ENDEREÇO</th>
+                                        <th data-column="7">Cidade</th>
+                                        <th data-column="8">PEP</th>
+                                        <th data-column="9">COD IMOVEL GED</th>
+                                        <th data-column="10">NODE GERENCIAL</th>
+                                        <th data-column="11">Área Técnica</th>
+                                        <th data-column="12">HP</th>
+                                        <th data-column="13">ANDAR</th>
+                                        <th data-column="14">DATA RECEBIMENTO</th>
+                                        <th data-column="15">DATA INICIO</th>
+                                        <th data-column="16">DATA FINAL</th>
+                                        <th data-column="17">EQUIPE</th>
+                                        <th data-column="18">Supervisor</th>
+                                        <th data-column="19">Status</th>
+                                        <th data-column="20">RDO</th>
+                                        <th data-column="21">BOOK</th>
+                                        <th data-column="22">PROJETO</th>
+                                        <th data-column="23">JUSTIFICATIVA</th>
+                                        <th data-column="24">Observação</th>
+                                        <th data-column="25">Observação</th>
+                                        <th data-column="actions">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="enderecoTableBody">
+                                    <tr class="empty-state">
+                                        <td colspan="26">
+                                            <div class="empty-state-content">
+                                                <div class="empty-icon">📊</div>
+                                                <h3>Tabela Vazia</h3>
+                                                <p>Faça upload de uma planilha Excel para preencher a tabela</p>
+                                                <p><small>As colunas devem estar na ordem exata especificada</small></p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Controles de Paginação -->
+                        <div id="paginationContainer" class="pagination-container">
+                            <!-- Controles de paginação serão inseridos aqui -->
+                        </div>
+
+                        <!-- Mensagem quando não há dados -->
+                        <div id="noDataMessage" class="no-data-message" style="display: none;">
+                            <div class="no-data-icon">📊</div>
+                            <h3>Nenhum dado encontrado</h3>
+                            <p>Faça o upload de uma planilha Excel para começar.</p>
+                            <button onclick="document.getElementById('excelUpload').click()" class="btn-primary">
+                                <span class="btn-icon">📊</span>
+                                Importar Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Seção de Gestão de Projetos -->
+                <div id="gestao-projetos" class="section">
+                    <div class="gestao-hero">
+                        <div class="gestao-hero-content">
+                            <div class="gestao-hero-icon">
+                                🗂️
+                            </div>
+                            <div class="gestao-hero-text">
+                                <h1 class="gestao-hero-title">Gestão de Projetos</h1>
+                                <p class="gestao-hero-desc">Gerencie projetos, clientes e configurações do sistema</p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="gestao-tabs">
+                        <button class="gestao-tab-btn active" onclick="showGestaoTab('projetos')">
+                            <i class="fas fa-building"></i>
+                            <span>Projetos</span>
+                        </button>
+                        <button class="gestao-tab-btn" onclick="showGestaoTab('subprojetos')">
+                            <i class="fas fa-sitemap"></i>
+                            <span>Sub Projetos</span>
+                        </button>
+                        <button class="gestao-tab-btn" onclick="showGestaoTab('tipos-acao')">
+                            <i class="fas fa-tasks"></i>
+                            <span>Tipos de Ação</span>
+                        </button>
+                        <button class="gestao-tab-btn" onclick="showGestaoTab('supervisores')">
+                            <i class="fas fa-user-tie"></i>
+                            <span>Supervisores</span>
+                        </button>
+                        <button class="gestao-tab-btn" onclick="showGestaoTab('equipes')">
+                            <i class="fas fa-users"></i>
+                            <span>Equipes</span>
+                        </button>
+                        <button class="gestao-tab-btn" onclick="showGestaoTab('cidades')">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Cidades</span>
+                        </button>
+                    </div>
+
+                    <!-- Tab de Projetos -->
+                    <div id="gestao-projetos-tab" class="gestao-tab-content active">
+                        <div class="gestao-header">
+                            <div class="gestao-title">
+                                <h2><i class="fas fa-building"></i> Projetos</h2>
+                                <p>Gerencie os projetos principais</p>
+                            </div>
+                            <div class="gestao-actions">
+                                <button class="btn-primary" onclick="adicionarItem('projetos')">
+                                    <i class="fas fa-plus"></i> Novo Projeto
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="crud-table-container">
+                            <table class="crud-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Nome</th>
+                                        <th>Descrição</th>
+                                        <th>Data Criação</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="projetosTableBody">
+                                    <!-- Dados serão carregados dinamicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab de Sub Projetos -->
+                    <div id="gestao-subprojetos-tab" class="gestao-tab-content">
+                        <div class="gestao-header">
+                            <div class="gestao-title">
+                                <h2><i class="fas fa-sitemap"></i> Sub Projetos</h2>
+                                <p>Gerencie os sub projetos dentro de cada projeto principal</p>
+                            </div>
+                            <button class="btn-primary" onclick="adicionarItem('subprojetos')">
+                                <i class="fas fa-plus"></i> Novo Sub Projeto
+                            </button>
+                        </div>
+
+                        <div class="crud-table-container">
+                            <table class="crud-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Nome</th>
+                                        <th>Descrição</th>
+                                        <th>Data Criação</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="subprojetosTableBody">
+                                    <!-- Dados serão carregados dinamicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab de Tipos de Ação -->
+                    <div id="gestao-tipos-acao-tab" class="gestao-tab-content">
+                        <div class="gestao-header">
+                            <div class="gestao-title">
+                                <h2><i class="fas fa-tasks"></i> Tipos de Ação</h2>
+                                <p>Gerencie os tipos de ação disponíveis (Vistoria, Construção, etc.)</p>
+                            </div>
+                            <button class="btn-primary" onclick="adicionarItem('tipos-acao')">
+                                <i class="fas fa-plus"></i> Novo Tipo de Ação
+                            </button>
+                        </div>
+
+                        <div class="crud-table-container">
+                            <table class="crud-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Nome</th>
+                                        <th>Descrição</th>
+                                        <th>Data Criação</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tiposAcaoTableBody">
+                                    <!-- Dados serão carregados dinamicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab de Supervisores -->
+                    <div id="gestao-supervisores-tab" class="gestao-tab-content">
+                        <div class="gestao-header">
+                            <div class="gestao-title">
+                                <h2><i class="fas fa-user-tie"></i> Supervisores</h2>
+                                <p>Gerencie os supervisores responsáveis pelos projetos</p>
+                            </div>
+                            <button class="btn-primary" onclick="adicionarItem('supervisores')">
+                                <i class="fas fa-plus"></i> Novo Supervisor
+                            </button>
+                        </div>
+
+                        <div class="crud-table-container">
+                            <table class="crud-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Nome</th>
+                                        <th>Descrição</th>
+                                        <th>Data Criação</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="supervisoresTableBody">
+                                    <!-- Dados serão carregados dinamicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab de Equipes -->
+                    <div id="gestao-equipes-tab" class="gestao-tab-content">
+                        <div class="gestao-header">
+                            <div class="gestao-title">
+                                <h2><i class="fas fa-users"></i> Equipes</h2>
+                                <p>Gerencie as equipes de trabalho</p>
+                            </div>
+                            <button class="btn-primary" onclick="adicionarItem('equipes')">
+                                <i class="fas fa-plus"></i> Nova Equipe
+                            </button>
+                        </div>
+
+                        <div class="crud-table-container">
+                            <table class="crud-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Nome</th>
+                                        <th>Descrição</th>
+                                        <th>Data Criação</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="equipesTableBody">
+                                    <!-- Dados serão carregados dinamicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab de Cidades -->
+                    <div id="gestao-cidades-tab" class="gestao-tab-content">
+                        <div class="gestao-header">
+                            <div class="gestao-title">
+                                <h2><i class="fas fa-map-marker-alt"></i> Cidades</h2>
+                                <p>Gerencie as cidades onde atuamos</p>
+                            </div>
+                            <button class="btn-primary" onclick="adicionarItem('cidades')">
+                                <i class="fas fa-plus"></i> Nova Cidade
+                            </button>
+                        </div>
+
+                        <div class="crud-table-container">
+                            <table class="crud-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Nome</th>
+                                        <th>Descrição</th>
+                                        <th>Data Criação</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cidadesTableBody">
+                                    <!-- Dados serão carregados dinamicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal CRUD -->
+    <div id="crudModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Novo Endereço</h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <form id="enderecoForm" class="modal-form">
+                <div class="form-grid">
+                    <!-- Coluna 1: Informações Básicas e Localização -->
+                    <div class="form-column">
+                        <!-- Informações Básicas -->
+                        <div class="form-section">
+                            <h4>📋 Informações Básicas</h4>
+                            
+                            <div class="form-group">
+                                <label for="projeto">Projeto *</label>
+                                <select id="projeto" name="projeto" required>
+                                    <option value="">Selecione o projeto...</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="subProjeto">Sub Projeto *</label>
+                                <select id="subProjeto" name="subProjeto" required>
+                                    <option value="">Selecione o sub projeto...</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="tipoAcao">Tipo de Ação *</label>
+                                <select id="tipoAcao" name="tipoAcao" required>
+                                    <option value="">Selecione o tipo de ação...</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="contrato">Contrato</label>
+                                <input type="text" id="contrato" name="contrato" placeholder="Número do contrato">
+                            </div>
+                        </div>
+
+                        <!-- Localização -->
+                        <div class="form-section">
+                            <h4>📍 Localização</h4>
+                            
+                            <div class="form-group">
+                                <label for="condominio">Condomínio *</label>
+                                <input type="text" id="condominio" name="condominio" required placeholder="Nome do condomínio">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="endereco">Endereço *</label>
+                                <input type="text" id="endereco" name="endereco" required placeholder="Endereço completo">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="cidade">Cidade *</label>
+                                <select id="cidade" name="cidade" required>
+                                    <option value="">Selecione a cidade...</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="andar">Andar</label>
+                                <input type="text" id="andar" name="andar" placeholder="Número do andar">
+                            </div>
+                        </div>
+
+                        <!-- Dados Técnicos -->
+                        <div class="form-section">
+                            <h4>⚙️ Dados Técnicos</h4>
+                            
+                            <div class="form-group">
+                                <label for="pep">PEP</label>
+                                <select id="pep" name="pep">
+                                    <option value="">Selecione o PEP...</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="codImovelGed">COD IMOVEL GED</label>
+                                <input type="text" id="codImovelGed" name="codImovelGed" placeholder="Código GED">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="nodeGerencial">NODE GERENCIAL</label>
+                                <input type="text" id="nodeGerencial" name="nodeGerencial" placeholder="Ex: PIT50">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="areaTecnica">Área Técnica</label>
+                                <input type="text" id="areaTecnica" name="areaTecnica" placeholder="Ex: PTBAA">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="hp">HP *</label>
+                                <input type="number" id="hp" name="hp" required placeholder="Quantidade HP" min="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coluna 2: Equipe, Status e Outros -->
+                    <div class="form-column">
+                        <!-- Equipe e Status -->
+                        <div class="form-section">
+                            <h4>👥 Equipe e Status</h4>
+                            
+                            <div class="form-group">
+                                <label for="equipe">Equipe *</label>
+                                <select id="equipe" name="equipe" required>
+                                    <option value="">Selecione a equipe...</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="supervisor">Supervisor *</label>
+                                <select id="supervisor" name="supervisor" required>
+                                    <option value="">Selecione o supervisor...</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="status">Status *</label>
+                                <select id="status" name="status" required>
+                                    <option value="">Selecione o status...</option>
+                                    <option value="PRODUTIVA">PRODUTIVA</option>
+                                    <option value="IMPRODUTIVA">IMPRODUTIVA</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Cronograma -->
+                        <div class="form-section">
+                            <h4>📅 Cronograma</h4>
+                            
+                            <div class="form-group">
+                                <label for="dataRecebimento">Data Recebimento</label>
+                                <input type="date" id="dataRecebimento" name="dataRecebimento">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="dataInicio">Data Início</label>
+                                <input type="date" id="dataInicio" name="dataInicio">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="dataFinal">Data Final</label>
+                                <input type="date" id="dataFinal" name="dataFinal">
+                            </div>
+                        </div>
+
+                        <!-- Informações Adicionais -->
+                        <div class="form-section">
+                            <h4>📝 Informações Adicionais</h4>
+                            
+                            <div class="form-group">
+                                <label for="rdo">RDO</label>
+                                <select id="rdo" name="rdo">
+                                    <option value="">Selecione...</option>
+                                    <option value="SIM">SIM</option>
+                                    <option value="NÃO">NÃO</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="book">BOOK</label>
+                                <select id="book" name="book">
+                                    <option value="">Selecione...</option>
+                                    <option value="SIM">SIM</option>
+                                    <option value="NÃO">NÃO</option>
+                                    <option value="KIT ENVIADO">KIT ENVIADO</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="projetoStatus">Status do Projeto</label>
+                                <select id="projetoStatus" name="projetoStatus">
+                                    <option value="">Selecione...</option>
+                                    <option value="CONCLUIDO">CONCLUIDO</option>
+                                    <option value="EM ANDAMENTO">EM ANDAMENTO</option>
+                                    <option value="PARADO">PARADO</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="situacao">Situação</label>
+                                <input type="text" id="situacao" name="situacao" placeholder="Situação atual">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="justificativa">Justificativa</label>
+                                <textarea id="justificativa" name="justificativa" placeholder="Justificativa se necessário"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="observacao">Observação</label>
+                                <textarea id="observacao" name="observacao" placeholder="Observações gerais"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="submitBtn">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Projetos -->
+    <div id="projetoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-building"></i> Novo Projeto</h3>
+                <span class="close" onclick="closeGestaoModal('projetoModal')">&times;</span>
+            </div>
+            <form id="projetoForm" class="modal-form">
+                <div class="form-grid">
+                    <div class="form-section">
+                        <h4>📋 Informações do Projeto</h4>
+                        
+                        <div class="form-group">
+                            <label for="projetoNome">Nome do Projeto *</label>
+                            <input type="text" id="projetoNome" name="nome" required placeholder="Ex: Claro, Vivo, etc.">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="projetoCliente">Cliente *</label>
+                            <input type="text" id="projetoCliente" name="cliente" required placeholder="Nome do cliente">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="projetoDescricao">Descrição</label>
+                            <textarea id="projetoDescricao" name="descricao" placeholder="Descrição detalhada do projeto"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="projetoStatus">Status *</label>
+                            <select id="projetoStatus" name="status" required>
+                                <option value="ATIVO">Ativo</option>
+                                <option value="INATIVO">Inativo</option>
+                                <option value="PAUSADO">Pausado</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-save">💾 Salvar Projeto</button>
+                    <button type="button" class="btn-cancel" onclick="closeGestaoModal('projetoModal')">❌ Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Sub Projetos -->
+    <div id="subprojetoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-sitemap"></i> Novo Sub Projeto</h3>
+                <span class="close" onclick="closeGestaoModal('subprojetoModal')">&times;</span>
+            </div>
+            <form id="subprojetoForm" class="modal-form">
+                <div class="form-grid">
+                    <div class="form-section">
+                        <h4>📋 Informações do Sub Projeto</h4>
+                        
+                        <div class="form-group">
+                            <label for="subprojetoNome">Nome *</label>
+                            <input type="text" id="subprojetoNome" name="nome" required placeholder="Nome do sub projeto">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="subprojetoProjeto">Projeto Principal *</label>
+                            <select id="subprojetoProjeto" name="projetoPrincipal" required>
+                                <option value="">Selecione o projeto principal...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="subprojetoDescricao">Descrição</label>
+                            <textarea id="subprojetoDescricao" name="descricao" placeholder="Descrição do sub projeto"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="subprojetoStatus">Status *</label>
+                            <select id="subprojetoStatus" name="status" required>
+                                <option value="ATIVO">Ativo</option>
+                                <option value="INATIVO">Inativo</option>
+                                <option value="PAUSADO">Pausado</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-save">💾 Salvar Sub Projeto</button>
+                    <button type="button" class="btn-cancel" onclick="closeGestaoModal('subprojetoModal')">❌ Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Tipos de Ação -->
+    <div id="tipoAcaoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-tasks"></i> Novo Tipo de Ação</h3>
+                <span class="close" onclick="closeGestaoModal('tipoAcaoModal')">&times;</span>
+            </div>
+            <form id="tipoAcaoForm" class="modal-form">
+                <div class="form-grid">
+                    <div class="form-section">
+                        <h4>📋 Informações do Tipo de Ação</h4>
+                        
+                        <div class="form-group">
+                            <label for="tipoAcaoNome">Nome *</label>
+                            <input type="text" id="tipoAcaoNome" name="nome" required placeholder="Ex: Vistoria, Construção, etc.">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tipoAcaoDescricao">Descrição</label>
+                            <textarea id="tipoAcaoDescricao" name="descricao" placeholder="Descrição do tipo de ação"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tipoAcaoCategoria">Categoria *</label>
+                            <select id="tipoAcaoCategoria" name="categoria" required>
+                                <option value="">Selecione...</option>
+                                <option value="VISTORIA">Vistoria</option>
+                                <option value="CONSTRUÇÃO">Construção</option>
+                                <option value="ATIVAÇÃO">Ativação</option>
+                                <option value="MANUTENÇÃO">Manutenção</option>
+                                <option value="ADMINISTRATIVO">Administrativo</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tipoAcaoStatus">Status *</label>
+                            <select id="tipoAcaoStatus" name="status" required>
+                                <option value="ATIVO">Ativo</option>
+                                <option value="INATIVO">Inativo</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-save">💾 Salvar Tipo de Ação</button>
+                    <button type="button" class="btn-cancel" onclick="closeGestaoModal('tipoAcaoModal')">❌ Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Supervisores -->
+    <div id="supervisorModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-tie"></i> Novo Supervisor</h3>
+                <span class="close" onclick="closeGestaoModal('supervisorModal')">&times;</span>
+            </div>
+            <form id="supervisorForm" class="modal-form">
+                <div class="form-grid">
+                    <div class="form-section">
+                        <h4>👤 Informações Pessoais</h4>
+                        
+                        <div class="form-group">
+                            <label for="supervisorNome">Nome Completo *</label>
+                            <input type="text" id="supervisorNome" name="nome" required placeholder="Nome completo">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="supervisorEmail">Email *</label>
+                            <input type="email" id="supervisorEmail" name="email" required placeholder="email@exemplo.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="supervisorTelefone">Telefone</label>
+                            <input type="tel" id="supervisorTelefone" name="telefone" placeholder="(11) 99999-9999">
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>🏢 Informações Profissionais</h4>
+                        
+                        <div class="form-group">
+                            <label for="supervisorArea">Área de Atuação *</label>
+                            <input type="text" id="supervisorArea" name="area" required placeholder="Ex: Vistoria, Construção, etc.">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="supervisorStatus">Status *</label>
+                            <select id="supervisorStatus" name="status" required>
+                                <option value="ATIVO">Ativo</option>
+                                <option value="INATIVO">Inativo</option>
+                                <option value="FERIAS">Férias</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-save">💾 Salvar Supervisor</button>
+                    <button type="button" class="btn-cancel" onclick="closeGestaoModal('supervisorModal')">❌ Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Equipes -->
+    <div id="equipeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-users"></i> Nova Equipe</h3>
+                <span class="close" onclick="closeGestaoModal('equipeModal')">&times;</span>
+            </div>
+            <form id="equipeForm" class="modal-form">
+                <div class="form-grid">
+                    <div class="form-section">
+                        <h4>👥 Informações da Equipe</h4>
+                        
+                        <div class="form-group">
+                            <label for="equipeNome">Nome da Equipe *</label>
+                            <input type="text" id="equipeNome" name="nome" required placeholder="Nome da equipe">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="equipeLider">Líder da Equipe *</label>
+                            <select id="equipeLider" name="lider" required>
+                                <option value="">Selecione o líder...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="equipeMembros">Membros</label>
+                            <textarea id="equipeMembros" name="membros" placeholder="Lista de membros da equipe"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="equipeEspecialidade">Especialidade *</label>
+                            <input type="text" id="equipeEspecialidade" name="especialidade" required placeholder="Ex: Vistoria, Construção, etc.">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="equipeStatus">Status *</label>
+                            <select id="equipeStatus" name="status" required>
+                                <option value="ATIVO">Ativo</option>
+                                <option value="INATIVO">Inativo</option>
+                                <option value="EM_CAMPO">Em Campo</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-save">💾 Salvar Equipe</button>
+                    <button type="button" class="btn-cancel" onclick="closeGestaoModal('equipeModal')">❌ Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Cidades -->
+    <div id="cidadeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-map-marker-alt"></i> Nova Cidade</h3>
+                <span class="close" onclick="closeGestaoModal('cidadeModal')">&times;</span>
+            </div>
+            <form id="cidadeForm" class="modal-form">
+                <div class="form-grid">
+                    <div class="form-section">
+                        <h4>🏙️ Informações da Cidade</h4>
+                        
+                        <div class="form-group">
+                            <label for="cidadeNome">Nome da Cidade *</label>
+                            <input type="text" id="cidadeNome" name="nome" required placeholder="Nome da cidade">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="cidadeEstado">Estado *</label>
+                            <select id="cidadeEstado" name="estado" required>
+                                <option value="">Selecione o estado...</option>
+                                <option value="BA">Bahia</option>
+                                <option value="SP">São Paulo</option>
+                                <option value="RJ">Rio de Janeiro</option>
+                                <option value="MG">Minas Gerais</option>
+                                <option value="RS">Rio Grande do Sul</option>
+                                <option value="PR">Paraná</option>
+                                <option value="SC">Santa Catarina</option>
+                                <option value="GO">Goiás</option>
+                                <option value="MT">Mato Grosso</option>
+                                <option value="MS">Mato Grosso do Sul</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="cidadeRegiao">Região</label>
+                            <input type="text" id="cidadeRegiao" name="regiao" placeholder="Ex: Nordeste, Sudeste, etc.">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="cidadeStatus">Status *</label>
+                            <select id="cidadeStatus" name="status" required>
+                                <option value="ATIVO">Ativo</option>
+                                <option value="INATIVO">Inativo</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-save">💾 Salvar Cidade</button>
+                    <button type="button" class="btn-cancel" onclick="closeGestaoModal('cidadeModal')">❌ Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ===== NOVA TELA DE PERFIL DO USUÁRIO ===== -->
+    <div id="userProfileScreen" class="profile-screen" style="display: none;">
+        <div class="profile-container">
+            <div class="profile-header">
+                <button class="back-btn" onclick="closeUserProfileScreen()">
+                    <i class="fas fa-arrow-left"></i>
+                    Voltar
+                </button>
+                <h2><i class="fas fa-key"></i> Alterar Senha</h2>
+            </div>
+
+            <div class="profile-content">
+                <div class="profile-sections">
+                    <!-- Seção de Segurança -->
+                    <div class="profile-section">
+                        <div class="section-header">
+                            <h3><i class="fas fa-shield-alt"></i> Alterar Senha</h3>
+                            <p>Altere sua senha de acesso ao sistema</p>
+                        </div>
+                        <form class="profile-form" id="passwordForm">
+                            <div class="form-group">
+                                <label for="currentPassword">Senha Atual</label>
+                                <div class="password-input">
+                                    <input type="password" id="currentPassword" placeholder="Digite sua senha atual" required>
+                                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility('currentPassword')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newPassword">Nova Senha</label>
+                                    <div class="password-input">
+                                        <input type="password" id="newPassword" placeholder="Digite a nova senha" required minlength="6">
+                                        <button type="button" class="toggle-password" onclick="togglePasswordVisibility('newPassword')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div class="password-hint">
+                                        <ul class="password-requirements">
+                                            <li>Mínimo 6 caracteres</li>
+                                            <li>1 caracter especial</li>
+                                            <li>1 letra maiúscula</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="confirmPassword">Confirmar Nova Senha</label>
+                                    <div class="password-input">
+                                        <input type="password" id="confirmPassword" placeholder="Confirme a nova senha" required>
+                                        <button type="button" class="toggle-password" onclick="togglePasswordVisibility('confirmPassword')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-save btn-password" onclick="changePassword()">
+                                <i class="fas fa-key"></i>
+                                Alterar Senha
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+                    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+    
+    <!-- Firebase Sistema Unificado (PRODUCTION ONLY) -->
+    <script src="src/js/firebase-complete.js?v=1.3&t=2025081813"></script>
+    <script src="src/js/firestore-integration.js?v=1.3&t=2025081813"></script>
+    <script src="src/js/novo-endereco-limpo.js?v=1.0&t=2025090201"></script> <!-- NOVO SISTEMA LIMPO -->
+    <script src="src/js/dashboard-minimal.js?v=1.3&t=2025081813"></script>
+    <script src="src/js/dashboard-functions.js?v=1.3&t=2025081813"></script>
+    <!-- <script src="src/js/dashboard-handlers.js?v=1.3&t=2025081813"></script> DESABILITADO - Conflitando com novo sistema -->
+    <script src="src/js/firebase-table-system.js?v=4.3&t=2025082530"></script> <!-- Reabilitado - gráficos desabilitados para usar dashboard-integration.js -->
+    <!-- <script src="src/js/multi-select-filters.js?v=1.0&t=2025081925"></script> --> <!-- Desabilitado - usando novo sistema -->
+    <!-- <script src="src/js/excel-reader-complete.js?v=1.0&t=2025081925"></script> --> <!-- Desabilitado - substituído por endereco-excel-upload.js -->
+    <!-- <script src="src/js/excel-template-standard.js?v=1.0&t=2025082020"></script> --> <!-- Desabilitado - usando novo sistema -->
+    <!-- <script src="src/js/excel-column-ordering.js?v=1.0&t=2025082020"></script> --> <!-- Desabilitado - usando novo sistema -->
+    <!-- <script src="src/js/checkbox-dropdown.js?v=1.3&t=2025081813"></script> --> <!-- Desabilitado - não necessário com sistema de ordem fixa -->
+    <!-- <script src="src/js/novo-upload-excel.js?v=1.0&t=2025082121"></script> DESABILITADO - Conflitando com sistema integrado -->
+    <!-- <script src="src/js/dashboard-integration.js?v=6.0&t=2025082520"></script> --> <!-- DESABILITADO - Conflitando com sistema final -->
+    <!-- SISTEMA DE GRÁFICOS NOVO - IMPLEMENTAÇÃO LIMPA -->
+    <script src="src/js/dashboard-charts-novo.js?v=1.0"></script>
+    <script src="src/js/dashboard-charts-implementacao.js?v=1.0"></script>
+    <!-- <script src="src/js/multi-select-dropdown.js?v=1.0&t=2025082121"></script> --> <!-- DESABILITADO - Sistema unificado de filtros -->
+    <!-- <script src="src/js/permissions-system.js?v=1.0&t=2025082121"></script> --> <!-- Desabilitado - sistema simplificado -->
+    <!-- <script src="src/js/force-init-dropdowns.js?v=1.3&t=2025081813"></script> --> <!-- DESABILITADO - Sistema unificado de filtros -->
+    <!-- <script src="src/js/gestao-renovada.js?v=1.0&t=2025082121"></script> --> <!-- Desabilitado - substituído por sistema novo -->
+    <script src="src/js/gestao-nova-simples.js?v=1.2&t=2025090923"></script> <!-- Sistema de gestão REABILITADO -->
+    <!-- <script src="src/js/gestao-projetos-novo.js?v=1.0&t=2025091013"></script> --> <!-- NOVO SISTEMA DE GESTÃO - DESABILITADO -->
+    <!-- <script src="src/js/novo-endereco-integrado.js?v=2.0&t=2025082216"></script> --> <!-- DESABILITADO - Conflitava com firebase-table-system -->
+    <script src="src/js/teste-sistema-endereco.js?v=1.0&t=2025090512"></script> <!-- Sistema de testes para endereços -->
+    <script src="src/js/user-dropdown-system.js?v=1.0&t=2025082921"></script> <!-- Sistema de dropdown do usuário NOVO -->
+    
+    <!-- ============= SISTEMA UNIFICADO DE FILTROS ============= -->
+    <script src="src/js/unified-filter-system.js?v=1.0&t=2025090115"></script>
+    
+    <!-- ============= NOVA TABELA FILTRADA - VERSÃO 1.1 ============= -->
+    <script src="src/js/filtered-table-v1-1.js?v=1.1&t=2025090901"></script>
+    
+    <!-- SISTEMAS ANTIGOS DE FILTROS - TEMPORARIAMENTE DESABILITADOS -->
+    <!-- <script src="src/js/filter-state-manager.js?v=1.0&t=2025090115"></script> --> <!-- Substituído pelo sistema unificado -->
+    <!-- <script src="src/js/filter-event-listeners.js?v=1.0&t=2025090115"></script> --> <!-- Substituído pelo sistema unificado -->
+    <script>
+        // O script.js já tem o event listener DOMContentLoaded
+        // Não precisamos duplicar aqui
+        console.log('📄 Dashboard HTML carregado');
+        
+        // ============= INICIALIZAÇÃO DO SISTEMA DE GRÁFICOS NOVO =============
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 [DASHBOARD] Inicializando sistema de gráficos novo...');
+            
+            // Aguardar Chart.js e FirebaseTableSystem estarem prontos
+            function inicializarGraficos() {
+                if (typeof Chart !== 'undefined' && 
+                    typeof ChartsDashboard !== 'undefined' && 
+                    ChartsDashboard.inicializar) {
+                    
+                    console.log('📊 [DASHBOARD] Condições atendidas, iniciando gráficos...');
+                    
+                    // Tentar obter dados do FirebaseTableSystem
+                    let dados = null;
+                    if (window.FirebaseTableSystem && window.FirebaseTableSystem.getData) {
+                        dados = window.FirebaseTableSystem.getData();
+                        if (dados && dados.length > 0) {
+                            console.log('📊 [DASHBOARD] Dados do Firebase encontrados:', dados.length, 'registros');
+                        }
+                    }
+                    
+                    // Inicializar sistema
+                    ChartsDashboard.inicializar(dados);
+                    
+                } else {
+                    console.log('⏳ [DASHBOARD] Aguardando dependências...');
+                    setTimeout(inicializarGraficos, 1000);
+                }
+            }
+            
+            // Iniciar processo
+            setTimeout(inicializarGraficos, 1000);
+            
+            // Escutar eventos do FirebaseTableSystem
+            window.addEventListener('firebaseTableDataLoaded', function(event) {
+                console.log('📢 [DASHBOARD] Recebidos dados do Firebase, atualizando gráficos...');
+                if (ChartsDashboard && ChartsDashboard.atualizar) {
+                    ChartsDashboard.atualizar(event.detail.data);
+                }
+            });
+        });
+        
+        // ============= CARREGAR DADOS AUTOMATICAMENTE =============
+        setTimeout(async () => {
+            console.log('🔄 [DASHBOARD] Carregando dados automaticamente...');
+            
+            // Tentar carregar dados via loadStatistics se disponível
+            if (typeof window.loadStatistics === 'function') {
+                try {
+                    await window.loadStatistics();
+                    console.log('✅ [DASHBOARD] Dados carregados via loadStatistics');
+                } catch (error) {
+                    console.warn('⚠️ [DASHBOARD] Erro ao carregar dados via loadStatistics:', error);
+                }
+            }
+            
+            // Tentar criar gráficos diretamente se disponível
+            if (typeof window.criarTodosGraficos === 'function') {
+                try {
+                    await window.criarTodosGraficos();
+                    console.log('✅ [DASHBOARD] Gráficos criados automaticamente');
+                } catch (error) {
+                    console.warn('⚠️ [DASHBOARD] Erro ao criar gráficos automaticamente:', error);
+                }
+            }
+        }, 5000); // Aguardar 5 segundos para todos os scripts carregarem
+        
+        // ============= CORRIGIR STATUS FIREBASE =============
+        setTimeout(() => {
+            const firebaseStatus = document.getElementById('firebaseStatus');
+            if (firebaseStatus) {
+                const statusDot = firebaseStatus.querySelector('.status-dot');
+                const statusText = firebaseStatus.querySelector('.status-text');
+                
+                if (statusDot && statusText) {
+                    statusDot.className = 'status-dot connected';
+                    statusText.textContent = 'Sistema carregado - Excel Reader ativo';
+                    console.log('✅ Status Firebase corrigido');
+                }
+            }
+        }, 3000);
+        
+        // ============= FUNÇÕES GLOBAIS DE GERENCIAMENTO =============
+        // function abrirNovoEndereco() - Agora gerenciado por endereco-gestao-integrado.js
+        
+        function closeModal() {
+            document.getElementById('crudModal').style.display = 'none';
+        }
+        
+        function openGestaoModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+        
+        function closeGestaoModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        function showGestaoTab(tabName) {
+            console.log(`🎯 [DASHBOARD] showGestaoTab chamado para: ${tabName}`);
+            
+            // Esconder todas as abas
+            const tabs = document.querySelectorAll('.gestao-tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Remover classe active de todos os botões
+            const buttons = document.querySelectorAll('.gestao-tab-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Mostrar aba selecionada
+            document.getElementById(`gestao-${tabName}-tab`).classList.add('active');
+            
+            // Adicionar classe active no botão clicado
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
+            
+            // CORREÇÃO: Chamar o sistema de gestão se disponível
+            if (window.mostrarNovaAba && typeof window.mostrarNovaAba === 'function') {
+                console.log(`✅ [DASHBOARD] Chamando sistema de gestão para: ${tabName}`);
+                setTimeout(() => {
+                    window.mostrarNovaAba(tabName);
+                }, 100);
+            } else {
+                console.warn(`⚠️ [DASHBOARD] Sistema de gestão não disponível para: ${tabName}`);
+                console.log('💡 [DASHBOARD] Tentando novamente em 2 segundos...');
+                setTimeout(() => {
+                    if (window.mostrarNovaAba && typeof window.mostrarNovaAba === 'function') {
+                        window.mostrarNovaAba(tabName);
+                    }
+                }, 2000);
+            }
+        }
+        
+        function showSection(sectionName, event) {
+            // Esconder todas as seções
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => section.classList.remove('active'));
+            
+            // Remover classe active de todos os links
+            const links = document.querySelectorAll('.sidebar-menu a');
+            links.forEach(link => link.classList.remove('active'));
+            
+            // Mostrar seção selecionada
+            document.getElementById(sectionName).classList.add('active');
+            
+            // Adicionar classe active no link clicado
+            if (event) {
+                event.target.classList.add('active');
+            }
+            
+            // Atualizar título da seção
+            const titles = {
+                'inicio': 'Início',
+                'infraestrutura': 'Dashboard - Infraestrutura',
+                'enderecos': 'Cadastro de Endereços',
+                'gestao-projetos': 'Gestão de Projetos'
+            };
+            
+            document.getElementById('section-title').textContent = titles[sectionName] || sectionName;
+            
+            // Carregar dados específicos da seção - SISTEMA MELHORADO
+            if (sectionName === 'enderecos') {
+                console.log('📋 [SHOW-SECTION] Carregando dados da tabela de endereços...');
+                
+                // Função recursiva para aguardar FirebaseTableSystem
+                const aguardarECarregar = (tentativas = 0, maxTentativas = 10) => {
+                    if (window.FirebaseTableSystem && window.FirebaseTableSystem.loadData) {
+                        console.log('✅ [SHOW-SECTION] FirebaseTableSystem encontrado, carregando...');
+                        window.FirebaseTableSystem.loadData().then(() => {
+                            console.log('✅ [SHOW-SECTION] Dados da tabela carregados com sucesso');
+                        }).catch((error) => {
+                            console.error('❌ [SHOW-SECTION] Erro ao carregar dados:', error);
+                        });
+                    } else if (tentativas < maxTentativas) {
+                        console.log(`⏳ [SHOW-SECTION] Aguardando FirebaseTableSystem... (${tentativas + 1}/${maxTentativas})`);
+                        setTimeout(() => aguardarECarregar(tentativas + 1, maxTentativas), 1000);
+                    } else {
+                        console.error('❌ [SHOW-SECTION] FirebaseTableSystem não carregou após 10 tentativas');
+                        console.log('🔍 [SHOW-SECTION] Verificando o que está disponível no window:', Object.keys(window).filter(k => k.includes('Firebase')));
+                    }
+                };
+                
+                setTimeout(aguardarECarregar, 500);
+            }
+            
+            // Para infraestrutura, forçar carregamento de dados e gráficos
+            if (sectionName === 'infraestrutura') {
+                console.log('📊 [SHOW-SECTION] Carregando infraestrutura...');
+                setTimeout(() => {
+                    // Primeiro carregar dados
+                    if (window.FirebaseTableSystem && window.FirebaseTableSystem.loadData) {
+                        window.FirebaseTableSystem.loadData().then(() => {
+                            console.log('✅ [SHOW-SECTION] Dados carregados, iniciando dashboard...');
+                            // Depois inicializar dashboard
+                            setTimeout(() => {
+                                if (window.inicializarDashboard) {
+                                    window.inicializarDashboard();
+                                }
+                                // Tabela resume será atualizada automaticamente pelos eventos
+                            }, 1000);
+                        });
+                    } else {
+                        // Se não há FirebaseTableSystem, inicializar tabela diretamente
+                        setTimeout(() => {
+                            if (window.initFilteredTableFromDashboard) {
+                                window.initFilteredTableFromDashboard();
+                            }
+                        }, 2000);
+                    }
+                }, 500);
+            }
+        }
+        
+        // Funções para modo colorblind e perfil de usuário (caso não existam)
+        function toggleColorblindMode() {
+            console.log('Toggle colorblind mode');
+            // TODO: Implementar modo daltônico
+        }
+        
+        function openUserProfile() {
+            document.getElementById('userProfileScreen').style.display = 'block';
+        }
+        
+        function closeUserProfileScreen() {
+            document.getElementById('userProfileScreen').style.display = 'none';
+        }
+        
+        // Usar a função de logout unificada do firebase-complete.js
+        function confirmLogout() {
+            if (typeof window.confirmLogout === 'function') {
+                // Usar função unificada se disponível
+                window.confirmLogout();
+            } else {
+                // Fallback local
+                if (confirm('Deseja realmente sair do sistema?')) {
+                    console.log('🚪 [LOGOUT] Realizando logout...');
+                    if (firebase && firebase.auth) {
+                        firebase.auth().signOut().then(() => {
+                            console.log('✅ [LOGOUT] Logout realizado com sucesso');
+                            window.location.href = 'index.html';
+                        }).catch((error) => {
+                            console.error('❌ [LOGOUT] Erro no logout:', error);
+                            window.location.href = 'index.html'; // Forçar redirecionamento mesmo com erro
+                        });
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                }
+            }
+        }
+        
+        function toggleNewDropdown() {
+            const dropdown = document.getElementById('newUserDropdown');
+            dropdown.classList.toggle('active');
+        }
+        
+        // ============= SISTEMA DE TROCA DE SENHA =============
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            const button = input.nextElementSibling.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                button.className = 'fas fa-eye';
+            }
+        }
+        
+        async function changePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            // Validações
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                alert('❌ Erro: Todos os campos são obrigatórios');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                alert('❌ Erro: Nova senha e confirmação não coincidem');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                alert('❌ Erro: Nova senha deve ter no mínimo 6 caracteres');
+                return;
+            }
+            
+            try {
+                console.log('🔐 [PASSWORD] Iniciando alteração de senha...');
+                
+                if (!firebase || !firebase.auth) {
+                    throw new Error('Firebase não disponível');
+                }
+                
+                const user = firebase.auth().currentUser;
+                if (!user) {
+                    throw new Error('Usuário não autenticado');
+                }
+                
+                // Re-autenticar usuário com senha atual
+                const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPassword);
+                
+                await user.reauthenticateWithCredential(credential);
+                console.log('✅ [PASSWORD] Re-autenticação realizada');
+                
+                // Alterar senha
+                await user.updatePassword(newPassword);
+                console.log('✅ [PASSWORD] Senha alterada com sucesso');
+                
+                // Limpar campos
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+                
+                // Fechar modal
+                closeUserProfileScreen();
+                
+                alert('✅ Senha alterada com sucesso!');
+                
+            } catch (error) {
+                console.error('❌ [PASSWORD] Erro ao alterar senha:', error);
+                
+                if (error.code === 'auth/wrong-password') {
+                    alert('❌ Erro: Senha atual incorreta');
+                } else if (error.code === 'auth/weak-password') {
+                    alert('❌ Erro: Nova senha muito fraca');
+                } else {
+                    alert('❌ Erro ao alterar senha: ' + error.message);
+                }
+            }
+        }
+        
+        // Fechar dropdown quando clicar fora
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('newUserDropdown');
+            if (dropdown && !dropdown.contains(event.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
+        
+        // ============= FUNÇÕES DE ADMIN PARA LIMPEZA =============
+        function checkAdminPermissions() {
+            // Verificar se o usuário é admin baseado no role
+            const userRole = document.getElementById('userRoleSimple')?.textContent;
+            const isAdmin = userRole && (userRole.includes('ADMIN') || userRole.includes('admin'));
+            
+            const adminControls = document.getElementById('adminControls');
+            if (adminControls) {
+                adminControls.style.display = isAdmin ? 'block' : 'none';
+            }
+            
+            return isAdmin;
+        }
+        
+        // ============= SISTEMA DE CONTROLE DE PERMISSÕES =============
+        function setupUserPermissions() {
+            const userRole = document.getElementById('userRoleSimple')?.textContent;
+            if (!userRole) return;
+            
+            console.log('🔐 [PERMISSIONS] Configurando permissões para:', userRole);
+            
+            // Elementos do menu lateral
+            const menuItems = {
+                'inicio': document.querySelector('a[onclick*="inicio"]')?.parentElement,
+                'infraestrutura': document.querySelector('a[onclick*="infraestrutura"]')?.parentElement,  
+                'enderecos': document.querySelector('a[onclick*="enderecos"]')?.parentElement,
+                'gestao-projetos': document.querySelector('a[onclick*="gestao-projetos"]')?.parentElement
+            };
+            
+            // Controle de acesso baseado no role
+            if (userRole.toLowerCase().includes('admin')) {
+                console.log('👑 [PERMISSIONS] Usuário ADMIN - Acesso total');
+                // Admin tem acesso a tudo - não ocultar nada
+                
+            } else if (userRole.toLowerCase().includes('supervisor')) {
+                console.log('👨‍💼 [PERMISSIONS] Usuário SUPERVISOR - Acesso restrito');
+                // Supervisor: início, dashboard, gestão de projetos, cadastro de endereços
+                // Não ocultar nada, supervisor tem acesso a todos módulos
+                
+            } else {
+                console.log('👤 [PERMISSIONS] Usuário COMUM - Acesso limitado');
+                // Usuário comum: apenas início e dashboard
+                if (menuItems['enderecos']) {
+                    menuItems['enderecos'].style.display = 'none';
+                }
+                if (menuItems['gestao-projetos']) {
+                    menuItems['gestao-projetos'].style.display = 'none';
+                }
+                
+                // Se estiver em uma seção restrita, redirecionar para início
+                const currentSection = document.querySelector('.section.active')?.id;
+                if (currentSection === 'enderecos' || currentSection === 'gestao-projetos') {
+                    showSection('inicio');
+                }
+            }
+        }
+        
+        function showAdminCleanupOptions() {
+            if (!checkAdminPermissions()) {
+                alert('⛔ Acesso Negado\n\nApenas administradores podem acessar esta funcionalidade.');
+                return;
+            }
+            
+            const options = `
+🗑️ OPÇÕES DE LIMPEZA ADMINISTRATIVA
+
+Escolha uma opção:
+
+1 - Limpar APENAS tabela de endereços (preserva gestão)
+2 - Limpar TODOS os dados (tabela + gestão de projetos)
+0 - Cancelar
+
+Digite o número da opção desejada:`;
+            
+            const choice = prompt(options);
+            
+            switch(choice) {
+                case '1':
+                    if (window.clearMainTableOnly) {
+                        window.clearMainTableOnly();
+                    } else {
+                        alert('❌ Função não disponível. Verifique se o sistema está carregado.');
+                    }
+                    break;
+                    
+                case '2':
+                    if (window.clearAllFirebaseData) {
+                        window.clearAllFirebaseData();
+                    } else {
+                        alert('❌ Função não disponível. Verifique se o sistema está carregado.');
+                    }
+                    break;
+                    
+                case '0':
+                case null:
+                    // Cancelado
+                    break;
+                    
+                default:
+                    alert('❌ Opção inválida. Operação cancelada.');
+            }
+        }
+        
+        // Verificar permissões quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                checkAdminPermissions();
+                setupUserPermissions();
+            }, 2000);
+        });
+        
+        // Verificar permissões quando mudar de seção
+        const originalShowSection = showSection;
+        showSection = function(sectionName, event) {
+            originalShowSection(sectionName, event);
+            if (sectionName === 'enderecos') {
+                setTimeout(() => {
+                    checkAdminPermissions();
+                    // Carregar tabela de endereços se não foi carregada ainda
+                    if (window.carregarTabelaEnderecos && typeof window.carregarTabelaEnderecos === 'function') {
+                        console.log('🏠 Carregando tabela de endereços...');
+                        window.carregarTabelaEnderecos();
+                    }
+                }, 500);
+            }
+        };
+
+    </script>
+</body>
+</html>

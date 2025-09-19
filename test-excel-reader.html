@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Leitor Excel</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .column { background: #e3f2fd; padding: 5px; margin: 2px; border-radius: 3px; display: inline-block; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .missing { color: red; font-weight: bold; }
+        .found { color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Teste do Leitor Excel - MDU 2025.xlsx</h1>
+    
+    <div style="margin: 20px 0;">
+        <label for="fileInput" style="display: block; margin-bottom: 10px;">
+            📁 Selecione o arquivo MDU 2025.xlsx:
+        </label>
+        <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="lerExcelSelecionado()" 
+               style="margin-bottom: 15px; padding: 10px; border: 2px dashed #ccc; border-radius: 5px;">
+    </div>
+    
+    <div id="resultado"></div>
+    
+    <script>
+        // As 31 colunas esperadas pelo sistema
+        const colunasEsperadas = [
+            'Projeto', 'Sub Projeto', 'Tipo de Ação', 'CONTRATO', 'Condominio',
+            'ENDEREÇO', 'Cidade', 'PEP', 'COD IMOVEL GED', 'NODE GERENCIAL',
+            'Área Técnica', 'HP', 'ANDAR', 'DATA RECEBIMENTO', 'DATA INICIO',
+            'DATA FINAL', 'Dias', 'EQUIPE', 'SUPERVISOR', 'STATUS', 'RDO',
+            'BOOK', 'COLABORADOR/BOOK', 'DATA BOOK', 'PROJETO', 
+            'COLABORADOR/PROJETO', 'DATA/PROJETO', 'JUSTIFICATIVA', 
+            'Observação', 'SOLUÇÃO', '< OU > QUE 30'
+        ];
+
+        function lerExcelSelecionado() {
+            const fileInput = document.getElementById('fileInput');
+            const arquivo = fileInput.files[0];
+            
+            if (!arquivo) {
+                document.getElementById('resultado').innerHTML = 
+                    '<div class="result">❌ Nenhum arquivo selecionado</div>';
+                return;
+            }
+            
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = '<div class="result">🔄 Carregando Excel...</div>';
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    // Ler com XLSX
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {
+                        type: 'array',
+                        cellDates: true,
+                        cellNF: false,
+                        cellText: false,
+                        raw: false
+                    });
+                    
+                    // Procurar pela aba BD_Controle
+                    const targetSheetName = 'BD_Controle';
+                    const sheetName = workbook.SheetNames.includes(targetSheetName) ? targetSheetName : workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    
+                    console.log('🔍 Abas disponíveis:', workbook.SheetNames);
+                    console.log('📋 Aba selecionada:', sheetName);
+                    
+                    // Converter para JSON
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+                        header: 1,
+                        raw: false,
+                        dateNF: 'dd/mm/yyyy'
+                    });
+                    
+                    const headers = jsonData[0];
+                    const dataRows = jsonData.slice(1).filter(row => 
+                        row && Array.isArray(row) && row.some(cell => 
+                            cell !== undefined && cell !== null && String(cell).trim() !== ''
+                        )
+                    );
+                    
+                    // Análise detalhada
+                    let html = '<div class="result">';
+                    html += `<h2>📊 Análise do Excel</h2>`;
+                    html += `<p><strong>Arquivo:</strong> ${arquivo.name}</p>`;
+                    html += `<p><strong>Planilha:</strong> ${sheetName}</p>`;
+                    html += `<p><strong>Total de linhas:</strong> ${jsonData.length} (incluindo cabeçalho)</p>`;
+                    html += `<p><strong>Linhas com dados:</strong> ${dataRows.length}</p>`;
+                    html += `<p><strong>Colunas encontradas:</strong> ${headers.length}</p>`;
+                    html += `<p><strong>Colunas esperadas:</strong> ${colunasEsperadas.length}</p>`;
+                    html += '</div>';
+                    
+                    // Mostrar todas as colunas encontradas
+                    html += '<div class="result">';
+                    html += '<h3>🔍 Colunas Encontradas no Excel:</h3>';
+                    headers.forEach((col, index) => {
+                        html += `<div class="column">${index + 1}. "${col}"</div>`;
+                    });
+                    html += '</div>';
+                    
+                    // Comparação com colunas esperadas
+                    html += '<div class="result">';
+                    html += '<h3>⚖️ Comparação com Colunas Esperadas:</h3>';
+                    
+                    const faltando = colunasEsperadas.filter(col => !headers.includes(col));
+                    const extras = headers.filter(col => !colunasEsperadas.includes(col));
+                    const coincidem = headers.filter(col => colunasEsperadas.includes(col));
+                    
+                    html += `<p><strong class="missing">❌ Colunas faltando (${faltando.length}):</strong></p>`;
+                    if (faltando.length === 0) {
+                        html += `<p style="color: green;">✅ Todas as colunas esperadas foram encontradas!</p>`;
+                    } else {
+                        faltando.forEach(col => {
+                            html += `<div class="column missing">"${col}"</div>`;
+                        });
+                    }
+                    
+                    html += `<p><strong style="color: orange;">➕ Colunas extras no Excel (${extras.length}):</strong></p>`;
+                    if (extras.length === 0) {
+                        html += `<p>Nenhuma coluna extra encontrada.</p>`;
+                    } else {
+                        extras.forEach(col => {
+                            html += `<div class="column" style="background: #fff3e0;">"${col}"</div>`;
+                        });
+                    }
+                    
+                    html += `<p><strong class="found">✅ Colunas que coincidem (${coincidem.length}):</strong></p>`;
+                    coincidem.forEach(col => {
+                        html += `<div class="column found">"${col}"</div>`;
+                    });
+                    html += '</div>';
+                    
+                    // Mostrar primeira linha de dados como exemplo
+                    if (dataRows.length > 0) {
+                        html += '<div class="result">';
+                        html += '<h3>📋 Primeira Linha de Dados (Exemplo):</h3>';
+                        html += '<table>';
+                        html += '<tr><th>Coluna</th><th>Valor</th></tr>';
+                        headers.forEach((col, index) => {
+                            const valor = dataRows[0] && dataRows[0][index] ? dataRows[0][index] : '';
+                            html += `<tr><td>${col}</td><td>${valor}</td></tr>`;
+                        });
+                        html += '</table>';
+                        html += '</div>';
+                    }
+                    
+                    resultado.innerHTML = html;
+                    
+                    // Log para console também
+                    console.log('🔍 ANÁLISE COMPLETA DO EXCEL:');
+                    console.log('Headers encontrados:', headers);
+                    console.log('Total de colunas:', headers.length);
+                    console.log('Colunas esperadas:', colunasEsperadas);
+                    console.log('Colunas faltando:', faltando);
+                    console.log('Colunas extras:', extras);
+                    console.log('Colunas que coincidem:', coincidem);
+                    console.log('Primeira linha de dados:', dataRows[0]);
+                    
+                } catch (error) {
+                    resultado.innerHTML = `<div class="result"><h2>❌ Erro ao ler Excel:</h2><p>${error.message}</p></div>`;
+                    console.error('Erro:', error);
+                }
+            };
+            
+            reader.readAsArrayBuffer(arquivo);
+        }
+    </script>
+</body>
+</html>

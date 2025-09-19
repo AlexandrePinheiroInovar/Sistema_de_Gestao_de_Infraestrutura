@@ -1,0 +1,53 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============= REGRAS SIMPLIFICADAS PARA DESENVOLVIMENTO =============
+    // PERMITE ACESSO TOTAL PARA USUARIOS AUTENTICADOS
+    
+    // ============= USUÁRIOS =============
+    match /users/{userId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // ============= ENDEREÇOS - COLLECTION PRINCIPAL =============
+    match /enderecos/{enderecoId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // ============= COLLECTIONS OPCIONAIS (se existirem) =============
+    match /projetos/{projetoId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /subprojetos/{subprojetoId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /supervisores/{supervisorId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /equipes/{equipeId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /cidades/{cidadeId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /tipos_acao/{tipoId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /analises/{analiseId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Qualquer outra collection que possa ser criada
+    match /{collection}/{document} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
