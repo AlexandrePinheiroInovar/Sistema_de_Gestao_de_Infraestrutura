@@ -66,6 +66,31 @@ HIERARQUIA DE Z-INDEX PADRONIZADA:
     border-radius: 8px !important;
 }
 
+/* ============= SISTEMA DE FILTROS UNIFICADO ============= */
+
+/* Container dos filtros deve ter z-index menor quando dropdown está aberto */
+.infra-filters-container {
+    z-index: 1 !important;
+}
+
+.unified-filter-dropdown {
+    z-index: 1 !important;
+    position: relative !important;
+}
+
+.unified-filter-dropdown.open {
+    z-index: 999999999 !important;
+    position: relative !important;
+}
+
+.unified-filter-dropdown-content {
+    z-index: 999999999 !important;
+    position: absolute !important;
+    background: white !important;
+    border: 2px solid #3b82f6 !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5) !important;
+}
+
 /* ============= CHECKBOX DROPDOWN SYSTEM ============= */
 
 .checkbox-dropdown {

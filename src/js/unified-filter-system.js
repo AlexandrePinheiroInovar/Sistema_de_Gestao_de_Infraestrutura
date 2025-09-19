@@ -38,7 +38,7 @@ class UnifiedFilterSystem {
             },
             { id: 'infraFilterEquipe', name: 'equipe', label: 'Equipe', column: 'equipe' },
             { id: 'infraFilterStatus', name: 'status', label: 'Status', column: 'status' },
-            { id: 'infraFilterCidade', name: 'cidade', label: 'Cidade', column: 'cidade' },
+            { id: 'infraFilterCidade', name: 'cidade', label: 'Cidade', column: 'Cidade' },
             { 
                 id: 'infraFilterJustificativa', 
                 name: 'justificativa', 
@@ -401,19 +401,21 @@ class UnifiedFilterSystem {
         const dropdown = document.createElement('div');
         dropdown.className = 'unified-filter-dropdown-content';
         dropdown.style.cssText = `
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
+            position: fixed !important;
+            background: white !important;
+            border: 2px solid #3b82f6 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.9) !important;
+            z-index: 2147483647 !important;
             display: none;
             max-height: 300px;
             overflow-y: auto;
+            min-width: 250px;
+            pointer-events: auto !important;
         `;
+
+        // Adicionar diretamente ao body para escapar de qualquer contexto de stacking
+        document.body.appendChild(dropdown);
 
         // Input de busca
         const searchInput = document.createElement('input');
@@ -436,7 +438,7 @@ class UnifiedFilterSystem {
         dropdown.appendChild(searchInput);
         dropdown.appendChild(optionsContainer);
         container.appendChild(button);
-        container.appendChild(dropdown);
+        // Dropdown já foi adicionado ao body, não precisa adicionar ao container
 
         // Criar instância do dropdown
         const instance = {
@@ -480,11 +482,22 @@ class UnifiedFilterSystem {
             Object.values(this.dropdownInstances).forEach(other => {
                 if (other !== instance) {
                     other.dropdown.style.display = 'none';
+                    other.container.classList.remove('open');
                 }
             });
 
             // Toggle atual
-            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+            const isOpen = dropdown.style.display === 'block';
+            dropdown.style.display = isOpen ? 'none' : 'block';
+
+            // Adicionar/remover classe open para controle de z-index
+            if (isOpen) {
+                instance.container.classList.remove('open');
+            } else {
+                instance.container.classList.add('open');
+                // Posicionar dropdown usando coordenadas fixas
+                this.positionDropdown(button, dropdown);
+            }
 
             if (dropdown.style.display === 'block') {
                 searchInput.focus();
@@ -498,10 +511,45 @@ class UnifiedFilterSystem {
 
         // Fechar ao clicar fora
         document.addEventListener('click', e => {
-            if (!instance.container.contains(e.target)) {
+            if (!instance.container.contains(e.target) && !dropdown.contains(e.target)) {
                 dropdown.style.display = 'none';
+                instance.container.classList.remove('open');
             }
         });
+
+        // Reposicionar dropdown quando scroll ou resize
+        const repositionHandler = () => {
+            if (dropdown.style.display === 'block') {
+                this.positionDropdown(button, dropdown);
+            }
+        };
+
+        window.addEventListener('scroll', repositionHandler, true);
+        window.addEventListener('resize', repositionHandler);
+    }
+
+    positionDropdown(button, dropdown) {
+        // Obter posição do botão na página incluindo scroll
+        const buttonRect = button.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+
+        console.log('🔧 [POSITION] Posicionando dropdown:', {
+            buttonRect,
+            scrollTop,
+            scrollLeft,
+            finalLeft: buttonRect.left + scrollLeft,
+            finalTop: buttonRect.bottom + scrollTop + 2
+        });
+
+        // Posicionar dropdown logo abaixo do botão (considerando scroll)
+        dropdown.style.left = (buttonRect.left + scrollLeft) + 'px';
+        dropdown.style.top = (buttonRect.bottom + scrollTop + 2) + 'px';
+        dropdown.style.width = Math.max(buttonRect.width, 250) + 'px';
+
+        // Para position: fixed, não precisamos adicionar scroll - usar coordenadas da viewport
+        dropdown.style.left = buttonRect.left + 'px';
+        dropdown.style.top = (buttonRect.bottom + 2) + 'px';
     }
 
     renderDropdownOptions(instance) {
@@ -592,9 +640,12 @@ class UnifiedFilterSystem {
             }
         }
 
+        // Verificar se dropdown está aberto
+        const isOpen = instance.dropdown.style.display === 'block';
+
         button.innerHTML = `
             <span style="color: ${count > 0 ? '#374151' : '#9ca3af'}">${displayText}</span>
-            <span style="transform: rotate(${button.nextElementSibling.style.display === 'block' ? '180deg' : '0deg'}); transition: transform 0.2s;">▼</span>
+            <span style="transform: rotate(${isOpen ? '180deg' : '0deg'}); transition: transform 0.2s;">▼</span>
         `;
 
         // Atualizar filtro atual
@@ -676,8 +727,8 @@ class UnifiedFilterSystem {
                         itemValue = item['supervisor'] || item['SUPERVISOR'] || item['Supervisor'];
                     } else if (config.column === 'equipe') {
                         itemValue = item['equipe'] || item['EQUIPE'] || item['Equipe'];
-                    } else if (config.column === 'cidade') {
-                        itemValue = item['cidade'] || item['Cidade'] || item['CIDADE'];
+                    } else if (config.column === 'Cidade') {
+                        itemValue = item['Cidade'] || item['cidade'] || item['CIDADE'];
                     } else {
                         itemValue = item[config.column];
                     }
@@ -805,9 +856,14 @@ class UnifiedFilterSystem {
         this.currentFilters = {};
 
         // Limpar dropdowns
+        console.log('🔧 [CLEAR] Limpando', Object.keys(this.dropdownInstances).length, 'dropdowns');
         Object.values(this.dropdownInstances).forEach(instance => {
+            console.log('🔧 [CLEAR] Limpando dropdown:', instance.config.label);
             instance.selectedValues.clear();
             this.updateDropdownDisplay(instance);
+            // Fechar dropdown se estiver aberto
+            instance.dropdown.style.display = 'none';
+            instance.container.classList.remove('open');
         });
 
         // Limpar campos de data
@@ -888,8 +944,15 @@ class UnifiedFilterSystem {
 
     getUniqueValues(columnName) {
         if (!columnName || !this.allData || this.allData.length === 0) {
+            console.warn(`⚠️ [UNIFIED-FILTER] getUniqueValues falhou para coluna '${columnName}':`, {
+                columnName,
+                allDataExists: !!this.allData,
+                allDataLength: this.allData ? this.allData.length : 0
+            });
             return [];
         }
+
+        console.log(`🔍 [UNIFIED-FILTER] Obtendo valores únicos para coluna '${columnName}' de ${this.allData.length} registros`);
 
         const values = this.allData
             .map(item => {
@@ -900,8 +963,8 @@ class UnifiedFilterSystem {
                     return item['supervisor'] || item['SUPERVISOR'] || item['Supervisor'];
                 } else if (columnName === 'equipe') {
                     return item['equipe'] || item['EQUIPE'] || item['Equipe'];
-                } else if (columnName === 'cidade') {
-                    return item['cidade'] || item['Cidade'] || item['CIDADE'];
+                } else if (columnName === 'Cidade') {
+                    return item['Cidade'] || item['cidade'] || item['CIDADE'];
                 } else {
                     return item[columnName];
                 }
@@ -909,7 +972,11 @@ class UnifiedFilterSystem {
             .filter(value => value && value.toString().trim() !== '')
             .map(value => value.toString().trim());
 
-        return [...new Set(values)].sort();
+        const uniqueValues = [...new Set(values)].sort();
+
+        console.log(`✅ [UNIFIED-FILTER] Valores únicos para '${columnName}':`, uniqueValues.length, 'valores:', uniqueValues);
+
+        return uniqueValues;
     }
 
     updateInterface() {
@@ -986,7 +1053,24 @@ class UnifiedFilterSystem {
         });
         document.dispatchEvent(event);
 
-        console.log('✅ [UNIFIED-FILTER] Interface atualizada');
+        // Tentar forçar atualização de cards/gráficos usando método direto
+        console.log('🔄 [UNIFIED-FILTER] Tentando forçar atualização de cards...');
+        if (typeof window.forceUpdateCards === 'function') {
+            window.forceUpdateCards(this.filteredData);
+        }
+
+        // Tentar usar o método de gráficos diretamente
+        if (typeof window.updateCharts === 'function') {
+            console.log('📊 [UNIFIED-FILTER] Tentando updateCharts...');
+            window.updateCharts(this.filteredData);
+        }
+
+        console.log('✅ [UNIFIED-FILTER] Interface atualizada - Evento disparado:', {
+            eventType: 'unifiedFiltersChanged',
+            filteredCount: this.filteredData.length,
+            totalCount: this.allData.length,
+            activeFilters: Object.keys(this.currentFilters).filter(key => this.currentFilters[key].length > 0)
+        });
     }
 
     // ============= PERSISTÊNCIA =============
