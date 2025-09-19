@@ -1,0 +1,14 @@
+Cache bust timestamp: 2025-08-26 14:00:00
+Version: 7.4
+Dashboard - SOMENTE Gráficos Modernos - Código Limpo
+✅ GRÁFICOS MODERNOS V4.0 - IMPLEMENTAÇÃO COMPLETA:
+- Projetos: Gráfico combinado (barras azuis quantidade + linha vermelha percentual) 
+- Sub-Projetos: Gráfico combinado (barras verdes quantidade + linha amarela percentual)
+- Cidades: Barras azuis uniformes com rótulos sem sobreposição
+- HP por Projeto: Barras azuis uniformes com rótulos
+- Supervisores: 2 barras separadas por supervisor (verde produtiva + vermelha improdutiva)
+- Recebimentos: Linha temporal moderna (azul recebidos + verde concluídos)
+- Rótulos ChartDataLabels em todos os gráficos sem conflitos
+- Eixos duplos nos gráficos combinados com cores identificadoras
+- Visual limpo sem cores de ranking nas tabelas
+Dynamic Excel Upload System Active
