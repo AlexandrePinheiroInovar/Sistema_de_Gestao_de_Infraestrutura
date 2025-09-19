@@ -62,23 +62,19 @@ function resetEditState() {
 async function abrirModalParaEdicao(data) {
     console.log('🎯 [EDIT-FIX] Abrindo modal para edição...');
 
-    // NOVA ESTRATÉGIA: Destruir e recriar o modal se necessário
+    // CORREÇÃO: Sempre resetar contador no início de nova edição
+    window.modalTentativas = 0;
+
     const tentativaCount = window.modalTentativas || 0;
     window.modalTentativas = tentativaCount + 1;
 
     console.log(`🔢 [EDIT-FIX] Tentativa #${window.modalTentativas} de abrir modal`);
 
-    if (window.modalTentativas > 1) {
-        // Se já tentou antes, usar método de força total
-        console.log('💥 [EDIT-FIX] Segunda tentativa - Modo DESTRUIR E RECRIAR');
-        await destruirERecriarModal();
-    }
-
     // Primeiro, resetar completamente o modal
     await resetarModalCompleto();
 
-    // Método 1: Tentar usando função existente
-    if (typeof window.novoEnderecoLimpo === 'function' && window.modalTentativas === 1) {
+    // Método 1: SEMPRE tentar usando função existente primeiro
+    if (typeof window.novoEnderecoLimpo === 'function') {
         console.log('🔄 [EDIT-FIX] Tentando com função existente...');
 
         try {
@@ -98,7 +94,11 @@ async function abrirModalParaEdicao(data) {
         }
     }
 
-    // Método 2: Forçar abertura direta
+    // Método 2: Se falhou, tentar destruir e recriar
+    console.log('💥 [EDIT-FIX] Primeira tentativa falhou - Modo DESTRUIR E RECRIAR');
+    await destruirERecriarModal();
+
+    // Método 3: Forçar abertura direta
     console.log('🔄 [EDIT-FIX] Forçando abertura direta...');
     await forcarAberturaModal(data);
 }
@@ -340,25 +340,38 @@ async function forcarReloadSelects() {
     console.log('🔄 [EDIT-FIX] Forçando reload dos selects...');
 
     try {
-        // Usar o sistema novo-endereco-limpo se disponível
-        if (window.NovoEndereco && window.NovoEndereco.carregarSeletores) {
-            console.log('🔄 [EDIT-FIX] Usando NovoEndereco.carregarSeletores...');
-            await window.NovoEndereco.carregarSeletores();
-        } else if (window.novoEnderecoLimpo) {
-            // Tentar simular o carregamento através da função principal
-            console.log('🔄 [EDIT-FIX] Simulando carregamento via novoEnderecoLimpo...');
+        // NOVA ESTRATÉGIA: Aguardar mais tempo para o sistema NovoEndereco
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // Recarregar selects manualmente
-            await recarregarSelectsManualmente();
-        } else {
-            console.warn('⚠️ [EDIT-FIX] Sistema NovoEndereco não disponível');
-            await recarregarSelectsManualmente();
+        // Método 1: Usar o sistema novo-endereco-limpo se disponível
+        if (window.NovoEndereco && typeof window.NovoEndereco.carregarSeletores === 'function') {
+            console.log('🔄 [EDIT-FIX] Usando NovoEndereco.carregarSeletores...');
+
+            // Garantir que NovoEndereco está inicializado
+            if (!window.NovoEndereco.initialized) {
+                console.log('🔄 [EDIT-FIX] Inicializando NovoEndereco...');
+                await window.NovoEndereco.init();
+            }
+
+            await window.NovoEndereco.carregarSeletores();
+            console.log('✅ [EDIT-FIX] NovoEndereco.carregarSeletores executado');
+
+            // Verificar se realmente carregou
+            const projetoSelect = document.getElementById('projeto');
+            if (projetoSelect && projetoSelect.options.length > 1) {
+                console.log('✅ [EDIT-FIX] Selects carregados pelo NovoEndereco');
+                return;
+            }
         }
+
+        // Método 2: Fallback manual mais robusto
+        console.log('🔄 [EDIT-FIX] Fallback: recarregando selects manualmente...');
+        await recarregarSelectsManualmenteRobusto();
 
         console.log('✅ [EDIT-FIX] Reload dos selects concluído');
     } catch (error) {
         console.error('❌ [EDIT-FIX] Erro no reload dos selects:', error);
-        await recarregarSelectsManualmente();
+        await recarregarSelectsManualmenteRobusto();
     }
 }
 
@@ -413,6 +426,133 @@ async function recarregarSelectsManualmente() {
             console.error(`❌ [EDIT-FIX] Erro ao recarregar ${selectorId}:`, error);
         }
     }
+}
+
+// ============= RECARREGAR SELECTS ROBUSTO =============
+async function recarregarSelectsManualmenteRobusto() {
+    console.log('💪 [EDIT-FIX] Recarregando selects - MODO ROBUSTO...');
+
+    const collections = {
+        projeto: 'nova_gestao_projetos',
+        subProjeto: 'nova_gestao_subprojetos',
+        tipoAcao: 'nova_gestao_tipos_acao',
+        cidade: 'nova_gestao_cidades',
+        equipe: 'nova_gestao_equipes',
+        supervisor: 'nova_gestao_supervisores'
+    };
+
+    // Dados de fallback caso Firebase falhe
+    const dadosFallback = {
+        projeto: ['CLARO', 'VIVO', 'TIM', 'OI'],
+        subProjeto: ['MDU RESIDENCIAL', 'MDU COMERCIAL', 'FTTH', 'HFC'],
+        tipoAcao: ['VISTORIA', 'CONSTRUÇÃO', 'ATIVAÇÃO', 'MANUTENÇÃO'],
+        cidade: ['Salvador', 'Lauro de Freitas', 'Camaçari', 'Feira de Santana'],
+        equipe: ['EQUIPE A', 'EQUIPE B', 'EQUIPE C'],
+        supervisor: ['SUPERVISOR 1', 'SUPERVISOR 2', 'SUPERVISOR 3']
+    };
+
+    for (const [selectorId, collectionName] of Object.entries(collections)) {
+        try {
+            const select = document.getElementById(selectorId);
+            if (!select) {
+                console.warn(`⚠️ [EDIT-FIX] Select ${selectorId} não encontrado`);
+                continue;
+            }
+
+            console.log(`📋 [EDIT-FIX] Carregando ${selectorId} (ROBUSTO)...`);
+
+            // Salvar valor atual
+            const valorAtual = select.value;
+
+            // Limpar opções existentes
+            select.innerHTML = '<option value="">Selecione...</option>';
+
+            let itemsCarregados = 0;
+
+            // Estratégia 1: Tentar Firebase
+            if (window.firestore) {
+                try {
+                    const snapshot = await window.firestore.collection(collectionName).get();
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const valor = data.nome || data.name || doc.id;
+                        if (valor && valor.trim()) {
+                            const option = document.createElement('option');
+                            option.value = valor;
+                            option.textContent = valor;
+                            select.appendChild(option);
+                            itemsCarregados++;
+                        }
+                    });
+
+                    if (itemsCarregados > 0) {
+                        console.log(`✅ [EDIT-FIX] ${selectorId}: ${itemsCarregados} itens do Firebase`);
+                    }
+                } catch (error) {
+                    console.warn(`⚠️ [EDIT-FIX] Firebase falhou para ${selectorId}:`, error);
+                }
+            }
+
+            // Estratégia 2: Se Firebase falhou, usar dados da tabela existente
+            if (itemsCarregados === 0 && window.tableData) {
+                try {
+                    const valoresUnicos = new Set();
+                    window.tableData.forEach(item => {
+                        const valor = item[selectorId] || item[selectorId.charAt(0).toUpperCase() + selectorId.slice(1)];
+                        if (valor && valor.trim()) {
+                            valoresUnicos.add(valor.trim());
+                        }
+                    });
+
+                    valoresUnicos.forEach(valor => {
+                        const option = document.createElement('option');
+                        option.value = valor;
+                        option.textContent = valor;
+                        select.appendChild(option);
+                        itemsCarregados++;
+                    });
+
+                    if (itemsCarregados > 0) {
+                        console.log(`✅ [EDIT-FIX] ${selectorId}: ${itemsCarregados} itens da tabela`);
+                    }
+                } catch (error) {
+                    console.warn(`⚠️ [EDIT-FIX] Dados da tabela falharam para ${selectorId}:`, error);
+                }
+            }
+
+            // Estratégia 3: Fallback com dados estáticos
+            if (itemsCarregados === 0 && dadosFallback[selectorId]) {
+                dadosFallback[selectorId].forEach(valor => {
+                    const option = document.createElement('option');
+                    option.value = valor;
+                    option.textContent = valor;
+                    select.appendChild(option);
+                    itemsCarregados++;
+                });
+
+                console.log(`⚠️ [EDIT-FIX] ${selectorId}: ${itemsCarregados} itens fallback`);
+            }
+
+            // Restaurar valor se ainda existir
+            if (valorAtual) {
+                const opcaoExistente = Array.from(select.options).find(opt =>
+                    opt.value === valorAtual ||
+                    opt.textContent === valorAtual ||
+                    opt.value.toLowerCase() === valorAtual.toLowerCase()
+                );
+                if (opcaoExistente) {
+                    select.value = opcaoExistente.value;
+                    console.log(`🔄 [EDIT-FIX] ${selectorId}: valor restaurado: ${valorAtual}`);
+                }
+            }
+
+        } catch (error) {
+            console.error(`❌ [EDIT-FIX] Erro crítico ao carregar ${selectorId}:`, error);
+        }
+    }
+
+    console.log('💪 [EDIT-FIX] Carregamento robusto dos selects concluído');
 }
 
 // ============= FUNÇÃO ESPECIALIZADA PARA PREENCHER SELECTS =============
@@ -992,12 +1132,31 @@ function adicionarListenerFechamento() {
             attributeFilter: ['style', 'class']
         });
 
-        // Também detectar cliques no backdrop ou botão fechar
+        // CORREÇÃO: Detectar cliques no backdrop ou botão fechar de forma mais abrangente
         modal.addEventListener('click', (e) => {
-            if (e.target === modal || e.target.classList.contains('btn-close') || e.target.classList.contains('close')) {
+            if (e.target === modal ||
+                e.target.classList.contains('btn-close') ||
+                e.target.classList.contains('close') ||
+                e.target.classList.contains('btn-secondary') ||
+                e.target.textContent.trim().toLowerCase().includes('fechar') ||
+                e.target.textContent.trim().toLowerCase().includes('cancelar')) {
                 setTimeout(() => {
                     window.modalTentativas = 0;
+                    isEditMode = false;
+                    currentEditId = null;
                     console.log('🔄 [EDIT-FIX] Modal fechado via clique - contador resetado');
+                }, 100);
+            }
+        });
+
+        // NOVO: Detectar tecla ESC para fechar modal
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.style.display === 'block') {
+                setTimeout(() => {
+                    window.modalTentativas = 0;
+                    isEditMode = false;
+                    currentEditId = null;
+                    console.log('🔄 [EDIT-FIX] Modal fechado via ESC - contador resetado');
                 }, 100);
             }
         });
